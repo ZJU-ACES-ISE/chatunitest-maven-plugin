@@ -13,7 +13,9 @@ Generate unit tests for the target class:
 mvn chatunitest:class -DselectClass=className
 ```
 
-Generate unit tests for the whole project:
+Generate unit tests for the whole project: 
+
+:warning: :warning: :warning: For a large project, it may consume a significant number of tokens, resulting in a substantial bill.
 ```
 mvn chatunitest:project
 ```
@@ -81,6 +83,7 @@ You can configure the plugin with the following parameters:
 ```
 
 ## :construction: TODO
+- Add code obfuscation to avoid sending the original code to ChatGPT.
 - Add expense estimation and quota.
 - Optimize the structure of generated test cases.
 
@@ -105,4 +108,4 @@ Our work has been submitted to arXiv. Check it out here: [ChatUniTest](https://a
 If you have any questions or would like to inquire about our experimental results, please feel free to contact us via email. The email addresses of the authors are as follows:
 
 1. Corresponding author: `zjuzhichen AT zju.edu.cn`
-2. Author: `xiezhuokui AT zju.edu.cn`, `yh_ch AT zju.edu.cn`
+2. Author: `yh_ch AT zju.edu.cn`, `xiezhuokui AT zju.edu.cn`
