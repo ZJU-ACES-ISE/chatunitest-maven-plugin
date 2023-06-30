@@ -70,6 +70,7 @@ public class ProjectTestMojo
     public void execute() throws MojoExecutionException {
         init();
         getLog().info("\n==========================\n[ChatTester] Generating tests for project " + project + " ...");
+        getLog().warn("\n==========================\n[ChatTester] It may consume a significant number of tokens!");
         tmpOutput = Paths.get(tmpOutput, Paths.get(project).getFileName().toString()).toString();
         String parseOutput = tmpOutput + File.separator + "class-info";
         parseOutput = parseOutput.replace("/", File.separator);

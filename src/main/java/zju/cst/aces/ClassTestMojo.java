@@ -34,6 +34,7 @@ import java.nio.file.Paths;
  * A demo of ChatUniTest maven plugin
  */
 
+//TODO: Use qualified name, get the package information in class parser.
 @Mojo(name = "class")
 public class ClassTestMojo
         extends ProjectTestMojo {
