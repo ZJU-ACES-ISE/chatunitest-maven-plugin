@@ -59,7 +59,7 @@ You can configure the plugin with the following parameters:
     <version>1.0.0</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
-        <apiKeys>Key1, Key2, ...</apiKeys>
+        <apiKeys></apiKeys>
         <maxRounds>6</maxRounds>
         <minErrorTokens>500</minErrorTokens>
         <model>gpt-3.5-turbo</model>
