@@ -1,27 +1,11 @@
-# ChatUnitest Maven Plugin
-
-Add ChatUnitest to your pom.xml:
-
-```
-  <plugin>
-    <groupId>edu.zju.cst.aces</groupId>
-    <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.0.0</version>
-    <configuration>
-<!--          You must specify you OpenAI API keys.-->
-      <apiKeys>Key1, Key2, ...</apiKeys>
-      <selectClass>${selectClass}</selectClass>
-      <selectMethod>${selectMethod}</selectMethod>
-    </configuration>
-  </plugin>
-```
+# :mega: ChatUnitest Maven Plugin
 
 ## Run
 You can run the plugin with the following command:
 
-Generate unit tests for the whole project:
+Generate unit tests for the target method:
 ```
-mvn chatunitest:project
+mvn chatunitest:method -DselectMethod=className#methodName
 ```
 
 Generate unit tests for the target class:
@@ -29,9 +13,9 @@ Generate unit tests for the target class:
 mvn chatunitest:class -DselectClass=className
 ```
 
-Generate unit tests for the target method:
+Generate unit tests for the whole project:
 ```
-mvn chatunitest:method -DselectMethod=className#methodName
+mvn chatunitest:project
 ```
 
 ## Configuration
@@ -42,7 +26,7 @@ You can configure the plugin with the following parameters:
     <artifactId>chatunitest-maven-plugin</artifactId>
     <version>1.0.0</version>
     <configuration>
-<!--          You must specify you OpenAI API keys.-->
+      <!-- You must specify you OpenAI API keys. -->
       <apiKeys>Key1, Key2, ...</apiKeys>
       <maxRounds>6</maxRounds>
       <minErrorTokens>500</minErrorTokens>
@@ -90,13 +74,15 @@ You can configure the plugin with the following parameters:
 
 ```
 <plugin>
-<groupId>org.apache.maven.plugins</groupId>
-<artifactId>maven-surefire-plugin</artifactId>
-<version>3.1.0</version>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>3.1.0</version>
 </plugin>
 ```
 
-
+## :construction: TODO
+- Add expense estimation and quota.
+- Optimize the structure of generated test cases.
 
 ## MISC
 
@@ -113,7 +99,7 @@ Our work has been submitted to arXiv. Check it out here: [ChatUniTest](https://a
 }
 ```
 
-## Contact us
+## :email: Contact us
 
 
 If you have any questions or would like to inquire about our experimental results, please feel free to contact us via email. The email addresses of the authors are as follows:
