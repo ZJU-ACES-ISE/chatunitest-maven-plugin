@@ -30,7 +30,6 @@ public class AskGPT extends ProjectTestMojo {
         int maxTry = 5;
         while (maxTry > 0) {
             try {
-//                System.out.println("Asking ... round " + (6 - maxTry) + "/" + maxTry);
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("messages", messages);
                 payload.put("model", Config.model);

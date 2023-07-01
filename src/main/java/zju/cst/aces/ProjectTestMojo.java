@@ -16,10 +16,14 @@ package zju.cst.aces;
  * limitations under the License.
  */
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.utils.Config;
@@ -40,8 +44,10 @@ import java.util.List;
 @Mojo(name = "project")
 public class ProjectTestMojo
         extends AbstractMojo {
-    @Parameter(name = "project", defaultValue = "${basedir}")
-    public String project;
+    @Parameter( defaultValue = "${session}", readonly = true, required = true )
+    private MavenSession session;
+    @Parameter(defaultValue = "${project}", readonly = true, required = true)
+    public MavenProject project;
     @Parameter(name = "testOutput", defaultValue = "chatunitest-tests")
     public String testOutput;
     @Parameter(name = "tmpOutput", defaultValue = "/tmp/chatunitest-info")//TODO: Use system file separator (for windows)
@@ -63,21 +69,25 @@ public class ProjectTestMojo
     @Parameter(name = "presencePenalty", defaultValue = "0")
     public int presencePenalty;
 
+    @Component(hint = "default")
+    private DependencyGraphBuilder dependencyGraphBuilder;
+
+    public String parseOutput;
+
+
     /**
      * Generate tests for all classes in the project
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
         init();
-        getLog().info("\n==========================\n[ChatTester] Generating tests for project " + project + " ...");
-        getLog().warn("\n==========================\n[ChatTester] It may consume a significant number of tokens!");
-        tmpOutput = Paths.get(tmpOutput, Paths.get(project).getFileName().toString()).toString();
-        String parseOutput = tmpOutput + File.separator + "class-info";
-        parseOutput = parseOutput.replace("/", File.separator);
-        Path projectPath = Paths.get(project).resolve("src" + File.separator + "main" + File.separator + "java");
+        getLog().info("\n==========================\n[ChatTester] Generating tests for project " + project.getBasedir().getName() + " ...");
+        getLog().warn("[ChatTester] It may consume a significant number of tokens!");
 
-        String jarDeps = tmpOutput + File.separator + "jar-deps";
-        ProjectParser parser = new ProjectParser(projectPath.toString(), parseOutput, jarDeps);
+        //TODO: Use project.getCompileSourceRoots() to handle project have submodules
+        Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
+
+        ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
         if (! (new File(parseOutput).exists())) {
             getLog().info("\n==========================\n[ChatTester] Parsing class info ...");
             parser.parse();
@@ -85,7 +95,7 @@ public class ProjectTestMojo
         }
 
         List<String> classPaths = new ArrayList<>();
-        parser.scanSourceDirectory(projectPath.toFile(), classPaths);
+        parser.scanSourceDirectory(srcMainJavaPath.toFile(), classPaths);
 
         TestCompiler.backupTestFolder();
         for (String classPath : classPaths) {
@@ -103,6 +113,8 @@ public class ProjectTestMojo
     }
 
     public void init() {
+        Config.setProject(project);
+        Config.setDependencyGraphBuilder(dependencyGraphBuilder);
         Config.setApiKeys(apiKeys);
         Config.setModel(model);
         Config.setMaxRounds(maxRounds);
@@ -111,5 +123,9 @@ public class ProjectTestMojo
         Config.setTopP(topP);
         Config.setFrequencyPenalty(frequencyPenalty);
         Config.setPresencePenalty(presencePenalty);
+        Config.setSession(session);
+        tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getBasedir().getName()));
+        parseOutput = tmpOutput + File.separator + "class-info";
+        parseOutput = parseOutput.replace("/", File.separator);
     }
 }

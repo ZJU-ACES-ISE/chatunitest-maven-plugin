@@ -15,14 +15,17 @@ public class TestCompiler {
     public static File backupFolder = new File("src" + File.separator + "backup");
 
     public static boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo) {
+        System.out.println("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
             outputPath.toAbsolutePath().getParent().toFile().mkdirs();
         }
         String testFileName = testFile.getName().split("\\.")[0];
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command(Arrays.asList("mvn", "test", "-Dtest=" + getPackage(testFile) + testFileName));
+        String mvn = System.getProperty("os.name").toLowerCase().contains("win") ? "mvn.cmd" : "mvn";
+        processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
 
         List<String> errorMsg = new ArrayList<>();
+        // full output text
         StringBuilder output = new StringBuilder();
 
         try {
@@ -59,7 +62,7 @@ public class TestCompiler {
             //TODO: Cannot parse runtime error like Assertion failure.
             String processedOutput = errorProcesser.processErrorMessage(errorMsg, Config.minErrorTokens);
 
-            System.out.println(processedOutput);
+//            System.out.println(processedOutput);
 
             promptInfo.setErrorMsg(processedOutput);
 

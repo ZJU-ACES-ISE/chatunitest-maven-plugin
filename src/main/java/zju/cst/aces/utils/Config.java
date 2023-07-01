@@ -1,8 +1,16 @@
 package zju.cst.aces.utils;
 
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
+
 import java.util.Random;
 
 public class Config {
+
+    public static MavenSession session;
+    public static MavenProject project;
+    public static DependencyGraphBuilder dependencyGraphBuilder;
     public static int testNumber;
     public static int timeOut;
     public static int processNumber;
@@ -18,13 +26,16 @@ public class Config {
     public static int presencePenalty;
     public static String[] apiKeys;
 
-    public static String getRandomKey() {
-        Random rand = new Random();
-        if (apiKeys == null) {
-            throw new RuntimeException("apiKeys is null");
-        }
-        String apiKey = apiKeys[rand.nextInt(apiKeys.length)];
-        return apiKey;
+    public static void setSession(MavenSession session) {
+        Config.session = session;
+    }
+
+    public static void setProject(MavenProject project) {
+        Config.project = project;
+    }
+
+    public static void setDependencyGraphBuilder(DependencyGraphBuilder dependencyGraphBuilder) {
+        Config.dependencyGraphBuilder = dependencyGraphBuilder;
     }
 
     public static void setApiKeys(String[] apiKeys) {
@@ -81,5 +92,14 @@ public class Config {
 
     public static void setPresencePenalty(int presencePenalty) {
         Config.presencePenalty = presencePenalty;
+    }
+
+    public static String getRandomKey() {
+        Random rand = new Random();
+        if (apiKeys == null) {
+            throw new RuntimeException("apiKeys is null");
+        }
+        String apiKey = apiKeys[rand.nextInt(apiKeys.length)];
+        return apiKey;
     }
 }

@@ -27,22 +27,21 @@ public class ErrorParser {
             }
         }
         for(String eline :errorlines){
+            //TODO: do not need error type
             if(hasErrorFlag(eline,"COMPILATION ERROR")){
                 testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
             }
             if(hasErrorFlag(eline,"RUNTIME ERROR")){
                 testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
             }
-            if(eline.contains(".java")){
+            if(eline.contains(".java:")){
                 testMessage.setUnitTest(getUnitTest(eline));
             }
             if(!eline.equals("[ERROR] ")){
                 errorMessage.add(getErrorMessage(eline));
             }
 
-            //sb.append(getErrorMessage(eline));
         }
-        //testMessage.setErrorMessage(sb.toString());
         testMessage.setErrorMessage(errorMessage);
         return testMessage;
     }
@@ -56,7 +55,7 @@ public class ErrorParser {
     }
     static String getUnitTest(String message){
         String testClass="";
-        if(message.contains(".java")){
+        if(message.contains(".java:")){
             testClass=message.substring(message.lastIndexOf("/") + 1,message.indexOf(":"));
         }
         return testClass;
@@ -66,7 +65,7 @@ public class ErrorParser {
         String errorMessage="";
         if(message.contains("[ERROR]")){
             errorMessage=message.replace("[ERROR]","");
-            if(message.contains(".java")){
+            if(message.contains(".java:")){
                 errorMessage=message.substring(message.indexOf(".java")+1);
                 //TODO: Add the information of error line and column
 //                errorMessage=errorMessage.substring(errorMessage.indexOf("]")+2);

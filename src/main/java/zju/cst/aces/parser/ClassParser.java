@@ -19,8 +19,12 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.jetbrains.annotations.NotNull;
 import zju.cst.aces.utils.ClassInfo;
+import zju.cst.aces.utils.Config;
 import zju.cst.aces.utils.MethodInfo;
 
 import java.io.File;
@@ -40,27 +44,23 @@ public class ClassParser {
     private static Path outputPath = null;
     private static ClassInfo classInfo;
 
-    public ClassParser(String path, String depPath) {
+    public ClassParser(String path) {
         setOutputPath(path);
-        JavaSymbolSolver symbolSolver = getSymbolSolver(depPath);
+        JavaSymbolSolver symbolSolver = getSymbolSolver();
         parser.getParserConfiguration().setSymbolResolver(symbolSolver);
     }
 
-    private JavaSymbolSolver getSymbolSolver(String depPath) {
+    private JavaSymbolSolver getSymbolSolver() {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
         try {
-            // traverse the jarDepPath and add all jar files to type solver
-            Files.walk(Paths.get(depPath))
-                    .filter(Files::isRegularFile)
-                    .forEach(file -> {
-                        try {
-                            combinedTypeSolver.add(new JarTypeSolver(file.toAbsolutePath()));
-                        } catch (IOException e) {
-                            System.out.println("Error when adding jar file to type solver: " + e);
-                        }
-                    });
-        } catch (IOException e) {
+            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(Config.session.getProjectBuildingRequest() );
+            buildingRequest.setProject(Config.project);
+            DependencyNode root = Config.dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
+            for (DependencyNode dep : root.getChildren()) {
+                combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
+            }
+        } catch (Exception e) {
             System.out.println(e);
         }
         for (Path source : getSources()) {

@@ -56,13 +56,9 @@ public class MethodTestMojo
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
 
-        tmpOutput = Paths.get(tmpOutput, Paths.get(project).getFileName().toString()).toString();
-        String parseOutput = tmpOutput + File.separator + "class-info";
-        parseOutput = parseOutput.replace("/", File.separator);
-        Path projectPath = Paths.get(project).resolve("src" + File.separator + "main" + File.separator + "java");
+        Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
 
-        String jarDeps = tmpOutput + File.separator + "jar-deps";
-        ProjectParser parser = new ProjectParser(projectPath.toString(), parseOutput, jarDeps);
+        ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
         if (! (new File(parseOutput).exists())) {
             getLog().info("\n==========================\n[ChatTester] Parsing class info ...");
             parser.parse();
