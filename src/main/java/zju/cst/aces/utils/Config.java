@@ -96,8 +96,8 @@ public class Config {
 
     public static String getRandomKey() {
         Random rand = new Random();
-        if (apiKeys == null) {
-            throw new RuntimeException("apiKeys is null");
+        if (apiKeys.length == 0) {
+            throw new RuntimeException("apiKeys is null!");
         }
         String apiKey = apiKeys[rand.nextInt(apiKeys.length)];
         return apiKey;

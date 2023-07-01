@@ -84,9 +84,11 @@ public class ProjectTestMojo
         getLog().info("\n==========================\n[ChatTester] Generating tests for project " + project.getBasedir().getName() + " ...");
         getLog().warn("[ChatTester] It may consume a significant number of tokens!");
 
-        //TODO: Use project.getCompileSourceRoots() to handle project have submodules
         Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
-
+        if (!srcMainJavaPath.toFile().exists()) {
+            getLog().info("\n==========================\n[ChatTester] No compile source found in " + project);
+            return;
+        }
         ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
         if (! (new File(parseOutput).exists())) {
             getLog().info("\n==========================\n[ChatTester] Parsing class info ...");
@@ -104,7 +106,7 @@ public class ProjectTestMojo
             try {
                 new ClassRunner(className, parseOutput, testOutput).start();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                getLog().error("[ChatTester] Generate tests for class " + className + " failed: " + e);
             }
         }
         TestCompiler.restoreTestFolder();
@@ -113,6 +115,7 @@ public class ProjectTestMojo
     }
 
     public void init() {
+        Config.setSession(session);
         Config.setProject(project);
         Config.setDependencyGraphBuilder(dependencyGraphBuilder);
         Config.setApiKeys(apiKeys);
@@ -123,8 +126,7 @@ public class ProjectTestMojo
         Config.setTopP(topP);
         Config.setFrequencyPenalty(frequencyPenalty);
         Config.setPresencePenalty(presencePenalty);
-        Config.setSession(session);
-        tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getBasedir().getName()));
+        tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getArtifactId()));
         parseOutput = tmpOutput + File.separator + "class-info";
         parseOutput = parseOutput.replace("/", File.separator);
     }

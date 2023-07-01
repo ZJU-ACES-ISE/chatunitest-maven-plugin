@@ -36,7 +36,7 @@ public class CleanMojo
      */
     public void execute() throws MojoExecutionException {
         init();
-        getLog().info("\n==========================\n[ChatTester] Cleaning project " + project + " ...");
+        getLog().info("\n==========================\n[ChatTester] Cleaning project " +  project.getBasedir().getName() + " ...");
         getLog().info("\n==========================\n[ChatTester] Cleaning output directory "
                 + tmpOutput + " and " + testOutput + " ...");
         try {

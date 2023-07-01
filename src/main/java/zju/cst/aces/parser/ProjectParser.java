@@ -6,7 +6,6 @@ import java.util.List;
 
 public class ProjectParser {
 
-    //    private static final String projectRootPath = System.getProperty("user.dir");
     private String srcFolderPath;
     private String outputPath;
     private ClassParser classParser = null;
@@ -55,13 +54,4 @@ public class ProjectParser {
     public void setOutputPath(String output) {
         this.outputPath = output;
     }
-
-    public String getOutputPath() {
-        return this.outputPath;
-    }
-
-    public String getSrcFolderPath() {
-        return this.srcFolderPath;
-    }
-
 }

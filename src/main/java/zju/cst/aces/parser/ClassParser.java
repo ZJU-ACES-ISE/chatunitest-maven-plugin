@@ -57,18 +57,30 @@ public class ClassParser {
             ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(Config.session.getProjectBuildingRequest() );
             buildingRequest.setProject(Config.project);
             DependencyNode root = Config.dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
-            for (DependencyNode dep : root.getChildren()) {
-                combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
+            Set<DependencyNode> depSet = new HashSet<>();
+            walkDep(root, depSet);
+            for (DependencyNode dep : depSet) {
+                if (dep.getArtifact().getFile() != null) {
+                    combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
+                }
             }
         } catch (Exception e) {
             System.out.println(e);
         }
-        for (Path source : getSources()) {
-            combinedTypeSolver.add(new JavaParserTypeSolver(source.resolve(
-                    "src" + File.separator + "main" + File.separator + "java").toFile()));
+        for (String src : Config.project.getCompileSourceRoots()) {
+            if (new File(src).exists()) {
+                combinedTypeSolver.add(new JavaParserTypeSolver(src));
+            }
         }
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         return symbolSolver;
+    }
+
+    private static void walkDep(DependencyNode node, Set<DependencyNode> depSet) {
+        depSet.add(node);
+        for (DependencyNode dep : node.getChildren()) {
+            walkDep(dep, depSet);
+        }
     }
 
     private static boolean isJavaSourceDir(Path path) {
@@ -232,32 +244,19 @@ public class ClassParser {
     /**
      * Get brief method(construcor)
      * Note:
-     * Get source code by modifiers and body may fail because the method node may have no modifiers or body, may occur errors:
-     * no modifiers error: Exception: java.lang.IndexOutOfBoundsException: Index 0 out of bounds for length 0.
-     * no body error: Exception: java.util.NoSuchElementException: No value present.
+     * Get source code from begin of method to begin of body
      */
     private static String getBriefMethod(CompilationUnit cu, CallableDeclaration node) {
         String sig = "";
         if (node instanceof MethodDeclaration) {
             MethodDeclaration methodNode = (MethodDeclaration) node;
-            if (methodNode.getModifiers().size() > 0) {
-                if (methodNode.getBody().isPresent()) {
-                    sig = getSourceCodeByPosition(getTokenString(cu),
-                            methodNode.getModifiers().get(0).getBegin().orElseThrow(), methodNode.getBody().get().getBegin().orElseThrow());
-                    sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
-                } else {
-                    sig = getSourceCodeByPosition(getTokenString(cu),
-                            methodNode.getModifiers().get(0).getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
-                }
+            if (methodNode.getBody().isPresent()) {
+                sig = getSourceCodeByPosition(getTokenString(cu),
+                        methodNode.getBegin().orElseThrow(), methodNode.getBody().get().getBegin().orElseThrow());
+                sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
             } else {
-                if (methodNode.getBody().isPresent()) {
-                    sig = getSourceCodeByPosition(getTokenString(cu),
-                            methodNode.getType().getBegin().orElseThrow(), methodNode.getBody().get().getBegin().orElseThrow());
-                    sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
-                } else {
-                    sig = getSourceCodeByPosition(getTokenString(cu),
-                            methodNode.getType().getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
-                }
+                sig = getSourceCodeByPosition(getTokenString(cu),
+                        methodNode.getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
             }
         } else if (node instanceof ConstructorDeclaration) {
             ConstructorDeclaration constructorNode = (ConstructorDeclaration) node.removeComment();
@@ -279,22 +278,7 @@ public class ClassParser {
      * Get method(constructor) source code start from the first modifier to the end of the node.
      */
     private static String getMethodCode(CompilationUnit cu, CallableDeclaration node) {
-        String code = "";
-        if (node instanceof MethodDeclaration) {
-            MethodDeclaration methodNode = (MethodDeclaration) node;
-            if (methodNode.getModifiers().size() > 0) {
-                code = getSourceCodeByPosition(getTokenString(cu),
-                        methodNode.getModifiers().get(0).getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
-            } else {
-                code = getSourceCodeByPosition(getTokenString(cu),
-                        methodNode.getType().getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
-            }
-        } else if (node instanceof ConstructorDeclaration) {
-            ConstructorDeclaration constructorNode = (ConstructorDeclaration) node.removeComment();
-            code = getSourceCodeByPosition(getTokenString(cu),
-                    constructorNode.getBegin().orElseThrow(), constructorNode.getEnd().orElseThrow());
-        }
-        return code;
+        return node.getTokenRange().orElseThrow().toString();
     }
 
     /**
@@ -312,8 +296,7 @@ public class ClassParser {
      * Get field source code start from the first modifier to the end of the node
      */
     private static String getFieldCode(CompilationUnit cu, FieldDeclaration node) {
-        return getSourceCodeByPosition(getTokenString(cu),
-                node.getModifiers().get(0).getBegin().orElseThrow(), node.getEnd().orElseThrow());
+        return node.getTokenRange().orElseThrow().toString();
     }
 
     /**
