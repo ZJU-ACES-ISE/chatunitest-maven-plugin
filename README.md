@@ -47,6 +47,16 @@ substantial bill.
 mvn chatunitest:project
 ```
 
+**Clean the generated tests:**
+
+```shell
+mvn chatunitest:clean
+```
+Running this command will delete all generated tests and restore your test folder.
+
+**Note:** When running generated tests, ChatUnitest will backup your test folder and restore it when finished.
+You can use the following command to restore the test folder manually: `mvn chatunitest:restore`
+
 ## Configuration
 
 You can configure the plugin with the following parameters:
