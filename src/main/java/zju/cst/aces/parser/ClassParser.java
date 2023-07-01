@@ -27,9 +27,8 @@ import zju.cst.aces.utils.ClassInfo;
 import zju.cst.aces.utils.Config;
 import zju.cst.aces.utils.MethodInfo;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -406,7 +405,8 @@ public class ClassParser {
             Files.createDirectories(classOutputDir);
         }
         Path classInfoPath = classOutputDir.resolve("class.json");
-        try (FileWriter writer = new FileWriter(classInfoPath.toFile())) {
+        //set charset utf-8
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(classInfoPath.toFile()), StandardCharsets.UTF_8)){
             writer.write(json);
         }
     }
@@ -417,7 +417,8 @@ public class ClassParser {
             Files.createDirectories(classOutputDir);
         }
         Path info = classOutputDir.resolve(getFilePathBySig(node.resolve().getSignature()));
-        try (FileWriter writer = new FileWriter(info.toFile())) {
+        //set charset utf-8
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
             writer.write(json);
         }
     }
@@ -428,7 +429,8 @@ public class ClassParser {
             Files.createDirectories(classOutputDir);
         }
         Path info = classOutputDir.resolve(getFilePathBySig(node.resolve().getSignature()));
-        try (FileWriter writer = new FileWriter(info.toFile())) {
+        //set charset utf-8
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
             writer.write(json);
         }
     }

@@ -8,6 +8,7 @@ import zju.cst.aces.utils.PromptInfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -117,7 +118,7 @@ public class ClassRunner extends AbstractRunner {
         if (!depMethodInfoPath.toFile().exists()) {
             return null;
         }
-        return GSON.fromJson(Files.readString(depMethodInfoPath), MethodInfo.class);
+        return GSON.fromJson(Files.readString(depMethodInfoPath, StandardCharsets.UTF_8), MethodInfo.class);
     }
 
     public void getDepInfo(PromptInfo promptInfo, String depClassName, Set<String> depMethods) throws IOException {

@@ -6,8 +6,11 @@ import okhttp3.Response;
 import zju.cst.aces.ProjectTestMojo;
 import zju.cst.aces.utils.*;
 
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -116,7 +119,9 @@ public class AbstractRunner extends ProjectTestMojo {
         if (!savePath.toAbsolutePath().getParent().toFile().exists()) {
             savePath.toAbsolutePath().getParent().toFile().mkdirs();
         }
-        try (FileWriter writer = new FileWriter(savePath.toFile())) {
+        //set charset utf-8
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(savePath.toFile()), StandardCharsets.UTF_8)){
             writer.write(code);
         } catch (IOException e) {
             throw new RuntimeException(e);
