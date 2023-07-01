@@ -18,7 +18,6 @@ package zju.cst.aces;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.codehaus.plexus.util.FileUtils;
 import zju.cst.aces.utils.TestCompiler;
 
 /**
@@ -26,22 +25,17 @@ import zju.cst.aces.utils.TestCompiler;
  * ChatUniTest maven plugin
  */
 
-@Mojo(name = "clean")
-public class CleanMojo
+@Mojo(name = "restore")
+public class RestoreBackupMojo
         extends ProjectTestMojo {
 
     /**
-     * Clean output directory and restore backup test folder
+     * Restore backup directory
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
         init();
-        getLog().info("\n==========================\n[ChatTester] Cleaning project " + project + " ...");
-        getLog().info("\n==========================\n[ChatTester] Cleaning output directory "
-                + tmpOutput + " and " + testOutput + " ...");
         try {
-            FileUtils.deleteDirectory(tmpOutput);
-            FileUtils.deleteDirectory(testOutput);
             getLog().info("\n==========================\n[ChatTester] Restoring test folder ...");
             TestCompiler.restoreTestFolder();
         } catch (Exception e) {

@@ -37,7 +37,7 @@ import java.nio.file.Paths;
 
 /**
  * @author chenyi
- * A demo of ChatUniTest maven plugin
+ * ChatUniTest maven plugin
  */
 
 @Mojo(name = "method")
@@ -48,7 +48,7 @@ public class MethodTestMojo
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     /**
-     * Generate tests for all classes in the project
+     * Generate test for target method in given class
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {

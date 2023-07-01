@@ -38,7 +38,7 @@ import java.util.List;
 
 /**
  * @author chenyi
- * A demo of ChatUniTest maven plugin
+ * ChatUniTest maven plugin
  */
 
 @Mojo(name = "project")

@@ -31,7 +31,7 @@ import java.nio.file.Paths;
 
 /**
  * @author chenyi
- * A demo of ChatUniTest maven plugin
+ * ChatUniTest maven plugin
  */
 
 //TODO: Use qualified name, get the package information in class parser.
@@ -42,7 +42,7 @@ public class ClassTestMojo
     public String selectClass;
 
     /**
-     * Generate tests for all classes in the project
+     * Generate tests for target class
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
