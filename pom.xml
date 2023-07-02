@@ -1,12 +1,31 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.zju.cst.aces</groupId>
+  <!--gav information-->
+  <groupId>io.github.ZJU-ACES-ISE</groupId>
   <artifactId>chatunitest-maven-plugin</artifactId>
+  <!--Uploading to the SNAPSHOT repository, the version suffix must include 'SNAPSHOT'-->
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
-  <version>1.0.0</version>
-  <name>Maven Mojo Archetype</name>
-  <url>http://maven.apache.org</url>
+  <name>chatunitest-maven-plugin</name>
+  <description>A Maven plugin for generating unit tests using ChatGPT</description>
+  <url>https://github.com/ZJU-ACES-ISE/chatunitest-maven-plugin</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+  <scm>
+    <connection>https://github.com/ZJU-ACES-ISE/chatunitest-maven-plugin.git</connection>
+    <url>https://github.com/ZJU-ACES-ISE/chatunitest-maven-plugin</url>
+  </scm>
+  <developers>
+    <developer>
+      <name> </name>
+      <email> </email>
+    </developer>
+  </developers>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>11</maven.compiler.source>
@@ -72,6 +91,102 @@
     </dependency>
   </dependencies>
 
+  <profiles>
+    <profile>
+      <id>ossrh</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <!--publish to the central SNAPSHOT repository-->
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.7</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+              <!--<autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>com.thoughtworks.xstream</groupId>
+                <artifactId>xstream</artifactId>
+                <version>1.4.15</version> <!-- apparently this needs to be exactly this version -->
+              </dependency>
+            </dependencies>
+          </plugin>
+          <!--Generate source code -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.2.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!--Generate API documentation-->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.1.1</version>
+            <configuration>
+              <show>private</show>
+              <nohelp>true</nohelp>
+              <charset>UTF-8</charset>
+              <encoding>UTF-8</encoding>
+              <docencoding>UTF-8</docencoding>
+              <additionalOptions>
+                <additionalOption>-Xdoclint:none</additionalOption>
+              </additionalOptions>
+              <!-- TODO 临时解决不规范的javadoc生成报错,后面要规范化后把这行去掉 -->
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!--gpg plugin-->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+
+      <distributionManagement>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+          <id>ossrh</id>
+          <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+  </profiles>
   <build>
     <plugins>
       <plugin>
