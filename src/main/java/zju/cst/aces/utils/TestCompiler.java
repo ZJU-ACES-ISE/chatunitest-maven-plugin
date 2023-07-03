@@ -27,6 +27,7 @@ public class TestCompiler {
         List<String> errorMsg = new ArrayList<>();
         // full output text
         StringBuilder output = new StringBuilder();
+        List<String> errorMessage = new ArrayList<>();
 
         try {
             Process process = processBuilder.start();
@@ -38,6 +39,7 @@ public class TestCompiler {
 //                if (line.contains("COMPILATION ERROR :")) {
 
                 output.append(line).append("\n");
+                errorMessage.add(line);
                 if (line.contains("BUILD SUCCESS")){
                     return true;
                 }
@@ -52,6 +54,7 @@ public class TestCompiler {
                 }
                 errorMsg.add(line);
                 output.append(line).append("\n");
+                errorMessage.add(line);
             }
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
@@ -60,9 +63,8 @@ public class TestCompiler {
 
             ErrorProcesser errorProcesser = new ErrorProcesser();
             //TODO: Cannot parse runtime error like Assertion failure.
-            String processedOutput = errorProcesser.processErrorMessage(errorMsg, Config.minErrorTokens);
-
-//            System.out.println(processedOutput);
+            String processedOutput = errorProcesser.processErrorMessage(errorMessage, Config.minErrorTokens);
+            //System.out.println("**error info:"+processedOutput);
 
             promptInfo.setErrorMsg(processedOutput);
 
