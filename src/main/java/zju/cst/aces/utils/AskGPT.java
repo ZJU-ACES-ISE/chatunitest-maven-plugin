@@ -15,28 +15,36 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class AskGPT extends ProjectTestMojo {
-
-    private static  Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Config.hostName, Integer.parseInt(Config.port)));
     private static final String URL = "https://api.openai.com/v1/chat/completions";
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json");
-    private static  OkHttpClient CLIENT = new OkHttpClient.Builder()
-            .connectTimeout(5, TimeUnit.MINUTES)
-            .writeTimeout(5, TimeUnit.MINUTES)
-            .readTimeout(5, TimeUnit.MINUTES)
-            .proxy(proxy)//自定义代理
-            .build();
-
-    /*
-    public static OkHttpClient setProxyForClient() {
-        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Config.hostName, Integer.parseInt(Config.port)));
-        return CLIENT.newBuilder().proxy(proxy).build();
-    }
-     */
+    private static  OkHttpClient client;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-
+    public static void setClinet(){
+        //System.out.println("setClinet without proxy");
+        client=new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .build();
+    }
+    public static void setClinetwithProxy(){
+        //System.out.println("hostname:"+Config.hostName+" port:"+Config.port);
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Config.hostName, Integer.parseInt(Config.port)));
+        client=new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .proxy(proxy)//自定义代理
+                .build();
+        //System.out.println("setClinet with proxy");
+    }
     public static Response askChatGPT(List<Message> messages) {
-        //setProxyForClient();
+        if(!Config.hostName.equals("null") && !Config.port.equals("-1")){
+            setClinetwithProxy();
+        }else {
+            setClinet();
+        }
         String apiKey = Config.getRandomKey();
         int maxTry = 5;
         while (maxTry > 0) {
@@ -58,7 +66,7 @@ public class AskGPT extends ProjectTestMojo {
                         .addHeader("Authorization", "Bearer " + apiKey)
                         .build();
 
-                Response response = CLIENT.newCall(request).execute();
+                Response response = client.newCall(request).execute();
                 if (!response.isSuccessful()) throw new IOException("In AskGPT.askChatGPT: Unexpected code " + response);
                 return response;
 

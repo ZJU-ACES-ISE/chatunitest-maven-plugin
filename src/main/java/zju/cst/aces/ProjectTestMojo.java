@@ -68,9 +68,9 @@ public class ProjectTestMojo
     public int frequencyPenalty;
     @Parameter(name = "presencePenalty", defaultValue = "0")
     public int presencePenalty;
-    @Parameter(name = "hostName",defaultValue = "127.0.0.1")
+    @Parameter(name = "hostName",defaultValue = "null")
     public String hostName;
-    @Parameter(name = "port",defaultValue = "80")
+    @Parameter(name = "port",defaultValue = "-1")
     public String port;
 
     @Component(hint = "default")

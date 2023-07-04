@@ -24,8 +24,8 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
         <topP>1</topP>
         <frequencyPenalty>0</frequencyPenalty>
         <presencePenalty>0</presencePenalty>
-        <hostName>127.0.0.1</hostName>
-        <port>80</port>
+        <hostName>${hostName}</hostName>
+        <port>${port}</port>
     </configuration>
 </plugin>
 ```
@@ -39,8 +39,8 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 - `topP`: (**Optional**) The OpenAI API parameters. Default: `1`.
 - `frequencyPenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
 - `presencePenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
-- `hostName`:(**Required**)Your host name.Default: `127.0.0.1`.
-- `port`:(**Required**)Your port number.Default: `80`.
+- `hostName`:(**Optional**)Your host name if you need.Default: `127.0.0.1`.
+- `port`:(**Optional**)Your port number if you need.Default: `80`.
 
 Essentially, the only thing you need to provide are your API keys.
 
