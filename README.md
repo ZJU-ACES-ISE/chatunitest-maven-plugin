@@ -1,7 +1,10 @@
 # :mega: ChatUnitest Maven Plugin
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
 
-## Configuration
+
+## Steps to run
+
+### 0. Add our plugin to `pom.xml` and config
 
 You can configure the plugin with the following parameters to your `pom.xml` file:
 
@@ -47,7 +50,47 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 - `project`: (**Optional**) The target project path. Default: `{basedir}`.
 
 
-## Run
+### 1. Add following dependencies to pom.xml
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.8.2</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>3.12.4</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <version>3.12.4</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-inline</artifactId>
+        <version>3.12.4</version>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+```xml
+
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>3.1.0</version>
+</plugin>
+```
+
+### 2. Run
 
 **You can run the plugin with the following command:**
 
@@ -104,45 +147,7 @@ Running this command will delete all generated tests and restore your test folde
 **Note:** When running generated tests, ChatUnitest will backup your test folder and restore it when finished.
 You can use the following command to restore the test folder manually: `mvn chatunitest:restore`
 
-## Dependencies
 
-```xml
-<dependencies>
-    <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <version>5.8.2</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>3.12.4</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-junit-jupiter</artifactId>
-        <version>3.12.4</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-inline</artifactId>
-        <version>3.12.4</version>
-        <scope>test</scope>
-    </dependency>
-</dependencies>
-```
-
-```xml
-
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-surefire-plugin</artifactId>
-    <version>3.1.0</version>
-</plugin>
-```
 
 ## :construction: TODO
 
