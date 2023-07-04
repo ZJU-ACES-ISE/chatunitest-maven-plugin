@@ -26,7 +26,7 @@ public class ProjectParser {
             try {
                 this.classParser.extractClass(classPath);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("In ProjectParser.parse: " + e);
             }
         }
     }

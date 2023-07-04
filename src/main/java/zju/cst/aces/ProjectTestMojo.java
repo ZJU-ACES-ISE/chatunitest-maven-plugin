@@ -58,6 +58,8 @@ public class ProjectTestMojo
     public int maxRounds;
     @Parameter(name = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
+    @Parameter(name = "maxPromptTokens", defaultValue = "2700")
+    public int maxPromptTokens;
     @Parameter(name = "model", defaultValue = "gpt-3.5-turbo")
     public String model;
     @Parameter(name = "temperature", defaultValue = "0.5")
@@ -126,6 +128,7 @@ public class ProjectTestMojo
         Config.setModel(model);
         Config.setMaxRounds(maxRounds);
         Config.setMinErrorTokens(minErrorTokens);
+        Config.setMaxPromptTokens(maxPromptTokens);
         Config.setTemperature(temperature);
         Config.setTopP(topP);
         Config.setFrequencyPenalty(frequencyPenalty);

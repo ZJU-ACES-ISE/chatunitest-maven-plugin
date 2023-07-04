@@ -128,7 +128,7 @@ public class AbstractRunner extends ProjectTestMojo {
                 new FileOutputStream(savePath.toFile()), StandardCharsets.UTF_8)){
             writer.write(code);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("In AbstractRunner.exportTest: " + e);
         }
     }
 

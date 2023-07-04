@@ -56,13 +56,15 @@ public class MethodRunner extends ClassRunner {
             exportTest(code, savePath);
 
             File testFile = TestCompiler.copyFileToTest(savePath.toFile());
+
+            int promptTokens = prompt.stream().mapToInt(message -> TokenCounter.countToken(message.getContent())).sum();
             if (TestCompiler.compileAndExport(testFile,
-                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
+                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo, promptTokens)) {
                 getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 break;
             } else {
                 removeTestFile(testFile);
-//                removeTestFile(savePath.toFile()); //TODO: failed tests in chatunitest-test should also be removed
+                removeTestFile(savePath.toFile());
                 getLog().info("Test for method < " + methodInfo.methodName + " > generated failed");
             }
         }

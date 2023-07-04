@@ -21,7 +21,6 @@ public class AskGPT extends ProjectTestMojo {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static void setClinet(){
-        //System.out.println("setClinet without proxy");
         client=new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .writeTimeout(5, TimeUnit.MINUTES)
@@ -29,16 +28,15 @@ public class AskGPT extends ProjectTestMojo {
                 .build();
     }
     public static void setClinetwithProxy(){
-        //System.out.println("hostname:"+Config.hostName+" port:"+Config.port);
         Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Config.hostName, Integer.parseInt(Config.port)));
         client=new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .writeTimeout(5, TimeUnit.MINUTES)
                 .readTimeout(5, TimeUnit.MINUTES)
-                .proxy(proxy)//自定义代理
+                .proxy(proxy) //Custom proxy
                 .build();
-        //System.out.println("setClinet with proxy");
     }
+
     public static Response askChatGPT(List<Message> messages) {
         if(!Config.hostName.equals("null") && !Config.port.equals("-1")){
             setClinetwithProxy();

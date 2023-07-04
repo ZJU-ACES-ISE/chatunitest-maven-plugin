@@ -17,7 +17,7 @@ public class Config {
     public static String resultDir;
     public static String projectDir;
     public static int maxRounds;
-    public static int MAX_PROMPT_TOKENS;
+    public static int maxPromptTokens;
     public static int minErrorTokens;
     public static String model;
     public static Double temperature;
@@ -68,8 +68,8 @@ public class Config {
         Config.maxRounds = maxRounds;
     }
 
-    public static void setMAX_PROMPT_TOKENS(int MAX_PROMPT_TOKENS) {
-        Config.MAX_PROMPT_TOKENS = MAX_PROMPT_TOKENS;
+    public static void setMaxPromptTokens(int maxPromptTokens) {
+        Config.maxPromptTokens = maxPromptTokens;
     }
 
     public static void setMinErrorTokens(int minErrorTokens) {

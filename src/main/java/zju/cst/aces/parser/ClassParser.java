@@ -44,7 +44,7 @@ public class ClassParser {
     private static ClassInfo classInfo;
 
     public ClassParser(String path) {
-        setOutputPath(path);
+        setOutputPath(path); //TODO: Full qualified name to path
         JavaSymbolSolver symbolSolver = getSymbolSolver();
         parser.getParserConfiguration().setSymbolResolver(symbolSolver);
     }
@@ -206,7 +206,7 @@ public class ClassParser {
             try {
                 mSigs.put(methods.get(i).resolve().getSignature(), String.valueOf(i));
             } catch (Exception e) {
-                throw new RuntimeException("Error in get method signature: " + methods.get(i).getNameAsString());
+                throw new RuntimeException("In ClassParser getMethodSignature: " + methods.get(i).getNameAsString());
             }
         }
         List<ConstructorDeclaration> constructors = node.getConstructors();
@@ -457,7 +457,7 @@ public class ClassParser {
                     .filter(ClassParser::isJavaSourceDir)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("In ClassParser.getSources: " + e);
         }
     }
 

@@ -102,7 +102,7 @@ public class ClassRunner extends AbstractRunner {
             information += fields + "\n" + joinLines(classInfo.getterSetters) + "\n";
         }
         if (classInfo.hasConstructor) {
-            information += joinLines(classInfo.constructors);
+            information += joinLines(classInfo.constructors) + "\n";
         }
         information += joinLines(otherBriefMethods) + "\n";
         information += methodInfo.sourceCode + "\n}";

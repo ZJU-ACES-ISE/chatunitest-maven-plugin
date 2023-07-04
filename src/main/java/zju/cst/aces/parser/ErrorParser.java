@@ -27,7 +27,7 @@ public class ErrorParser {
             if(line.contains("[ERROR]")){
                 isErrorSection=true;
                 errorMessageBuffer.append(line).append("\n");
-                //TODO: do not need error type
+                //TODO: Unused ErrorType
                 if(hasErrorFlag(line,"COMPILATION ERROR")){
                     testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
                 }else{
@@ -63,7 +63,6 @@ public class ErrorParser {
     static String getErrorMessage(String message){
         String errorMessage="";
         if(message.contains("[ERROR]")){
-            //TODO: Add the information of error line and column
             errorMessage=message.replace("[ERROR]","");
         }
         return errorMessage.trim();

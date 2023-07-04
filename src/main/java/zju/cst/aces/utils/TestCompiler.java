@@ -14,7 +14,7 @@ public class TestCompiler {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
-    public static boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo) {
+    public static boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo, int promptTokens) {
         System.out.println("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
             outputPath.toAbsolutePath().getParent().toFile().mkdirs();
@@ -24,7 +24,6 @@ public class TestCompiler {
         String mvn = System.getProperty("os.name").toLowerCase().contains("win") ? "mvn.cmd" : "mvn";
         processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
 
-        List<String> errorMsg = new ArrayList<>();
         // full output text
         StringBuilder output = new StringBuilder();
         List<String> errorMessage = new ArrayList<>();
@@ -36,23 +35,16 @@ public class TestCompiler {
             String line;
             while ((line = reader.readLine()) != null) {
                 // TODO: handle other conditions e.g. Assertion error
-//                if (line.contains("COMPILATION ERROR :")) {
-
                 output.append(line).append("\n");
                 errorMessage.add(line);
                 if (line.contains("BUILD SUCCESS")){
                     return true;
-                }
-                if (line.contains("T E S T S") || line.contains("BUILD FAILURE")){
-                    errorMsg.add(line);
-                    break;
                 }
             }
             while ((line = reader.readLine()) != null) {
                 if (line.contains("BUILD FAILURE") || line.contains("[Help")){
                     break;
                 }
-                errorMsg.add(line);
                 output.append(line).append("\n");
                 errorMessage.add(line);
             }
@@ -63,7 +55,8 @@ public class TestCompiler {
 
             ErrorProcesser errorProcesser = new ErrorProcesser();
             //TODO: Cannot parse runtime error like Assertion failure.
-            String processedOutput = errorProcesser.processErrorMessage(errorMessage, Config.minErrorTokens);
+            int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
+            String processedOutput = errorProcesser.processErrorMessage(errorMessage, allowedTokens);
 
             promptInfo.setErrorMsg(processedOutput);
 
