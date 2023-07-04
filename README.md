@@ -96,8 +96,8 @@ mvn chatunitest:method -DselectMethod=className#methodName
 mvn chatunitest:class -DselectClass=className
 ```
 
-You must specify them when executing `mvn chatunitest:method` or `mvn chatunitest:class`. This is done using the -D option.
-There are parameters you can specify with the `-D` option:
+You must specify `selectMethod` and `selectClass` when executing `mvn chatunitest:method` or `mvn chatunitest:class`. This is done using the -D option.
+There are all parameters you can specify with the `-D` option:
 - `selectClass`: (**Optional**) Class under test.
 - `selectMethod`: (**Optional**) Method under test.
 - `tmpOutput`: (**Optional**) The output path for parsed information. Default: `/tmp/chatunitest-info`.
