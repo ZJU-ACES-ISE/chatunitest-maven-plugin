@@ -64,7 +64,6 @@ public class TestCompiler {
             ErrorProcesser errorProcesser = new ErrorProcesser();
             //TODO: Cannot parse runtime error like Assertion failure.
             String processedOutput = errorProcesser.processErrorMessage(errorMessage, Config.minErrorTokens);
-            //System.out.println("**error info:"+processedOutput);
 
             promptInfo.setErrorMsg(processedOutput);
 
