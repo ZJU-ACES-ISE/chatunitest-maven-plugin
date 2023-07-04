@@ -68,7 +68,7 @@ public class TestCompiler {
             promptInfo.setErrorMsg(processedOutput);
 
         } catch (Exception e) {
-            throw(new RuntimeException(e));
+            throw new RuntimeException("In TestCompiler.compileAndExport: " + e);
         }
         return false;
     }
@@ -86,7 +86,7 @@ public class TestCompiler {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("In TestCompiler.getPackage: " + e);
         }
         return "";
     }
@@ -104,7 +104,7 @@ public class TestCompiler {
             Files.copy(sourceFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("In TestCompiler.copyFileToTest: " + e);
         }
         return targetPath.toFile();
     }
@@ -119,7 +119,7 @@ public class TestCompiler {
                 FileUtils.copyDirectoryStructure(srcTestFolder, backupFolder);
                 FileUtils.deleteDirectory(srcTestFolder);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("In TestCompiler.backupTestFolder: " + e);
             }
         }
     }
@@ -136,7 +136,7 @@ public class TestCompiler {
                 FileUtils.copyDirectoryStructure(backupFolder, srcTestFolder);
                 FileUtils.deleteDirectory(backupFolder);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("In TestCompiler.restoreTestFolder: " + e);
             }
         }
     }

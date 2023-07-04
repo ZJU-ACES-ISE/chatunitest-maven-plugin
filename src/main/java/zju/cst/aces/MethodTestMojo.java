@@ -26,7 +26,6 @@ import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
 import zju.cst.aces.utils.ClassInfo;
-import zju.cst.aces.utils.Config;
 import zju.cst.aces.utils.MethodInfo;
 import zju.cst.aces.utils.TestCompiler;
 
@@ -43,7 +42,7 @@ import java.nio.file.Paths;
 @Mojo(name = "method")
 public class MethodTestMojo
         extends ProjectTestMojo {
-    @Parameter(name = "selectMethod", required = true)
+    @Parameter(property = "selectMethod", required = true)
     public String selectMethod;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
@@ -73,7 +72,6 @@ public class MethodTestMojo
                 + " method:" + methodName + " ...");
 
         TestCompiler.backupTestFolder();
-        Config.setApiKeys(apiKeys);
         try {
             ClassRunner classRunner = new ClassRunner(className, parseOutput, testOutput);
             File classInfoFile = new File(parseOutput
@@ -92,7 +90,7 @@ public class MethodTestMojo
             new MethodRunner(className, parseOutput, testOutput, methodInfo).start();
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("In MethodTestMojo.execute: " + e);
         }
         TestCompiler.restoreTestFolder();
 

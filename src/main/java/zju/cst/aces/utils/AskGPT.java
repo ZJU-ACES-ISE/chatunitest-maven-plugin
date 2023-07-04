@@ -48,7 +48,7 @@ public class AskGPT extends ProjectTestMojo {
                         .build();
 
                 Response response = CLIENT.newCall(request).execute();
-                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                if (!response.isSuccessful()) throw new IOException("In AskGPT.askChatGPT: Unexpected code " + response);
                 return response;
 
             } catch (IOException e) {
@@ -59,7 +59,7 @@ public class AskGPT extends ProjectTestMojo {
                     try {
                         Thread.sleep(new Random().nextInt(60) + 60);
                     } catch (InterruptedException ie) {
-                        throw new RuntimeException(ie);
+                        throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
                     }
                 }
                 maxTry--;

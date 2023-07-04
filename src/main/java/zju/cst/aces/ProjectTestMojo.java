@@ -48,9 +48,9 @@ public class ProjectTestMojo
     private MavenSession session;
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
-    @Parameter(name = "testOutput", defaultValue = "chatunitest-tests")
+    @Parameter(defaultValue = "chatunitest-tests", property = "testOutput")
     public String testOutput;
-    @Parameter(name = "tmpOutput", defaultValue = "/tmp/chatunitest-info")//TODO: Use system file separator (for windows)
+    @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public String tmpOutput;
     @Parameter(name = "apiKeys", required = true)
     public String[] apiKeys;

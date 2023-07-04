@@ -4,10 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
 import zju.cst.aces.ProjectTestMojo;
-import zju.cst.aces.utils.*;
+import zju.cst.aces.utils.CodeExtractor;
+import zju.cst.aces.utils.Message;
+import zju.cst.aces.utils.PromptInfo;
 
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -110,6 +111,9 @@ public class AbstractRunner extends ProjectTestMojo {
     }
 
     public static String parseResponse(Response response) {
+        if (response == null) {
+            return "";
+        }
         Map<String, Object> body = GSON.fromJson(response.body().charStream(), Map.class);
         String content = ((Map<String, String>) ((Map<String, Object>) ((ArrayList<?>) body.get("choices")).get(0)).get("message")).get("content");
         return extractCode(content);

@@ -21,7 +21,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
-import zju.cst.aces.utils.Config;
 import zju.cst.aces.utils.TestCompiler;
 
 import java.io.File;
@@ -38,7 +37,7 @@ import java.nio.file.Paths;
 @Mojo(name = "class")
 public class ClassTestMojo
         extends ProjectTestMojo {
-    @Parameter(name = "selectClass", required = true)
+    @Parameter(property = "selectClass", required = true)
     public String selectClass;
 
     /**
@@ -63,11 +62,10 @@ public class ClassTestMojo
 
         getLog().info("\n==========================\n[ChatTester] Generating tests for class " + className + " ...");
         TestCompiler.backupTestFolder();
-        Config.setApiKeys(apiKeys);
         try {
             new ClassRunner(className, parseOutput, testOutput).start();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("In ClassTestMojo.execute: " + e);
         }
         TestCompiler.restoreTestFolder();
 
