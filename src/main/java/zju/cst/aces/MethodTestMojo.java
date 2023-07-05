@@ -57,7 +57,7 @@ public class MethodTestMojo
 
         Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
         if (!srcMainJavaPath.toFile().exists()) {
-            getLog().info("\n==========================\n[ChatTester] No compile source found in " + project);
+            getLog().error("\n==========================\n[ChatTester] No compile source found in " + project);
             return;
         }
 

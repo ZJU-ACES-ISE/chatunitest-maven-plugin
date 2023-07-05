@@ -36,7 +36,7 @@ public class AbstractRunner extends ProjectTestMojo {
         errorOutputPath = parseOutputPath.getParent().resolve("error-message");
     }
 
-    public static List<Message> generateMessages(PromptInfo promptInfo) {
+    public List<Message> generateMessages(PromptInfo promptInfo) {
         List<Message> messages = new ArrayList<>();
         if (promptInfo.errorMsg.isEmpty()) { // round 1
             messages.add(Message.ofSystem(generateSystemPrompt(promptInfo)));
@@ -45,7 +45,7 @@ public class AbstractRunner extends ProjectTestMojo {
         return messages;
     }
 
-    public static String generateUserPrompt(PromptInfo promptInfo) {
+    public String generateUserPrompt(PromptInfo promptInfo) {
         String user = null;
         if (promptInfo.errorMsg.isEmpty()) {
             user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
@@ -80,7 +80,7 @@ public class AbstractRunner extends ProjectTestMojo {
         return user;
     }
 
-    public static String generateSystemPrompt(PromptInfo promptInfo) {
+    public String generateSystemPrompt(PromptInfo promptInfo) {
         String system = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
                 "I will provide the following information of the focal method:\n" +
                 "1. Required dependencies to import.\n" +
@@ -100,17 +100,17 @@ public class AbstractRunner extends ProjectTestMojo {
         return system;
     }
 
-    public static String joinLines(List<String> lines) {
+    public String joinLines(List<String> lines) {
         return lines.stream().collect(Collectors.joining("\n"));
     }
 
-    public static String filterAndJoinLines(List<String> lines, String filter) {
+    public String filterAndJoinLines(List<String> lines, String filter) {
         return lines.stream()
                 .filter(line -> !line.equals(filter))
                 .collect(Collectors.joining("\n"));
     }
 
-    public static String parseResponse(Response response) {
+    public String parseResponse(Response response) {
         if (response == null) {
             return "";
         }
@@ -119,7 +119,7 @@ public class AbstractRunner extends ProjectTestMojo {
         return extractCode(content);
     }
 
-    public static void exportTest(String code, Path savePath) {
+    public void exportTest(String code, Path savePath) {
         if (!savePath.toAbsolutePath().getParent().toFile().exists()) {
             savePath.toAbsolutePath().getParent().toFile().mkdirs();
         }
@@ -132,11 +132,11 @@ public class AbstractRunner extends ProjectTestMojo {
         }
     }
 
-    public static String extractCode(String content) {
+    public String extractCode(String content) {
         return new CodeExtractor(content).getExtractedCode();
     }
 
-    public static String repairImports(String code, List<String> imports) {
+    public String repairImports(String code, List<String> imports) {
         String[] codeParts = code.trim().split("\\n", 2);
         String firstLine = codeParts[0];
         String _code = codeParts[1];
@@ -149,7 +149,7 @@ public class AbstractRunner extends ProjectTestMojo {
         return firstLine + "\n" + _code;
     }
 
-    public static String repairPackage(String code, String packageInfo) {
+    public String repairPackage(String code, String packageInfo) {
         String[] lines = code.split("\n");
         String firstLine = lines[0];
 
@@ -183,13 +183,12 @@ public class AbstractRunner extends ProjectTestMojo {
             testCase = repairImports(testCase, timeoutImport);
             return testCase.replace("@Test\n", String.format("@Test%n    @Timeout(%d)%n", timeout));
         } else {
-//            System.out.println(testCase);
-            getLog().info("Generated with unknown JUnit version");
+            getLog().error("Generated with unknown JUnit version, try without adding timeout.");
         }
         return testCase;
     }
 
-    public static String changeTestName(String code, String className, String newName) {
+    public String changeTestName(String code, String className, String newName) {
         String oldName = className + "Test";
         return code.replace(oldName, newName);
     }

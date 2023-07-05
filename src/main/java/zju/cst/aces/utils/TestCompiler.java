@@ -1,6 +1,7 @@
 package zju.cst.aces.utils;
 
 import org.codehaus.plexus.util.FileUtils;
+import zju.cst.aces.ProjectTestMojo;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -10,11 +11,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestCompiler {
+public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
-    public static boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo, int promptTokens) {
+    public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo, int promptTokens) {
         System.out.println("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
             outputPath.toAbsolutePath().getParent().toFile().mkdirs();
@@ -24,6 +25,8 @@ public class TestCompiler {
         String mvn = System.getProperty("os.name").toLowerCase().contains("win") ? "mvn.cmd" : "mvn";
         processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
 
+        getLog().debug("In TestCompiler.compileAndExport: running command: \\`"
+                + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "\\`");
         // full output text
         StringBuilder output = new StringBuilder();
         List<String> errorMessage = new ArrayList<>();
@@ -59,6 +62,7 @@ public class TestCompiler {
             String processedOutput = errorProcesser.processErrorMessage(errorMessage, allowedTokens);
 
             promptInfo.setErrorMsg(processedOutput);
+            getLog().debug("In TestCompiler.compileAndExport: processed error message: " + processedOutput);
 
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileAndExport: " + e);
@@ -87,11 +91,12 @@ public class TestCompiler {
     /**
      * Copy test file to src/test/java folder with the same directory structure
      */
-    public static File copyFileToTest(File file) {
+    public File copyFileToTest(File file) {
         Path sourceFile = file.toPath();
         //TODO: change the split string
         String pathWithParent = sourceFile.toAbsolutePath().toString().split("chatunitest-tests" + File.separator)[1];
         Path targetPath = srcTestFolder.toPath().resolve(pathWithParent);
+        getLog().debug("In TestCompiler.copyFileToTest: file " + file.getName() + " target path" + targetPath);
         try {
             Files.createDirectories(targetPath.getParent());
             Files.copy(sourceFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
