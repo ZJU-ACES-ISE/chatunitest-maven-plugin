@@ -2,6 +2,7 @@ package zju.cst.aces.utils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ClassInfo {
     public String className;
@@ -15,10 +16,12 @@ public class ClassInfo {
     public boolean hasConstructor;
     public List<String> constructors;
     public List<String> getterSetters;
+    public Map<String, Set<String>> constructorDeps;
 
     public ClassInfo(String className, String packageDeclaration, String classSignature, List<String> imports,
                      List<String> fields, List<String> superClasses, Map<String, String> methodSignatures,
-                     List<String> briefMethods, boolean hasConstructor, List<String> constructors, List<String> getterSetters) {
+                     List<String> briefMethods, boolean hasConstructor, List<String> constructors,
+                     List<String> getterSetters, Map<String, Set<String>> constructorDeps) {
         this.className = className;
         this.packageDeclaration = packageDeclaration;
         this.classSignature = classSignature;
@@ -30,5 +33,6 @@ public class ClassInfo {
         this.hasConstructor = hasConstructor;
         this.constructors = constructors;
         this.getterSetters = getterSetters;
+        this.constructorDeps = constructorDeps;
     }
 }

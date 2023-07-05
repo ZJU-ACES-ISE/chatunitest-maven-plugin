@@ -49,12 +49,11 @@ public class AbstractRunner extends ProjectTestMojo {
             user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
                     promptInfo.methodSignature, promptInfo.className, promptInfo.info);
             if (promptInfo.hasDep) {
-                //TODO: Add c_deps -- constructor dependencies of focal class
-            for (Map<String, String> cDeps : promptInfo.classDeps) {
-                for (Map.Entry<String, String> entry : cDeps.entrySet()) {
-                    user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
+                for (Map<String, String> cDeps : promptInfo.constructorDeps) {
+                    for (Map.Entry<String, String> entry : cDeps.entrySet()) {
+                        user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
+                    }
                 }
-            }
                 for (Map<String, String> mDeps : promptInfo.methodDeps) {
                     for (Map.Entry<String, String> entry : mDeps.entrySet()) {
                         user += String.format("\nThe brief information of dependent method `%s` is\n```%s```", entry.getKey(), entry.getValue());
@@ -72,15 +71,15 @@ public class AbstractRunner extends ProjectTestMojo {
             log.debug("Allowed tokens: " + allowedTokens + "\nprocessed error message: " + processedErrorMsg);
 
             user = String.format("I need you to fix an error in a unit test, an error occurred while compiling and executing\n" +
-                    "The unit test is:\n" +
-                    "```\n%s```\n" +
-                    "The error message is:\n" +
-                    "```\n%s```\n" +
-                    "The unit test is testing the method %s in the class %s,\n" +
-                    "the source code of the method under test and its class is:\n" +
-                    "```\n%s```\n" +
-                    "Please fix the error and return the whole fixed unit test." +
-                    " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n",
+                            "The unit test is:\n" +
+                            "```\n%s```\n" +
+                            "The error message is:\n" +
+                            "```\n%s```\n" +
+                            "The unit test is testing the method %s in the class %s,\n" +
+                            "the source code of the method under test and its class is:\n" +
+                            "```\n%s```\n" +
+                            "Please fix the error and return the whole fixed unit test." +
+                            " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n",
                     promptInfo.unitTest, processedErrorMsg, promptInfo.methodSignature, promptInfo.className, promptInfo.info);
         }
         return user;
@@ -131,7 +130,7 @@ public class AbstractRunner extends ProjectTestMojo {
         }
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(
-                new FileOutputStream(savePath.toFile()), StandardCharsets.UTF_8)){
+                new FileOutputStream(savePath.toFile()), StandardCharsets.UTF_8)) {
             writer.write(code);
         } catch (IOException e) {
             throw new RuntimeException("In AbstractRunner.exportTest: " + e);

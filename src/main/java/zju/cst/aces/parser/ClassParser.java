@@ -125,7 +125,8 @@ public class ClassParser {
                 getBriefMethods(cu, classNode),
                 hasConstructors(classNode),
                 getBriefConstructors(cu, classNode),
-                getGetterSetter(cu, classNode));
+                getGetterSetter(cu, classNode),
+                getConstructorDeps(cu, classNode));
     }
 
     /**
@@ -144,6 +145,22 @@ public class ClassParser {
                 isPublic(node),
                 getParameters(node),
                 getDependentMethods(cu, node));
+    }
+
+    private static Map<String, Set<String>> getConstructorDeps(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
+        Map<String, Set<String>> constructorDeps = new HashMap<>();
+        for (ConstructorDeclaration c : classNode.getConstructors()) {
+            Map<String, Set<String>> tmp = getDependentMethods(cu, c);
+            for (String key : tmp.keySet()) {
+                // Do not need method dependency
+                if (constructorDeps.containsKey(key)) {
+                    continue;
+                } else {
+                    constructorDeps.put(key, new HashSet<>());
+                }
+            }
+        }
+        return constructorDeps;
     }
 
     private static List<String> getGetterSetter(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {

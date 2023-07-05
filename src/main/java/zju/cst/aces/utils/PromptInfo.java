@@ -14,7 +14,7 @@ public class PromptInfo {
     public String methodSignature;
     public String methodCode;
     public String info;
-    public List<Map<String, String>> classDeps = new ArrayList<>();
+    public List<Map<String, String>> constructorDeps = new ArrayList<>();
     public List<Map<String, String>> methodDeps = new ArrayList<>();
     public List<String> errorMsg = null;
     public String unitTest = "";
@@ -29,10 +29,16 @@ public class PromptInfo {
     }
 
     public void addMethodDeps(Map<String, String> methodDep) {
+        if (methodDep == null) {
+            return;
+        }
         this.methodDeps.add(methodDep);
     }
 
-    public void addClassDeps(Map<String, String> classDep) {
-        this.classDeps.add(classDep);
+    public void addConstructorDeps(Map<String, String> constructorDep) {
+        if (constructorDep == null) {
+            return;
+        }
+        this.constructorDeps.add(constructorDep);
     }
 }

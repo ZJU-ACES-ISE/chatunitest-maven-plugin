@@ -87,7 +87,15 @@ public class ClassRunner extends AbstractRunner {
                 continue;
             }
             Set<String> depMethods = entry.getValue();
-            getDepInfo(promptInfo, depClassName, depMethods);
+            promptInfo.addMethodDeps(getDepInfo(promptInfo, depClassName, depMethods));
+        }
+        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
+            String depClassName = entry.getKey();
+            Set<String> depMethods = entry.getValue();
+            if (methodInfo.dependentMethods.containsKey(depClassName)) {
+                continue;
+            }
+            promptInfo.addConstructorDeps(getDepInfo(promptInfo, depClassName, depMethods));
         }
 
         String fields = joinLines(classInfo.fields);
@@ -121,17 +129,16 @@ public class ClassRunner extends AbstractRunner {
         return GSON.fromJson(Files.readString(depMethodInfoPath, StandardCharsets.UTF_8), MethodInfo.class);
     }
 
-    public void getDepInfo(PromptInfo promptInfo, String depClassName, Set<String> depMethods) throws IOException {
+    public Map<String, String> getDepInfo(PromptInfo promptInfo, String depClassName, Set<String> depMethods) throws IOException {
         Path depClassInfoPath = parseOutputPath.resolve(depClassName).resolve("class.json");
         if (!depClassInfoPath.toFile().exists()) {
-            return;
+            return null;
         }
         ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath), ClassInfo.class);
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);
         String constructors = joinLines(depClassInfo.constructors);
-        Map<String, String> classDeps = new HashMap<>();
         Map<String, String> methodDeps = new HashMap<>();
 
         String basicInfo = classSig + " {\n" + fields + "\n";
@@ -139,7 +146,6 @@ public class ClassRunner extends AbstractRunner {
             basicInfo += constructors + "\n";
         }
 
-        classDeps.put(depClassName, basicInfo + "}");
         String briefDepMethods = "";
         for (String sig : depMethods) {
             //TODO: identify used fields in dependent class
@@ -151,8 +157,6 @@ public class ClassRunner extends AbstractRunner {
         }
         String getterSetter = joinLines(depClassInfo.getterSetters) + "\n";
         methodDeps.put(depClassName, basicInfo + getterSetter + briefDepMethods + "}");
-
-        promptInfo.addClassDeps(classDeps);
-        promptInfo.addMethodDeps(methodDeps);
+        return methodDeps;
     }
 }
