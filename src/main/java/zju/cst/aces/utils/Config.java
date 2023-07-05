@@ -25,8 +25,7 @@ public class Config {
     public static int frequencyPenalty;
     public static int presencePenalty;
     public static String[] apiKeys;
-    public static String hostName;
-    public static String port;
+    public static String proxy;
 
     public static void setSession(MavenSession session) {
         Config.session = session;
@@ -96,13 +95,7 @@ public class Config {
         Config.presencePenalty = presencePenalty;
     }
 
-    public static void setHostName(String hostName){
-        Config.hostName = hostName;
-    }
-
-    public static void setPort(String port){
-        Config.port = port;
-    }
+    public static void setProxy(String proxy){Config.proxy=proxy;}
 
     public static String getRandomKey() {
         Random rand = new Random();

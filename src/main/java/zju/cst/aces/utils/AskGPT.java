@@ -18,27 +18,13 @@ public class AskGPT extends ProjectTestMojo {
     private static final String URL = "https://api.openai.com/v1/chat/completions";
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json");
     private static  OkHttpClient client;
-
+    private static String hostname;
+    private static String port;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    public static void setClinet(){
-        client=new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.MINUTES)
-                .writeTimeout(5, TimeUnit.MINUTES)
-                .readTimeout(5, TimeUnit.MINUTES)
-                .build();
-    }
-    public static void setClinetwithProxy(){
-        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Config.hostName, Integer.parseInt(Config.port)));
-        client=new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.MINUTES)
-                .writeTimeout(5, TimeUnit.MINUTES)
-                .readTimeout(5, TimeUnit.MINUTES)
-                .proxy(proxy) //Custom proxy
-                .build();
-    }
 
     public Response askChatGPT(List<Message> messages) {
-        if(!Config.hostName.equals("null") && !Config.port.equals("-1")){
+        setProxyStr();
+        if(!hostname.equals("null") && !port.equals("-1")){
             setClinetwithProxy();
         }else {
             setClinet();
@@ -85,5 +71,29 @@ public class AskGPT extends ProjectTestMojo {
         }
         log.debug("AskGPT: Failed to get response\n");
         return null;
+    }
+    public static void setProxyStr(){
+        hostname=Config.proxy.split(":")[0];
+        port=Config.proxy.split(":")[1];
+    }
+
+    public static void setClinet(){
+        //System.out.println("setClinet without proxy");
+        client=new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .build();
+    }
+    public static void setClinetwithProxy(){
+        //System.out.println("hostname:"+Config.hostName+" port:"+Config.port);
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(hostname, Integer.parseInt(port)));
+        client=new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .proxy(proxy)//自定义代理
+                .build();
+        //System.out.println("setClinet with proxy");
     }
 }

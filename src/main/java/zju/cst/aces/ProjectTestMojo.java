@@ -71,10 +71,9 @@ public class ProjectTestMojo
     public int frequencyPenalty;
     @Parameter(name = "presencePenalty", defaultValue = "0")
     public int presencePenalty;
-    @Parameter(name = "hostName",defaultValue = "null")
-    public String hostName;
-    @Parameter(name = "port",defaultValue = "-1")
-    public String port;
+    @Parameter(name = "proxy",defaultValue = "null:-1")
+    public String proxy;
+
     @Component(hint = "default")
     private DependencyGraphBuilder dependencyGraphBuilder;
     public String parseOutput;
@@ -133,8 +132,7 @@ public class ProjectTestMojo
         Config.setTopP(topP);
         Config.setFrequencyPenalty(frequencyPenalty);
         Config.setPresencePenalty(presencePenalty);
-        Config.setHostName(hostName);
-        Config.setPort(port);
+        Config.setProxy(proxy);
         tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getArtifactId()));
         parseOutput = tmpOutput + File.separator + "class-info";
         parseOutput = parseOutput.replace("/", File.separator);
