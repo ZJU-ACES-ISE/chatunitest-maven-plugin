@@ -35,6 +35,7 @@ public class MethodRunner extends ClassRunner {
                 log.info("Fixing test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             }
             List<Message> prompt = generateMessages(promptInfo);
+            log.debug("[Prompt]:\n" + prompt.toString());
 
             AskGPT askGPT = new AskGPT();
             Response response = askGPT.askChatGPT(prompt);
@@ -61,10 +62,8 @@ public class MethodRunner extends ClassRunner {
             TestCompiler compiler = new TestCompiler();
             File testFile = compiler.copyFileToTest(savePath.toFile());
 
-            int promptTokens = prompt.stream().mapToInt(message -> TokenCounter.countToken(message.getContent())).sum();
-
             if (compiler.compileAndExport(testFile,
-                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo, promptTokens)) {
+                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
                 log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 break;
             } else {

@@ -17,7 +17,7 @@ public class TestCompiler extends ProjectTestMojo {
 
     public static String OS = System.getProperty("os.name").toLowerCase();
 
-    public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo, int promptTokens) {
+    public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo) {
         System.out.println("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
             outputPath.toAbsolutePath().getParent().toFile().mkdirs();
@@ -45,26 +45,16 @@ public class TestCompiler extends ProjectTestMojo {
                 if (line.contains("BUILD SUCCESS")){
                     return true;
                 }
-            }
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("BUILD FAILURE") || line.contains("[Help")){
+                if (line.contains("[Help")){
                     break;
                 }
-                output.append(line).append("\n");
-                errorMessage.add(line);
             }
-
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
             writer.write(output.toString()); // store the original output
             writer.close();
 
-            ErrorProcesser errorProcesser = new ErrorProcesser();
-            //TODO: Cannot parse runtime error like Assertion failure.
-            int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
-            String processedOutput = errorProcesser.processErrorMessage(errorMessage, allowedTokens);
-
-            promptInfo.setErrorMsg(processedOutput);
-            log.debug("In TestCompiler.compileAndExport: processed error message: " + processedOutput);
+            promptInfo.setErrorMsg(errorMessage);
+            log.debug("In TestCompiler.compileAndExport: error message: " + output);
 
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileAndExport: " + e);

@@ -51,7 +51,7 @@ public class AskGPT extends ProjectTestMojo {
                         .build();
 
                 Response response = client.newCall(request).execute();
-                if (!response.isSuccessful()) throw new IOException("In AskGPT.askChatGPT: Unexpected code " + response);
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
                 return response;
 
             } catch (IOException e) {

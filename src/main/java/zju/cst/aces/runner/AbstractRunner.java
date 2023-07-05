@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
 import zju.cst.aces.ProjectTestMojo;
-import zju.cst.aces.utils.CodeExtractor;
-import zju.cst.aces.utils.Message;
-import zju.cst.aces.utils.PromptInfo;
+import zju.cst.aces.utils.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,27 +34,27 @@ public class AbstractRunner extends ProjectTestMojo {
         errorOutputPath = parseOutputPath.getParent().resolve("error-message");
     }
 
-    public List<Message> generateMessages(PromptInfo promptInfo) {
+    public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
         List<Message> messages = new ArrayList<>();
-        if (promptInfo.errorMsg.isEmpty()) { // round 1
+        if (promptInfo.errorMsg == null) { // round 1
             messages.add(Message.ofSystem(generateSystemPrompt(promptInfo)));
         }
         messages.add(Message.of(generateUserPrompt(promptInfo)));
         return messages;
     }
 
-    public String generateUserPrompt(PromptInfo promptInfo) {
+    public String generateUserPrompt(PromptInfo promptInfo) throws IOException {
         String user = null;
-        if (promptInfo.errorMsg.isEmpty()) {
+        if (promptInfo.errorMsg == null) {
             user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
                     promptInfo.methodSignature, promptInfo.className, promptInfo.info);
             if (promptInfo.hasDep) {
                 //TODO: Add c_deps -- constructor dependencies of focal class
-//            for (Map<String, String> cDeps : promptInfo.classDeps) {
-//                for (Map.Entry<String, String> entry : cDeps.entrySet()) {
-//                    user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
-//                }
-//            }
+            for (Map<String, String> cDeps : promptInfo.classDeps) {
+                for (Map.Entry<String, String> entry : cDeps.entrySet()) {
+                    user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
+                }
+            }
                 for (Map<String, String> mDeps : promptInfo.methodDeps) {
                     for (Map.Entry<String, String> entry : mDeps.entrySet()) {
                         user += String.format("\nThe brief information of dependent method `%s` is\n```%s```", entry.getKey(), entry.getValue());
@@ -64,7 +62,15 @@ public class AbstractRunner extends ProjectTestMojo {
                 }
             }
         } else {
-            //TODO: Use information with drection1 like the python code.
+            int promptTokens = TokenCounter.countToken(promptInfo.unitTest)
+                    + TokenCounter.countToken(promptInfo.methodSignature)
+                    + TokenCounter.countToken(promptInfo.className)
+                    + TokenCounter.countToken(promptInfo.info);
+            ErrorProcesser errorProcesser = new ErrorProcesser();
+            int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
+            String processedErrorMsg = errorProcesser.processErrorMessage(promptInfo.errorMsg, allowedTokens);
+            log.debug("Allowed tokens: " + allowedTokens + "\nprocessed error message: " + processedErrorMsg);
+
             user = String.format("I need you to fix an error in a unit test, an error occurred while compiling and executing\n" +
                     "The unit test is:\n" +
                     "```\n%s```\n" +
@@ -75,7 +81,7 @@ public class AbstractRunner extends ProjectTestMojo {
                     "```\n%s```\n" +
                     "Please fix the error and return the whole fixed unit test." +
                     " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n",
-                    promptInfo.unitTest, promptInfo.errorMsg, promptInfo.methodSignature, promptInfo.className, promptInfo.info);
+                    promptInfo.unitTest, processedErrorMsg, promptInfo.methodSignature, promptInfo.className, promptInfo.info);
         }
         return user;
     }

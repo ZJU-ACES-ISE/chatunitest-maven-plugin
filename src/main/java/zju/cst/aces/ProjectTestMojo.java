@@ -59,7 +59,7 @@ public class ProjectTestMojo
     public int maxRounds;
     @Parameter(name = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
-    @Parameter(name = "maxPromptTokens", defaultValue = "2700")
+    @Parameter(name = "maxPromptTokens", defaultValue = "2600")
     public int maxPromptTokens;
     @Parameter(name = "model", defaultValue = "gpt-3.5-turbo")
     public String model;

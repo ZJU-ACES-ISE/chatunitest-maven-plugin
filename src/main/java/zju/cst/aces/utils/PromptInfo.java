@@ -16,7 +16,7 @@ public class PromptInfo {
     public String info;
     public List<Map<String, String>> classDeps = new ArrayList<>();
     public List<Map<String, String>> methodDeps = new ArrayList<>();
-    public String errorMsg = "";
+    public List<String> errorMsg = null;
     public String unitTest = "";
 
     public PromptInfo(boolean hasDep, String className, String methodName,
