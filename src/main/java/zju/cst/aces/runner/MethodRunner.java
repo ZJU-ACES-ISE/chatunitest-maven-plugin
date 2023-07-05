@@ -25,15 +25,17 @@ public class MethodRunner extends ClassRunner {
         PromptInfo promptInfo = null;
         for (int rounds = 1; rounds <= config.maxRounds; rounds++) {
             if (promptInfo == null) {
+                log.info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
                 if (methodInfo.dependentMethods.size() > 0) {
                     promptInfo = generatePromptInfoWithDep(classInfo, methodInfo);
                 } else {
                     promptInfo = generatePromptInfoWithoutDep(classInfo, methodInfo);
                 }
+            } else {
+                log.info("Fixing test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             }
             List<Message> prompt = generateMessages(promptInfo);
 
-            log.info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             AskGPT askGPT = new AskGPT();
             Response response = askGPT.askChatGPT(prompt);
             Path savePath = testOutputPath.resolve(classInfo.packageDeclaration
@@ -44,7 +46,7 @@ public class MethodRunner extends ClassRunner {
 
             String code = parseResponse(response);
             if (code.isEmpty()) {
-                log.debug("Test for method < " + methodInfo.methodName + " > extract code failed");
+                log.info("Test for method < " + methodInfo.methodName + " > extract code failed");
                 continue;
             }
             code = changeTestName(code, className, testName);
