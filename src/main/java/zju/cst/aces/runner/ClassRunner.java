@@ -21,7 +21,7 @@ public class ClassRunner extends AbstractRunner {
         super(classname, parsePath, testPath);
         infoDir = new File(parseOutputPath + File.separator + className);
         if (!infoDir.isDirectory()) {
-            getLog().error("Error: " + className + " no parsed info found");
+            log.error("Error: " + className + " no parsed info found");
         }
         File classInfoFile = new File(parseOutputPath
                 + File.separator + className + File.separator + "class.json");

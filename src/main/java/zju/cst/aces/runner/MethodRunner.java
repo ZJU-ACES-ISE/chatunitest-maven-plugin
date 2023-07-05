@@ -33,7 +33,7 @@ public class MethodRunner extends ClassRunner {
             }
             List<Message> prompt = generateMessages(promptInfo);
 
-            getLog().info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
+            log.info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             AskGPT askGPT = new AskGPT();
             Response response = askGPT.askChatGPT(prompt);
             Path savePath = testOutputPath.resolve(classInfo.packageDeclaration
@@ -44,7 +44,7 @@ public class MethodRunner extends ClassRunner {
 
             String code = parseResponse(response);
             if (code.isEmpty()) {
-                getLog().debug("Test for method < " + methodInfo.methodName + " > extract code failed");
+                log.debug("Test for method < " + methodInfo.methodName + " > extract code failed");
                 continue;
             }
             code = changeTestName(code, className, testName);
@@ -63,12 +63,12 @@ public class MethodRunner extends ClassRunner {
 
             if (compiler.compileAndExport(testFile,
                     errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo, promptTokens)) {
-                getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");
+                log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 break;
             } else {
                 removeTestFile(testFile);
                 removeTestFile(savePath.toFile());
-                getLog().info("Test for method < " + methodInfo.methodName + " > generated failed");
+                log.info("Test for method < " + methodInfo.methodName + " > generated failed");
             }
         }
     }

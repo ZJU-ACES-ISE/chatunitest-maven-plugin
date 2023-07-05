@@ -57,18 +57,18 @@ public class MethodTestMojo
 
         Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
         if (!srcMainJavaPath.toFile().exists()) {
-            getLog().error("\n==========================\n[ChatTester] No compile source found in " + project);
+            log.error("\n==========================\n[ChatTester] No compile source found in " + project);
             return;
         }
 
         ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
         if (! (new File(parseOutput).exists())) {
-            getLog().info("\n==========================\n[ChatTester] Parsing class info ...");
+            log.info("\n==========================\n[ChatTester] Parsing class info ...");
             parser.parse();
-            getLog().info("\n==========================\n[ChatTester] Parse finished");
+            log.info("\n==========================\n[ChatTester] Parse finished");
         }
 
-        getLog().info("\n==========================\n[ChatTester] Generating tests for class: " + className
+        log.info("\n==========================\n[ChatTester] Generating tests for class: " + className
                 + " method:" + methodName + " ...");
 
         TestCompiler.backupTestFolder();
@@ -94,6 +94,6 @@ public class MethodTestMojo
         }
         TestCompiler.restoreTestFolder();
 
-        getLog().info("\n==========================\n[ChatTester] Generation finished");
+        log.info("\n==========================\n[ChatTester] Generation finished");
     }
 }

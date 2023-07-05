@@ -183,7 +183,7 @@ public class AbstractRunner extends ProjectTestMojo {
             testCase = repairImports(testCase, timeoutImport);
             return testCase.replace("@Test\n", String.format("@Test%n    @Timeout(%d)%n", timeout));
         } else {
-            getLog().error("Generated with unknown JUnit version, try without adding timeout.");
+            log.error("Generated with unknown JUnit version, try without adding timeout.");
         }
         return testCase;
     }

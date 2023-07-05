@@ -15,6 +15,8 @@ public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
+    public static String OS = System.getProperty("os.name").toLowerCase();
+
     public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo, int promptTokens) {
         System.out.println("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
@@ -22,11 +24,11 @@ public class TestCompiler extends ProjectTestMojo {
         }
         String testFileName = testFile.getName().split("\\.")[0];
         ProcessBuilder processBuilder = new ProcessBuilder();
-        String mvn = System.getProperty("os.name").toLowerCase().contains("win") ? "mvn.cmd" : "mvn";
+        String mvn = OS.contains("win") ? "mvn.cmd" : "mvn";
         processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
 
-        getLog().debug("In TestCompiler.compileAndExport: running command: \\`"
-                + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "\\`");
+        log.debug("In TestCompiler.compileAndExport: running command: `"
+                + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "`");
         // full output text
         StringBuilder output = new StringBuilder();
         List<String> errorMessage = new ArrayList<>();
@@ -62,7 +64,7 @@ public class TestCompiler extends ProjectTestMojo {
             String processedOutput = errorProcesser.processErrorMessage(errorMessage, allowedTokens);
 
             promptInfo.setErrorMsg(processedOutput);
-            getLog().debug("In TestCompiler.compileAndExport: processed error message: " + processedOutput);
+            log.debug("In TestCompiler.compileAndExport: processed error message: " + processedOutput);
 
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileAndExport: " + e);
@@ -93,10 +95,10 @@ public class TestCompiler extends ProjectTestMojo {
      */
     public File copyFileToTest(File file) {
         Path sourceFile = file.toPath();
-        //TODO: change the split string
-        String pathWithParent = sourceFile.toAbsolutePath().toString().split("chatunitest-tests" + File.separator)[1];
+        String splitString = OS.contains("win") ? "chatunitest-tests\\\\" : "chatunitest-tests/";
+        String pathWithParent = sourceFile.toAbsolutePath().toString().split(splitString)[1];
         Path targetPath = srcTestFolder.toPath().resolve(pathWithParent);
-        getLog().debug("In TestCompiler.copyFileToTest: file " + file.getName() + " target path" + targetPath);
+        log.debug("In TestCompiler.copyFileToTest: file " + file.getName() + " target path" + targetPath);
         try {
             Files.createDirectories(targetPath.getParent());
             Files.copy(sourceFile, targetPath, StandardCopyOption.REPLACE_EXISTING);

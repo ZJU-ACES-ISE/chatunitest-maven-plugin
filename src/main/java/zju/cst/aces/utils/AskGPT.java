@@ -83,7 +83,7 @@ public class AskGPT extends ProjectTestMojo {
                 maxTry--;
             }
         }
-        getLog().debug("AskGPT: Failed to get response\n");
+        log.debug("AskGPT: Failed to get response\n");
         return null;
     }
 }
