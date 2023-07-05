@@ -46,7 +46,7 @@ import java.util.List;
 public class ProjectTestMojo
         extends AbstractMojo {
     @Parameter( defaultValue = "${session}", readonly = true, required = true )
-    private MavenSession session;
+    public MavenSession session;
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
     @Parameter(defaultValue = "chatunitest-tests", property = "testOutput")
@@ -75,7 +75,7 @@ public class ProjectTestMojo
     public String proxy;
 
     @Component(hint = "default")
-    private DependencyGraphBuilder dependencyGraphBuilder;
+    public DependencyGraphBuilder dependencyGraphBuilder;
     public String parseOutput;
     public static Log log;
 

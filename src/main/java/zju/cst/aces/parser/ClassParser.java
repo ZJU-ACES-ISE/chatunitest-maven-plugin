@@ -27,7 +27,10 @@ import zju.cst.aces.utils.ClassInfo;
 import zju.cst.aces.utils.Config;
 import zju.cst.aces.utils.MethodInfo;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -348,7 +351,12 @@ public class ClassParser {
     private static Map<String, Set<String>> getDependentMethods(CompilationUnit cu, CallableDeclaration node) {
         Map<String, Set<String>> dependentMethods = new HashMap<>();
         List<MethodCallExpr> methodCalls = node.findAll(MethodCallExpr.class);
+        List<Parameter> pars = node.getParameters();
 
+        for (Parameter p : pars) {
+            String dependentType = String.valueOf(p.getType());
+            dependentMethods.put(dependentType, new HashSet<String>());
+        }
         for (MethodCallExpr m : methodCalls) {
             try {
                 ResolvedMethodDeclaration md = m.resolve();
