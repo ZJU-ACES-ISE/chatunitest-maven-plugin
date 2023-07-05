@@ -1,6 +1,4 @@
 # :mega: ChatUnitest Maven Plugin
-![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
-
 
 ## Steps to run
 
