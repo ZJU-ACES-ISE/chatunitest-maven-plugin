@@ -147,7 +147,16 @@ Running this command will delete all generated tests and restore your test folde
 **Note:** When running generated tests, ChatUnitest will backup your test folder and restore it when finished.
 You can use the following command to restore the test folder manually: `mvn chatunitest:restore`
 
+## Requirements
 
+This Maven plugin can be executed in various operating systems with different Java Development Kits (JDK) and Maven versions. The following environments have been tested and proven to work:
+
+- Environment 1: Windows 11 / Oracle JDK 11 / Maven 3.9
+- Environment 2: Windows 10 / Oracle JDK 11 / Maven 3.6
+- Environment 3: Ubuntu 22.04 / OpenJDK 11 / Maven 3.6
+- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 11 / Maven 3.8
+       
+Please note that these environments are tested and known to work. You can also try running the plugin in similar environments. If you encounter any issues in other environments, please refer to the documentation or seek appropriate support.    
 
 ## :construction: TODO
 
