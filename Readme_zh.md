@@ -100,7 +100,7 @@ mvn chatunitest:class -DselectClass=className
 当执行 `mvn chatunitest:method` 或 `mvn chatunitest:class` 命令时，您必须指定 `selectMethod` 和 `selectClass`，可以使用 -D 选项来实现这一点。
 以下是您可以使用 `-D` 选项指定的所有参数：
 
-- `selectClass`: (**可选**) 被测试的类
+- `selectClass`: (**可选**) 被测试的类，如果项目中有同名类，需要指定完整的类名。
 - `selectMethod`: (**可选**) 被测试的方法
 - `tmpOutput`: (**可选**) 解析项目信息的输出路径，默认值： `/tmp/chatunitest-info`
 - `testOutput`: (**可选**) 由 `chatunitest`生成的测试的输出路径，默认值：`{basedir}/chatunitest`
