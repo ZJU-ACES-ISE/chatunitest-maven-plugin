@@ -47,7 +47,7 @@ public class ClassParser {
     private static ClassInfo classInfo;
 
     public ClassParser(String path) {
-        setOutputPath(path); //TODO: Full qualified name to path
+        setOutputPath(path);
         JavaSymbolSolver symbolSolver = getSymbolSolver();
         parser.getParserConfiguration().setSymbolResolver(symbolSolver);
     }
