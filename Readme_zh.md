@@ -1,10 +1,6 @@
 # :mega: ChatUnitest Maven Plugin
 
-<div style="font-size: 1.5rem;">
-  <a href="./README.md">English</a> |
-  <a href="./Readme_zh.md">中文</a>
-</div>
-</br>
+[English](./README.md) | [中文](./README_zh.md)
 
 ## 运行步骤
 
