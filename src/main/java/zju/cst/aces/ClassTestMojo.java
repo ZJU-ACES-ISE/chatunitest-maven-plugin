@@ -60,10 +60,10 @@ public class ClassTestMojo
             log.info("\n==========================\n[ChatTester] Parse finished");
         }
 
-        log.info("\n==========================\n[ChatTester] Generating tests for class " + className + " ...");
+        log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
         TestCompiler.backupTestFolder();
         try {
-            new ClassRunner(className, parseOutput, testOutput).start();
+            new ClassRunner(getFullClassName(className), parseOutput, testOutput).start();
         } catch (IOException e) {
             throw new RuntimeException("In ClassTestMojo.execute: " + e);
         }

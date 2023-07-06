@@ -16,12 +16,9 @@ package zju.cst.aces;
  * limitations under the License.
  */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.FileUtils;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
@@ -44,7 +41,6 @@ public class MethodTestMojo
         extends ProjectTestMojo {
     @Parameter(property = "selectMethod", required = true)
     public String selectMethod;
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     /**
      * Generate test for target method in given class
@@ -68,15 +64,14 @@ public class MethodTestMojo
             log.info("\n==========================\n[ChatTester] Parse finished");
         }
 
-        log.info("\n==========================\n[ChatTester] Generating tests for class: " + className
-                + " method:" + methodName + " ...");
+        log.info("\n==========================\n[ChatTester] Generating tests for class: < " + className
+                + "> method: < " + methodName + " > ...");
 
         TestCompiler.backupTestFolder();
         try {
-            ClassRunner classRunner = new ClassRunner(className, parseOutput, testOutput);
-            File classInfoFile = new File(parseOutput
-                    + File.separator + className + File.separator + "class.json");
-            ClassInfo classInfo = GSON.fromJson(FileUtils.fileRead(classInfoFile), ClassInfo.class);
+            String fullClassName = getFullClassName(className);
+            ClassRunner classRunner = new ClassRunner(fullClassName, parseOutput, testOutput);
+            ClassInfo classInfo = classRunner.classInfo;
             MethodInfo methodInfo = null;
             for (String mSig : classInfo.methodSignatures.keySet()) {
                 if (mSig.split("\\(")[0].equals(methodName)) {
@@ -85,9 +80,9 @@ public class MethodTestMojo
                 }
             }
             if (methodInfo == null) {
-                throw new RuntimeException("Method " + methodName + " in class " + className + " not found");
+                throw new RuntimeException("Method " + methodName + " in class " + fullClassName + " not found");
             }
-            new MethodRunner(className, parseOutput, testOutput, methodInfo).start();
+            new MethodRunner(fullClassName, parseOutput, testOutput, methodInfo).start();
 
         } catch (IOException e) {
             throw new RuntimeException("In MethodTestMojo.execute: " + e);

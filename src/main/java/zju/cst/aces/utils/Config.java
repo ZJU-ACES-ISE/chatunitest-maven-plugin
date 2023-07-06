@@ -4,6 +4,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 
+import java.nio.file.Path;
 import java.util.Random;
 
 public class Config {
@@ -26,6 +27,8 @@ public class Config {
     public static int presencePenalty;
     public static String[] apiKeys;
     public static String proxy;
+
+    public static Path classMapPath;
 
     public static void setSession(MavenSession session) {
         Config.session = session;
@@ -96,6 +99,10 @@ public class Config {
     }
 
     public static void setProxy(String proxy){Config.proxy=proxy;}
+
+    public static void setClassMapPath(Path classMapPath) {
+        Config.classMapPath = classMapPath;
+    }
 
     public static String getRandomKey() {
         Random rand = new Random();

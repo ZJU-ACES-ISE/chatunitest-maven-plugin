@@ -1,19 +1,30 @@
 package zju.cst.aces.parser;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import zju.cst.aces.utils.Config;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProjectParser {
 
     private String srcFolderPath;
     private String outputPath;
-    private ClassParser classParser = null;
+    public Map<String, List<String>> classMap = new HashMap<>();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     public ProjectParser(String src, String output) {
         setSrcFolderPath(src);
         setOutputPath(output);
-        classParser = new ClassParser(outputPath);
     }
 
     /**
@@ -24,10 +35,39 @@ public class ProjectParser {
         scanSourceDirectory(new File(srcFolderPath), classPaths);
         for (String classPath : classPaths) {
             try {
-                this.classParser.extractClass(classPath);
+                addClassMap(classPath);
+                String packagePath = classPath.substring(srcFolderPath.length() + 1);
+                Path output = Paths.get(outputPath, packagePath).getParent();
+                ClassParser classParser = new ClassParser(output);
+                classParser.extractClass(classPath);
             } catch (Exception e) {
                 throw new RuntimeException("In ProjectParser.parse: " + e);
             }
+        }
+        exportClassMap();
+    }
+
+    public void addClassMap(String classPath) {
+        String fullClassName = classPath.substring(srcFolderPath.length() + 1)
+                .replace(".java", "")
+                .replace(File.separator, ".");
+
+        String className = Paths.get(classPath).getFileName().toString().replace(".java", "");
+        if (classMap.containsKey(className)) {
+            classMap.get(className).add(fullClassName);
+        } else {
+            List<String> fullClassNames = new ArrayList<>();
+            fullClassNames.add(fullClassName);
+            classMap.put(className, fullClassNames);
+        }
+    }
+
+    public void exportClassMap() {
+        Path classMapPath = Config.classMapPath;
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(classMapPath.toFile()), StandardCharsets.UTF_8)){
+            writer.write(GSON.toJson(classMap));
+        } catch (Exception e) {
+            throw new RuntimeException("In ProjectParser.exportNameMap: " + e);
         }
     }
 

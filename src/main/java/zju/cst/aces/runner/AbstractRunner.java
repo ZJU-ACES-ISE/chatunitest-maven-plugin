@@ -26,9 +26,11 @@ public class AbstractRunner extends ProjectTestMojo {
     public Path testOutputPath;
     public Path errorOutputPath;
     public String className;
+    public String fullClassName;
 
-    public AbstractRunner(String classname, String output, String testPath) throws IOException {
-        className = classname;
+    public AbstractRunner(String fullClassname, String output, String testPath) throws IOException {
+        fullClassName = fullClassname;
+        className = fullClassname.substring(fullClassname.lastIndexOf(".") + 1);
         parseOutputPath = Paths.get(output);
         testOutputPath = Paths.get(testPath);
         errorOutputPath = parseOutputPath.getParent().resolve("error-message");
@@ -68,7 +70,8 @@ public class AbstractRunner extends ProjectTestMojo {
             ErrorProcesser errorProcesser = new ErrorProcesser();
             int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
             String processedErrorMsg = errorProcesser.processErrorMessage(promptInfo.errorMsg, allowedTokens);
-            log.debug("Allowed tokens: " + allowedTokens + "\nprocessed error message: " + processedErrorMsg);
+            log.debug("Allowed tokens: " + allowedTokens);
+            log.debug("Processed error message: \n" + processedErrorMsg);
 
             user = String.format("I need you to fix an error in a unit test, an error occurred while compiling and executing\n" +
                             "The unit test is:\n" +

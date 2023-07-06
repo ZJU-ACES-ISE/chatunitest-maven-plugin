@@ -1,6 +1,5 @@
 package zju.cst.aces.runner;
 
-import org.codehaus.plexus.util.FileUtils;
 import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.utils.ClassInfo;
 import zju.cst.aces.utils.MethodInfo;
@@ -17,16 +16,14 @@ public class ClassRunner extends AbstractRunner {
     public ClassInfo classInfo;
     public File infoDir;
 
-    public ClassRunner(String classname, String parsePath, String testPath) throws IOException {
-        super(classname, parsePath, testPath);
-        infoDir = new File(parseOutputPath + File.separator + className);
+    public ClassRunner(String fullClassName, String parsePath, String testPath) throws IOException {
+        super(fullClassName, parsePath, testPath);
+        infoDir = new File(parseOutputPath + File.separator + fullClassName.replace(".", File.separator));
         if (!infoDir.isDirectory()) {
-            log.error("Error: " + className + " no parsed info found");
+            log.error("Error: " + fullClassName + " no parsed info found");
         }
-        File classInfoFile = new File(parseOutputPath
-                + File.separator + className + File.separator + "class.json");
-        classInfo = GSON.fromJson(FileUtils.fileRead(classInfoFile), ClassInfo.class);
-        className = classInfo.className;
+        File classInfoFile = new File(infoDir + File.separator + "class.json");
+        classInfo = GSON.fromJson(Files.readString(classInfoFile.toPath(), StandardCharsets.UTF_8), ClassInfo.class);
     }
 
     public void start() throws IOException {
@@ -36,7 +33,7 @@ public class ClassRunner extends AbstractRunner {
             if (methodInfo == null) {
                 continue;
             }
-            new MethodRunner(className, parseOutputPath.toString(), testOutputPath.toString(), methodInfo).start();
+            new MethodRunner(fullClassName, parseOutputPath.toString(), testOutputPath.toString(), methodInfo).start();
         }
     }
 
@@ -120,7 +117,12 @@ public class ClassRunner extends AbstractRunner {
     }
 
     public MethodInfo getMethodInfo(ClassInfo info, String mSig) throws IOException {
+        String packagePath = info.packageDeclaration
+                .replace("package ", "")
+                .replace(".", File.separator)
+                .replace(";", "");
         Path depMethodInfoPath = parseOutputPath
+                .resolve(packagePath)
                 .resolve(info.className)
                 .resolve(ClassParser.getFilePathBySig(mSig, info));
         if (!depMethodInfoPath.toFile().exists()) {
@@ -134,7 +136,7 @@ public class ClassRunner extends AbstractRunner {
         if (!depClassInfoPath.toFile().exists()) {
             return null;
         }
-        ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath), ClassInfo.class);
+        ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);

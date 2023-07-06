@@ -12,18 +12,18 @@ public class MethodRunner extends ClassRunner {
 
     public MethodInfo methodInfo;
     public String testName;
-    private static Config config = new Config();
 
-    public MethodRunner(String classname, String parsePath, String testOutputPath, MethodInfo methodInfo) throws IOException {
-        super(classname, parsePath, testOutputPath);
+    public MethodRunner(String fullClassName, String parsePath, String testOutputPath, MethodInfo methodInfo) throws IOException {
+        super(fullClassName, parsePath, testOutputPath);
         this.methodInfo = methodInfo;
         testName = className + separator + methodInfo.methodName + separator + "Test";
     }
 
     @Override
     public void start() throws IOException {
+        log.info("\n==========================\n[ChatTester] Generating test for method < " + methodInfo.methodName + " > ...\n");
         PromptInfo promptInfo = null;
-        for (int rounds = 1; rounds <= config.maxRounds; rounds++) {
+        for (int rounds = 1; rounds <= Config.maxRounds; rounds++) {
             if (promptInfo == null) {
                 log.info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
                 if (methodInfo.dependentMethods.size() > 0) {

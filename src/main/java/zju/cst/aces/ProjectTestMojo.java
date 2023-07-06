@@ -16,6 +16,8 @@ package zju.cst.aces;
  * limitations under the License.
  */
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -32,10 +34,13 @@ import zju.cst.aces.utils.TestCompiler;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author chenyi
@@ -74,6 +79,7 @@ public class ProjectTestMojo
     @Parameter(name = "proxy",defaultValue = "null:-1")
     public String proxy;
 
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
     public String parseOutput;
@@ -107,8 +113,9 @@ public class ProjectTestMojo
         TestCompiler.backupTestFolder();
         for (String classPath : classPaths) {
             String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
-            log.info("\n==========================\n[ChatTester] Generating tests for class " + className + " ...");
             try {
+                className = getFullClassName(className);
+                log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
                 new ClassRunner(className, parseOutput, testOutput).start();
             } catch (IOException e) {
                 log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
@@ -136,6 +143,30 @@ public class ProjectTestMojo
         tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getArtifactId()));
         parseOutput = tmpOutput + File.separator + "class-info";
         parseOutput = parseOutput.replace("/", File.separator);
+        Config.setClassMapPath(Paths.get(parseOutput, "class-map.json"));
         log = getLog();
+    }
+
+    public String getFullClassName(String name) throws IOException {
+        if (isFullName(name)) {
+            return name;
+        }
+        Path classMapPath = Config.classMapPath;
+        Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
+        if (classMap.containsKey(name)) {
+            if (classMap.get(name).size() > 1) {
+                throw new RuntimeException("[ChatTester] Multiple classes Named " + name + ": " + classMap.get(name)
+                + " Please use full qualified name!");
+            }
+            return classMap.get(name).get(0);
+        }
+        return name;
+    }
+
+    public boolean isFullName(String name) {
+        if (name.contains(".")) {
+            return true;
+        }
+        return false;
     }
 }

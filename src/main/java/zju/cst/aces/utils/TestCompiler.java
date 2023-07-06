@@ -27,7 +27,7 @@ public class TestCompiler extends ProjectTestMojo {
         String mvn = OS.contains("win") ? "mvn.cmd" : "mvn";
         processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
 
-        log.debug("In TestCompiler.compileAndExport: running command: `"
+        log.debug("Running command: `"
                 + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "`");
         // full output text
         StringBuilder output = new StringBuilder();
@@ -39,7 +39,7 @@ public class TestCompiler extends ProjectTestMojo {
 
             String line;
             while ((line = reader.readLine()) != null) {
-                // TODO: handle other conditions e.g. Assertion error
+                log.debug(line);
                 output.append(line).append("\n");
                 errorMessage.add(line);
                 if (line.contains("BUILD SUCCESS")){
@@ -54,7 +54,6 @@ public class TestCompiler extends ProjectTestMojo {
             writer.close();
 
             promptInfo.setErrorMsg(errorMessage);
-            log.debug("In TestCompiler.compileAndExport: error message: " + output);
 
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileAndExport: " + e);

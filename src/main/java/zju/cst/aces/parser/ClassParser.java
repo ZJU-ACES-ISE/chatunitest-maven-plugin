@@ -52,6 +52,12 @@ public class ClassParser {
         parser.getParserConfiguration().setSymbolResolver(symbolSolver);
     }
 
+    public ClassParser(Path path) {
+        setOutputPath(path.toString());
+        JavaSymbolSolver symbolSolver = getSymbolSolver();
+        parser.getParserConfiguration().setSymbolResolver(symbolSolver);
+    }
+
     private JavaSymbolSolver getSymbolSolver() {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
