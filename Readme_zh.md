@@ -1,6 +1,6 @@
 # :mega: ChatUnitest Maven Plugin
 
-[English](./README.md) | [中文](./README_zh.md)
+[English](./README.md) | [中文](./Readme_zh.md)
 
 ## 运行步骤
 
@@ -144,8 +144,8 @@ mvn chatunitest:clean
 
 运行该命令将删除所有生成的测试代码并恢复您的测试文件夹。
 
-**注意:** 在运行生成的测试代码时，ChatUnitest会备份您的测试文件夹，并在完成后进行恢复。
-您可以使用以下命令手动恢复测试文件夹：`mvn chatunitest:restore`
+**注意:** 在运行生成的测试代码时，ChatUnitest会将您的测试文件夹备份到`src/backup/`目录，
+并将生成的测试拷贝到`src/test/java/`目录下运行，同时也便于您手动运行测试。您需要使用以下命令手动恢复测试文件夹：`mvn chatunitest:restore`
 
 ## 可运行环境
 

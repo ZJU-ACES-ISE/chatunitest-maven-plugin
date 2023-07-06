@@ -40,9 +40,9 @@ public class CleanMojo
         log.info("\n==========================\n[ChatTester] Cleaning output directory "
                 + tmpOutput + " and " + testOutput + " ...");
         try {
+            log.info("\n==========================\n[ChatTester] Restoring test folder ...");
             FileUtils.deleteDirectory(tmpOutput);
             FileUtils.deleteDirectory(testOutput);
-            log.info("\n==========================\n[ChatTester] Restoring test folder ...");
             TestCompiler.restoreTestFolder();
         } catch (Exception e) {
             log.error(e);

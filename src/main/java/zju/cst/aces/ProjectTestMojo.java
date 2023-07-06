@@ -114,7 +114,7 @@ public class ProjectTestMojo
                 log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
             }
         }
-        TestCompiler.restoreTestFolder();
+//        TestCompiler.restoreTestFolder();
 
         log.info("\n==========================\n[ChatTester] Generation finished");
     }

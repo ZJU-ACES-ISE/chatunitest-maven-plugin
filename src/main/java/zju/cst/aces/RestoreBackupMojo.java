@@ -40,6 +40,7 @@ public class RestoreBackupMojo
             TestCompiler.restoreTestFolder();
         } catch (Exception e) {
             log.error(e);
+            throw new MojoExecutionException("Failed to restore test folder, please try again.");
         }
         log.info("\n==========================\n[ChatTester] Finished");
     }

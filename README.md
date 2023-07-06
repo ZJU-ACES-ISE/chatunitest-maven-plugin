@@ -28,6 +28,7 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
     </configuration>
 </plugin>
 ```
+
 **Here's a detailed explanation of each configuration option:**
 
 - `apiKeys`: (**Required**) Your OpenAI API keys. Example: `Key1, Key2, ...`.
@@ -45,6 +46,7 @@ Essentially, the only thing you need to provide are your API keys.
 ### 1. Add following dependencies to pom.xml
 
 ```xml
+
 <dependencies>
     <dependency>
         <groupId>org.junit.jupiter</groupId>
@@ -98,8 +100,10 @@ mvn chatunitest:method -DselectMethod=className#methodName
 mvn chatunitest:class -DselectClass=className
 ```
 
-You must specify `selectMethod` and `selectClass` when executing `mvn chatunitest:method` or `mvn chatunitest:class`. This is done using the -D option.
+You must specify `selectMethod` and `selectClass` when executing `mvn chatunitest:method` or `mvn chatunitest:class`.
+This is done using the -D option.
 There are all parameters you can specify with the `-D` option:
+
 - `selectClass`: (**Optional**) Class under test.
 - `selectMethod`: (**Optional**) Method under test.
 - `tmpOutput`: (**Optional**) The output path for parsed information. Default: `/tmp/chatunitest-info`.
@@ -122,7 +126,8 @@ To test the class `Example` and all methods in it:
 mvn chatunitest:class -DselectClass=Example
 ```
 
-To test the method `method1` in the class `Example` (Now ChatUnitest will generate tests for all methods named method1 in the class)
+To test the method `method1` in the class `Example` (Now ChatUnitest will generate tests for all methods named method1
+in the class)
 
 ```shell
 mvn chatunitest:method -DselectMethod=Example#method1
@@ -142,21 +147,27 @@ mvn chatunitest:project
 ```shell
 mvn chatunitest:clean
 ```
+
 Running this command will delete all generated tests and restore your test folder.
 
-**Note:** When running generated tests, ChatUnitest will backup your test folder and restore it when finished.
-You can use the following command to restore the test folder manually: `mvn chatunitest:restore`
+**Note:** When executing the generated tests, ChatUnitest will first create a backup of your test folder in the `src/back/`
+directory. It will then copy the generated tests into the `src/test/java/` directory for execution and for your
+convenience when you want to run the tests manually. To restore the test folder, you should use the following Maven
+command: `mvn chatunitest:restore`.
 
 ## Requirements
 
-This Maven plugin can be executed in various operating systems with different Java Development Kits (JDK) and Maven versions. The following environments have been tested and proven to work:
+This Maven plugin can be executed in various operating systems with different Java Development Kits (JDK) and Maven
+versions. The following environments have been tested and proven to work:
 
 - Environment 1: Windows 11 / Oracle JDK 11 / Maven 3.9
 - Environment 2: Windows 10 / Oracle JDK 11 / Maven 3.6
 - Environment 3: Ubuntu 22.04 / OpenJDK 11 / Maven 3.6
 - Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 11 / Maven 3.8
-       
-Please note that these environments are tested and known to work. You can also try running the plugin in similar environments. If you encounter any issues in other environments, please refer to the documentation or seek appropriate support.    
+
+Please note that these environments are tested and known to work. You can also try running the plugin in similar
+environments. If you encounter any issues in other environments, please refer to the documentation or seek appropriate
+support.
 
 ## :construction: TODO
 

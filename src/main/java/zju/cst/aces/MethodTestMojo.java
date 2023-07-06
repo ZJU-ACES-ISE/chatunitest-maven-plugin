@@ -92,7 +92,7 @@ public class MethodTestMojo
         } catch (IOException e) {
             throw new RuntimeException("In MethodTestMojo.execute: " + e);
         }
-        TestCompiler.restoreTestFolder();
+//        TestCompiler.restoreTestFolder();
 
         log.info("\n==========================\n[ChatTester] Generation finished");
     }
