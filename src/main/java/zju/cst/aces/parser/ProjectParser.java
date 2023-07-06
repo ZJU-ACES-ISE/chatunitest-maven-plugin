@@ -6,8 +6,10 @@ import zju.cst.aces.utils.Config;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -33,6 +35,9 @@ public class ProjectParser {
     public void parse() {
         List<String> classPaths = new ArrayList<>();
         scanSourceDirectory(new File(srcFolderPath), classPaths);
+        if (classPaths.isEmpty()) {
+            throw new RuntimeException("No java file found in " + srcFolderPath);
+        }
         for (String classPath : classPaths) {
             try {
                 addClassMap(classPath);
@@ -64,6 +69,13 @@ public class ProjectParser {
 
     public void exportClassMap() {
         Path classMapPath = Config.classMapPath;
+        if (!Files.exists(classMapPath.getParent())) {
+            try {
+                Files.createDirectories(classMapPath.getParent());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(classMapPath.toFile()), StandardCharsets.UTF_8)){
             writer.write(GSON.toJson(classMap));
         } catch (Exception e) {

@@ -15,8 +15,6 @@ public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
-    public static String OS = System.getProperty("os.name").toLowerCase();
-
     public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo) {
         System.out.println("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
@@ -24,7 +22,7 @@ public class TestCompiler extends ProjectTestMojo {
         }
         String testFileName = testFile.getName().split("\\.")[0];
         ProcessBuilder processBuilder = new ProcessBuilder();
-        String mvn = OS.contains("win") ? "mvn.cmd" : "mvn";
+        String mvn = Config.OS.contains("win") ? "mvn.cmd" : "mvn";
         processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
 
         log.debug("Running command: `"
@@ -84,7 +82,7 @@ public class TestCompiler extends ProjectTestMojo {
      */
     public File copyFileToTest(File file) {
         Path sourceFile = file.toPath();
-        String splitString = OS.contains("win") ? "chatunitest-tests\\\\" : "chatunitest-tests/";
+        String splitString = Config.OS.contains("win") ? "chatunitest-tests\\\\" : "chatunitest-tests/";
         String pathWithParent = sourceFile.toAbsolutePath().toString().split(splitString)[1];
         Path targetPath = srcTestFolder.toPath().resolve(pathWithParent);
         log.debug("In TestCompiler.copyFileToTest: file " + file.getName() + " target path" + targetPath);

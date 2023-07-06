@@ -191,7 +191,11 @@ public class ClassParser {
     }
 
     private static String getPackageDeclaration(CompilationUnit compilationUnit) {
-        return compilationUnit.getPackageDeclaration().orElse(null).toString().trim();
+        if (compilationUnit.getPackageDeclaration().isPresent()) {
+            return compilationUnit.getPackageDeclaration().get().getNameAsString().trim();
+        } else {
+            return "";
+        }
     }
 
     private static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
@@ -427,7 +431,11 @@ public class ClassParser {
     }
 
     private static String getTokenString(@NotNull Node node) {
-        return node.getTokenRange().orElse(null).toString();
+        if (node.getTokenRange().isPresent()) {
+            return node.getTokenRange().get().toString();
+        } else {
+            return "";
+        }
     }
 
     private static void exportClassInfo(String json, ClassOrInterfaceDeclaration classNode) throws IOException {
@@ -505,7 +513,7 @@ public class ClassParser {
                 extractConstructors(cu, classDeclaration);
             }
         } catch (Exception e) {
-            System.out.println("Exception: " + e);
+            System.out.println("In ClassParser.extractClass Exception: " + e);
             e.printStackTrace();
         }
     }

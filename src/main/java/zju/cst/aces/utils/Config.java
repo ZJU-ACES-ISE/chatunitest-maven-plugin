@@ -9,6 +9,7 @@ import java.util.Random;
 
 public class Config {
 
+    public static String OS = System.getProperty("os.name").toLowerCase();
     public static MavenSession session;
     public static MavenProject project;
     public static DependencyGraphBuilder dependencyGraphBuilder;

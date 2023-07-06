@@ -42,8 +42,8 @@ public class MethodRunner extends ClassRunner {
             Path savePath = testOutputPath.resolve(classInfo.packageDeclaration
                     .replace(".", File.separator)
                     .replace("package ", "")
-                    .replace(";", "")
-                    + File.separator + testName + ".java");
+                    .replace(";", ""))
+                    .resolve(testName + ".java");
 
             String code = parseResponse(response);
             if (code.isEmpty()) {
