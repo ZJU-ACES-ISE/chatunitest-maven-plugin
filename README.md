@@ -18,8 +18,8 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
         <model>gpt-3.5-turbo</model>
-        <testNumber>6</testNumber>
-        <maxRounds>6</maxRounds>
+        <testNumber>5</testNumber>
+        <maxRounds>5</maxRounds>
         <minErrorTokens>500</minErrorTokens>
         <temperature>0.5</temperature>
         <topP>1</topP>
@@ -34,14 +34,15 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 
 - `apiKeys`: (**Required**) Your OpenAI API keys. Example: `Key1, Key2, ...`.
 - `model`: (**Optional**) The OpenAI model. Default: `gpt-3.5-turbo`.
-- `testNumber`: (**Optional**) The number of tests for each method. Default: `6`.
-- `maxRounds`: (**Optional**) The maximum rounds of the repair process. Default: `6`.
+- `testNumber`: (**Optional**) The number of tests for each method. Default: `5`.
+- `maxRounds`: (**Optional**) The maximum rounds of the repair process. Default: `5`.
 - `minErrorTokens`: (**Optional**) The minimum tokens of error message in the repair process. Default: `500`.
 - `temperature`: (**Optional**) The OpenAI API parameters. Default: `0.5`.
 - `topP`: (**Optional**) The OpenAI API parameters. Default: `1`.
 - `frequencyPenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
 - `presencePenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
-- `proxy`:(**Optional**)Your host name and port number if you need. Example:`127.0.0.1:7078`.
+- `proxy`: (**Optional**)Your host name and port number if you need. Example:`127.0.0.1:7078`.
+- `stopWhenSuccess`: (**Optional**) Stop the repair process when the test passes. Default: `true`.
 
 Essentially, the only thing you need to provide are your API keys.
 

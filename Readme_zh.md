@@ -16,8 +16,8 @@
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
         <model>gpt-3.5-turbo</model>
-        <testNumber>6</testNumber>
-        <maxRounds>6</maxRounds>
+        <testNumber>5</testNumber>
+        <maxRounds>5</maxRounds>
         <minErrorTokens>500</minErrorTokens>
         <temperature>0.5</temperature>
         <topP>1</topP>
@@ -32,14 +32,15 @@
 
 - `apiKeys`: (**必需**) 您的OpenAI API keys，示例：`Key1, Key2, ...`
 - `model`: (**可选**) OpenAI模型，默认值：`gpt-3.5-turbo`
-- `testNumber`: (**可选**) 每个方法的生成的测试数量，默认值：`6`
-- `maxRounds`: (**可选**) 修复过程的最大轮次，默认值：`6`
+- `testNumber`: (**可选**) 每个方法的生成的测试数量，默认值：`5`
+- `maxRounds`: (**可选**) 修复过程的最大轮次，默认值：`5`
 - `minErrorTokens`: (**可选**) 修复过程中错误信息的最小token数，默认值：`500`
 - `temperature`: (**可选**) OpenAI API参数，默认值：`0.5`
 - `topP`: (**可选**) OpenAI API参数，默认值： `1`
 - `frequencyPenalty`: (**可选**) OpenAI API参数，默认值： `0`
 - `presencePenalty`: (**可选**) OpenAI API参数，默认值： `0`
-- `proxy`:(**可选**)如果需要，填写您的主机名和端口号，示例：`127.0.0.1:7078`
+- `proxy`: (**可选**)如果需要，填写您的主机名和端口号，示例：`127.0.0.1:7078`
+- `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
 
 一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
 
