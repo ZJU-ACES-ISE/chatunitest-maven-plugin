@@ -16,6 +16,7 @@
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
         <model>gpt-3.5-turbo</model>
+        <testNumber>6</testNumber>
         <maxRounds>6</maxRounds>
         <minErrorTokens>500</minErrorTokens>
         <temperature>0.5</temperature>
@@ -31,6 +32,7 @@
 
 - `apiKeys`: (**必需**) 您的OpenAI API keys，示例：`Key1, Key2, ...`
 - `model`: (**可选**) OpenAI模型，默认值：`gpt-3.5-turbo`
+- `testNumber`: (**可选**) 每个方法的生成的测试数量，默认值：`6`
 - `maxRounds`: (**可选**) 修复过程的最大轮次，默认值：`6`
 - `minErrorTokens`: (**可选**) 修复过程中错误信息的最小token数，默认值：`500`
 - `temperature`: (**可选**) OpenAI API参数，默认值：`0.5`
@@ -105,6 +107,10 @@ mvn chatunitest:class -DselectClass=className
 - `tmpOutput`: (**可选**) 解析项目信息的输出路径，默认值： `/tmp/chatunitest-info`
 - `testOutput`: (**可选**) 由 `chatunitest`生成的测试的输出路径，默认值：`{basedir}/chatunitest`
 - `project`: (**可选**) 目标项目路径，默认值：`{basedir}`
+- `thread`: (**可选**) 开启或关闭多线程，默认值：`true`
+- `maxThread`: (**可选**) 最大线程数，默认值：`CPU核心数 * 10`
+
+您也可以在pom.xml中设置插件配置，而不是使用`-D`选项，例如`<maxThreads>30</maxThreads>`
 
 示例：
 

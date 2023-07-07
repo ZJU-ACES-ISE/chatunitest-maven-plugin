@@ -2,6 +2,7 @@ package zju.cst.aces.runner;
 
 import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.utils.ClassInfo;
+import zju.cst.aces.utils.Config;
 import zju.cst.aces.utils.MethodInfo;
 import zju.cst.aces.utils.PromptInfo;
 
@@ -11,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class ClassRunner extends AbstractRunner {
     public ClassInfo classInfo;
@@ -27,14 +29,54 @@ public class ClassRunner extends AbstractRunner {
     }
 
     public void start() throws IOException {
-        List<File> files = List.of(infoDir.listFiles());
-        for (String mSig : classInfo.methodSignatures.keySet()) {
-            MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
-            if (methodInfo == null) {
-                continue;
+        if (Config.enableMultithreading == true) {
+            methodJob();
+        } else {
+            for (String mSig : classInfo.methodSignatures.keySet()) {
+                MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+                if (methodInfo == null) {
+                    continue;
+                }
+                new MethodRunner(fullClassName, parseOutputPath.toString(), testOutputPath.toString(), methodInfo).start();
             }
-            new MethodRunner(fullClassName, parseOutputPath.toString(), testOutputPath.toString(), methodInfo).start();
         }
+    }
+
+    public void methodJob() {
+        ExecutorService executor = Executors.newFixedThreadPool(methodThreads);
+        List<Future<String>> futures = new ArrayList<>();
+        for (String mSig : classInfo.methodSignatures.keySet()) {
+            Callable<String> callable = new Callable<String>() {
+                @Override
+                public String call() throws Exception {
+                    MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+                    if (methodInfo == null) {
+                        return "No parsed info found for " + mSig + " in " + fullClassName;
+                    }
+                    new MethodRunner(fullClassName, parseOutputPath.toString(), testOutputPath.toString(), methodInfo).start();
+                    return "Processed " + mSig;
+                }
+            };
+            Future<String> future = executor.submit(callable);
+            futures.add(future);
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                executor.shutdownNow();
+            }
+        });
+
+        for (Future<String> future : futures) {
+            try {
+                String result = future.get();
+                System.out.println(result);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        executor.shutdown();
     }
 
     public PromptInfo generatePromptInfoWithoutDep(ClassInfo classInfo, MethodInfo methodInfo) {

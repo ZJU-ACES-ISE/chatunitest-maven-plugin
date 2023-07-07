@@ -13,6 +13,9 @@ public class Config {
     public static MavenSession session;
     public static MavenProject project;
     public static DependencyGraphBuilder dependencyGraphBuilder;
+    public static boolean stopWhenSuccess;
+    public static boolean enableMultithreading;
+    public static int maxThreads;
     public static int testNumber;
     public static int timeOut;
     public static int processNumber;
@@ -45,6 +48,22 @@ public class Config {
 
     public static void setApiKeys(String[] apiKeys) {
         Config.apiKeys = apiKeys;
+    }
+
+    public static void setStopWhenSuccess(boolean stopWhenSuccess) {
+        Config.stopWhenSuccess = stopWhenSuccess;
+    }
+
+    public static void setEnableMultithreading(boolean enableMultithreading) {
+        Config.enableMultithreading = enableMultithreading;
+    }
+
+    public static void setMaxThreads(int maxThreads) {
+        if (maxThreads == 0) {
+            Config.maxThreads = Runtime.getRuntime().availableProcessors() * 10;
+        } else {
+            Config.maxThreads = maxThreads;
+        }
     }
 
     public static void setTestNumber(int testNumber) {

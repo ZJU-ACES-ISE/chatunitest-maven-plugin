@@ -16,7 +16,7 @@ public class TestCompiler extends ProjectTestMojo {
     public static File backupFolder = new File("src" + File.separator + "backup");
 
     public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo) {
-        System.out.println("Running test " + testFile.getName() + "...");
+        log.debug("Running test " + testFile.getName() + "...");
         if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
             outputPath.toAbsolutePath().getParent().toFile().mkdirs();
         }

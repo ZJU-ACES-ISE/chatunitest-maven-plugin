@@ -6,23 +6,66 @@ import zju.cst.aces.utils.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class MethodRunner extends ClassRunner {
 
     public MethodInfo methodInfo;
-    public String testName;
 
     public MethodRunner(String fullClassName, String parsePath, String testOutputPath, MethodInfo methodInfo) throws IOException {
         super(fullClassName, parsePath, testOutputPath);
         this.methodInfo = methodInfo;
-        testName = className + separator + methodInfo.methodName + separator + "Test";
     }
 
     @Override
     public void start() throws IOException {
-        log.info("\n==========================\n[ChatTester] Generating test for method < " + methodInfo.methodName + " > ...\n");
+        if (Config.stopWhenSuccess) {
+            for (int num = 1; num <= Config.testNumber; num++) {
+                if (startRounds(num)) {
+                    break;
+                }
+            }
+        } else {
+            ExecutorService executor = Executors.newFixedThreadPool(Config.testNumber);
+            List<Future<String>> futures = new ArrayList<>();
+            for (int num = 1; num <= Config.testNumber; num++) {
+                int finalNum = num;
+                Callable<String> callable = new Callable<String>() {
+                    @Override
+                    public String call() throws Exception {
+                        startRounds(finalNum);
+                        return "";
+                    }
+                };
+                Future<String> future = executor.submit(callable);
+                futures.add(future);
+            }
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    executor.shutdownNow();
+                }
+            });
+
+            for (Future<String> future : futures) {
+                try {
+                    String result = future.get();
+                    System.out.println(result);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            executor.shutdown();
+        }
+    }
+
+    public boolean startRounds(final int num) throws IOException {
         PromptInfo promptInfo = null;
+        String testName = className + separator + methodInfo.methodName + separator + num + separator + "Test";
+        log.info("\n==========================\n[ChatTester] Generating test for method < "
+                + methodInfo.methodName + " > number " + num + "...\n");
         for (int rounds = 1; rounds <= Config.maxRounds; rounds++) {
             if (promptInfo == null) {
                 log.info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
@@ -40,9 +83,9 @@ public class MethodRunner extends ClassRunner {
             AskGPT askGPT = new AskGPT();
             Response response = askGPT.askChatGPT(prompt);
             Path savePath = testOutputPath.resolve(classInfo.packageDeclaration
-                    .replace(".", File.separator)
-                    .replace("package ", "")
-                    .replace(";", ""))
+                            .replace(".", File.separator)
+                            .replace("package ", "")
+                            .replace(";", ""))
                     .resolve(testName + ".java");
 
             String code = parseResponse(response);
@@ -65,13 +108,14 @@ public class MethodRunner extends ClassRunner {
             if (compiler.compileAndExport(testFile,
                     errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
                 log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
-                break;
+                return true;
             } else {
                 removeTestFile(testFile);
                 removeTestFile(savePath.toFile());
                 log.info("Test for method < " + methodInfo.methodName + " > generated failed");
             }
         }
+        return false;
     }
 
     /**

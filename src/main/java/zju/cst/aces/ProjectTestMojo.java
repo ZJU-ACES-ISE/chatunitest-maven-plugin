@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * @author chenyi
@@ -60,6 +61,14 @@ public class ProjectTestMojo
     public String tmpOutput;
     @Parameter(name = "apiKeys", required = true)
     public String[] apiKeys;
+    @Parameter(name = "stopWhenSuccess", property = "stopWhenSuccess", defaultValue = "true")
+    public boolean stopWhenSuccess;
+    @Parameter(alias = "thread", property = "thread", defaultValue = "true")
+    public boolean enableMultithreading;
+    @Parameter(property = "maxThreads", defaultValue = "0")
+    public int maxThreads;
+    @Parameter(name = "testNumber", defaultValue = "5")
+    public int testNumber;
     @Parameter(name = "maxRounds", defaultValue = "6")
     public int maxRounds;
     @Parameter(name = "minErrorTokens", defaultValue = "500")
@@ -84,6 +93,8 @@ public class ProjectTestMojo
     public DependencyGraphBuilder dependencyGraphBuilder;
     public String parseOutput;
     public static Log log;
+    public static int classThreads;
+    public static int methodThreads;
 
 
     /**
@@ -111,19 +122,63 @@ public class ProjectTestMojo
         parser.scanSourceDirectory(srcMainJavaPath.toFile(), classPaths);
 
         TestCompiler.backupTestFolder();
-        for (String classPath : classPaths) {
-            String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
-            try {
-                className = getFullClassName(className);
-                log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                new ClassRunner(className, parseOutput, testOutput).start();
-            } catch (IOException e) {
-                log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
+        if (Config.enableMultithreading == true) {
+            classJob(classPaths);
+        } else {
+            for (String classPath : classPaths) {
+                String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
+                try {
+                    className = getFullClassName(className);
+                    log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
+                    new ClassRunner(className, parseOutput, testOutput).start();
+                } catch (IOException e) {
+                    log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
+                }
             }
         }
 //        TestCompiler.restoreTestFolder();
 
         log.info("\n==========================\n[ChatTester] Generation finished");
+    }
+
+    public void classJob(List<String> classPaths) {
+        ExecutorService executor = Executors.newFixedThreadPool(classThreads);
+        List<Future<String>> futures = new ArrayList<>();
+        for (String classPath : classPaths) {
+            Callable<String> callable = new Callable<String>() {
+                @Override
+                public String call() throws Exception {
+                    String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
+                    try {
+                        className = getFullClassName(className);
+                        log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
+                        new ClassRunner(className, parseOutput, testOutput).start();
+                    } catch (IOException e) {
+                        log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
+                    }
+                    return "Processed " + classPath;
+                }
+            };
+            Future<String> future = executor.submit(callable);
+            futures.add(future);
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                executor.shutdownNow();
+            }
+        });
+
+        for (Future<String> future : futures) {
+            try {
+                String result = future.get();
+                System.out.println(result);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        executor.shutdown();
     }
 
     public void init() {
@@ -132,6 +187,10 @@ public class ProjectTestMojo
         Config.setDependencyGraphBuilder(dependencyGraphBuilder);
         Config.setApiKeys(apiKeys);
         Config.setModel(model);
+        Config.setStopWhenSuccess(stopWhenSuccess);
+        Config.setEnableMultithreading(enableMultithreading);
+        Config.setMaxThreads(maxThreads);
+        Config.setTestNumber(testNumber);
         Config.setMaxRounds(maxRounds);
         Config.setMinErrorTokens(minErrorTokens);
         Config.setMaxPromptTokens(maxPromptTokens);
@@ -145,6 +204,15 @@ public class ProjectTestMojo
         parseOutput = parseOutput.replace("/", File.separator);
         Config.setClassMapPath(Paths.get(parseOutput, "class-map.json"));
         log = getLog();
+        classThreads = Config.maxThreads / 10;
+        methodThreads = Config.maxThreads / classThreads;
+        log.info("\n==========================\n[ChatTester] Multithreading enabled >>>> " + Config.enableMultithreading);
+        if (Config.stopWhenSuccess == false) {
+            methodThreads = methodThreads / Config.testNumber;
+        }
+        if (Config.enableMultithreading == true) {
+            log.info("Class threads: " + classThreads + ", Method threads: " + methodThreads);
+        }
     }
 
     public String getFullClassName(String name) throws IOException {
