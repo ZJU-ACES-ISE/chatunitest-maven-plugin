@@ -21,13 +21,7 @@ public class MethodRunner extends ClassRunner {
 
     @Override
     public void start() throws IOException {
-        if (Config.stopWhenSuccess) {
-            for (int num = 1; num <= Config.testNumber; num++) {
-                if (startRounds(num)) {
-                    break;
-                }
-            }
-        } else {
+        if (Config.stopWhenSuccess == false && Config.enableMultithreading == true) {
             ExecutorService executor = Executors.newFixedThreadPool(Config.testNumber);
             List<Future<String>> futures = new ArrayList<>();
             for (int num = 1; num <= Config.testNumber; num++) {
@@ -58,6 +52,12 @@ public class MethodRunner extends ClassRunner {
             }
 
             executor.shutdown();
+        } else {
+            for (int num = 1; num <= Config.testNumber; num++) {
+                if (startRounds(num)) {
+                    break;
+                }
+            }
         }
     }
 
