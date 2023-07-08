@@ -63,7 +63,8 @@ public class MethodRunner extends ClassRunner {
 
     public boolean startRounds(final int num) throws IOException {
         PromptInfo promptInfo = null;
-        String testName = className + separator + methodInfo.methodName + separator + num + separator + "Test";
+        String testName = className + separator + methodInfo.methodName + separator
+                + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         log.info("\n==========================\n[ChatTester] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
         for (int rounds = 1; rounds <= Config.maxRounds; rounds++) {
@@ -104,6 +105,11 @@ public class MethodRunner extends ClassRunner {
 
             TestCompiler compiler = new TestCompiler();
             File testFile = compiler.copyFileToTest(savePath.toFile());
+
+            if (!testFile.exists()) {
+                log.error("Test file < " + testFile.getName() + " > not exists");
+                return false; // or continue?
+            }
 
             if (compiler.compileAndExport(testFile,
                     errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {

@@ -41,8 +41,7 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 - `topP`: (**Optional**) The OpenAI API parameters. Default: `1`.
 - `frequencyPenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
 - `presencePenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
-- `proxy`: (**Optional**)Your host name and port number if you need. Example:`127.0.0.1:7078`.
-- `stopWhenSuccess`: (**Optional**) Stop the repair process when the test passes. Default: `true`.
+- `proxy`: (**Optional**) Your host name and port number if you need. Example:`127.0.0.1:7078`.
 
 Essentially, the only thing you need to provide are your API keys.
 
@@ -114,6 +113,7 @@ There are all parameters you can specify with the `-D` option:
 - `project`: (**Optional**) The target project path. Default: `{basedir}`.
 - `thread`: (**Optional**) Enable multi-threaded execution. Default: `true`.
 - `maxThread`: (**Optional**) The maximum number of threads. Default: `CPU cores * 10`.
+- `stopWhenSuccess`: (**Optional**) Stop the repair process when the test passes. Default: `true`. 
  
 You can also set the plugin configuration in pom.xml instead of using `-D` option like: `<maxThreads>30</maxThreads>`
 

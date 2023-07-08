@@ -192,7 +192,7 @@ public class ClassParser {
 
     private static String getPackageDeclaration(CompilationUnit compilationUnit) {
         if (compilationUnit.getPackageDeclaration().isPresent()) {
-            return compilationUnit.getPackageDeclaration().get().getNameAsString().trim();
+            return compilationUnit.getPackageDeclaration().get().toString().trim();
         } else {
             return "";
         }

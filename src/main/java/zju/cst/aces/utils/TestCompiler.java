@@ -91,7 +91,7 @@ public class TestCompiler extends ProjectTestMojo {
             Files.copy(sourceFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         } catch (IOException e) {
-            throw new RuntimeException("In TestCompiler.copyFileToTest: " + e);
+            log.error("In TestCompiler.copyFileToTest: " + e);
         }
         return targetPath.toFile();
     }

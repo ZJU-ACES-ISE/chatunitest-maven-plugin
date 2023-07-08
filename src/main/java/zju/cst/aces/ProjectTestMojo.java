@@ -69,7 +69,7 @@ public class ProjectTestMojo
     public int maxThreads;
     @Parameter(name = "testNumber", defaultValue = "5")
     public int testNumber;
-    @Parameter(name = "maxRounds", defaultValue = "6")
+    @Parameter(name = "maxRounds", defaultValue = "5")
     public int maxRounds;
     @Parameter(name = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
