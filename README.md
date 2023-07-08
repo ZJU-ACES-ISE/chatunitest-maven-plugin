@@ -3,8 +3,7 @@
 [English](./README.md) | [中文](./Readme_zh.md)
 
 ## Updates:
-💥 We have recently added a multithreading feature to generate test cases more quickly!
-
+💥 We have recently added a multithreading feature to generate tests more quickly!
 
 ## Steps to run
 
