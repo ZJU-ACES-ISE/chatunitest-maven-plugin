@@ -2,6 +2,10 @@
 
 [English](./README.md) | [中文](./Readme_zh.md)
 
+## Updates:
+💥 We have recently added a multithreading feature to generate test cases more quickly!
+
+
 ## Steps to run
 
 ### 0. Add our plugin to `pom.xml` and config

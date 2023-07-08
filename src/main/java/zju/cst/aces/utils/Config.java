@@ -6,6 +6,7 @@ import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 
 import java.nio.file.Path;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Config {
 
@@ -34,6 +35,8 @@ public class Config {
 
     public static Path classMapPath;
 
+    public static ReentrantLock lock = new ReentrantLock();
+
     public static void setSession(MavenSession session) {
         Config.session = session;
     }
@@ -60,7 +63,7 @@ public class Config {
 
     public static void setMaxThreads(int maxThreads) {
         if (maxThreads == 0) {
-            Config.maxThreads = Runtime.getRuntime().availableProcessors() * 10;
+            Config.maxThreads = Runtime.getRuntime().availableProcessors() * 5;
         } else {
             Config.maxThreads = maxThreads;
         }

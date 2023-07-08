@@ -204,11 +204,11 @@ public class ProjectTestMojo
         parseOutput = parseOutput.replace("/", File.separator);
         Config.setClassMapPath(Paths.get(parseOutput, "class-map.json"));
         log = getLog();
-        classThreads = Config.maxThreads / 10;
-        methodThreads = Config.maxThreads / classThreads;
+        classThreads = (int) Math.ceil((double)  Config.maxThreads / 10);
+        methodThreads = (int) Math.ceil((double) Config.maxThreads / classThreads);
         log.info("\n==========================\n[ChatTester] Multithreading enabled >>>> " + Config.enableMultithreading);
         if (Config.stopWhenSuccess == false) {
-            methodThreads = methodThreads / Config.testNumber;
+            methodThreads = (int) Math.ceil((double)  methodThreads / Config.testNumber);
         }
         if (Config.enableMultithreading == true) {
             log.info("Class threads: " + classThreads + ", Method threads: " + methodThreads);

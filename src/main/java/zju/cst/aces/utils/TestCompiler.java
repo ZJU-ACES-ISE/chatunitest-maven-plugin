@@ -2,6 +2,7 @@ package zju.cst.aces.utils;
 
 import org.codehaus.plexus.util.FileUtils;
 import zju.cst.aces.ProjectTestMojo;
+import zju.cst.aces.runner.MethodRunner;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -15,23 +16,35 @@ public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
-    public boolean compileAndExport(File testFile, Path outputPath, PromptInfo promptInfo) {
-        log.debug("Running test " + testFile.getName() + "...");
-        if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
-            outputPath.toAbsolutePath().getParent().toFile().mkdirs();
-        }
-        String testFileName = testFile.getName().split("\\.")[0];
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        String mvn = Config.OS.contains("win") ? "mvn.cmd" : "mvn";
-        processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
-
-        log.debug("Running command: `"
-                + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "`");
-        // full output text
-        StringBuilder output = new StringBuilder();
-        List<String> errorMessage = new ArrayList<>();
-
+    public boolean compileAndExport(File file, Path outputPath, PromptInfo promptInfo) {
+//        log.info("Waiting for lock: " + file.getName() + "...");
+//        long startTime = System.nanoTime();
+        Config.lock.lock();
+        File testFile = null;
         try {
+//            long endTime = System.nanoTime();
+//            long duration = (endTime - startTime);  // 单位是纳秒
+//            log.warn("Get lock: " + file.getName() + " in " + duration / 1000000 + "ms");
+            testFile = copyFileToTest(file);
+            log.debug("Running test " + testFile.getName() + "...");
+            if (!testFile.exists()) {
+                log.error("Test file < " + testFile.getName() + " > not exists");
+                return false; // next round
+            }
+            if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
+                outputPath.toAbsolutePath().getParent().toFile().mkdirs();
+            }
+            String testFileName = testFile.getName().split("\\.")[0];
+            ProcessBuilder processBuilder = new ProcessBuilder();
+            String mvn = Config.OS.contains("win") ? "mvn.cmd" : "mvn";
+            processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
+
+            log.debug("Running command: `"
+                    + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "`");
+            // full output text
+            StringBuilder output = new StringBuilder();
+            List<String> errorMessage = new ArrayList<>();
+
             Process process = processBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
@@ -55,7 +68,10 @@ public class TestCompiler extends ProjectTestMojo {
 
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileAndExport: " + e);
+        } finally {
+            Config.lock.unlock();
         }
+        MethodRunner.removeTestFile(testFile);
         return false;
     }
 

@@ -104,19 +104,11 @@ public class MethodRunner extends ClassRunner {
             exportTest(code, savePath);
 
             TestCompiler compiler = new TestCompiler();
-            File testFile = compiler.copyFileToTest(savePath.toFile());
-
-            if (!testFile.exists()) {
-                log.error("Test file < " + testFile.getName() + " > not exists");
-                return false; // or continue?
-            }
-
-            if (compiler.compileAndExport(testFile,
+            if (compiler.compileAndExport(savePath.toFile(),
                     errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
                 log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 return true;
             } else {
-                removeTestFile(testFile);
                 removeTestFile(savePath.toFile());
                 log.info("Test for method < " + methodInfo.methodName + " > generated failed");
             }
@@ -127,8 +119,8 @@ public class MethodRunner extends ClassRunner {
     /**
      * Remove the failed test file
      */
-    private void removeTestFile(File testFile) {
-        if (testFile.exists()) {
+    public static void removeTestFile(File testFile) {
+        if (testFile != null && testFile.exists()) {
             testFile.delete();
         }
     }
