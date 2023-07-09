@@ -2,6 +2,8 @@
 
 [English](./README.md) | [中文](./Readme_zh.md)
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
+
 ## 更新
 💥 允许使用多线程更快地生成单元测试！
 
