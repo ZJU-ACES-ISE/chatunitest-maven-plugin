@@ -93,6 +93,8 @@ Essentially, the only thing you need to provide are your API keys.
 
 ### 2. Run
 
+**First, you need to download all necessary dependencies, which can be done by running `mvn compile` or `mvn install` command.**
+
 **You can run the plugin with the following command:**
 
 **Generate unit tests for the target method:**
