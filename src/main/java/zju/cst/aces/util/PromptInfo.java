@@ -1,4 +1,4 @@
-package zju.cst.aces.utils;
+package zju.cst.aces.util;
 
 import lombok.Data;
 
@@ -16,7 +16,7 @@ public class PromptInfo {
     public String info;
     public List<Map<String, String>> constructorDeps = new ArrayList<>();
     public List<Map<String, String>> methodDeps = new ArrayList<>();
-    public List<String> errorMsg = null;
+    public TestMessage errorMsg = null;
     public String unitTest = "";
 
     public PromptInfo(boolean hasDep, String className, String methodName,

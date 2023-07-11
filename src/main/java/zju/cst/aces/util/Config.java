@@ -1,10 +1,11 @@
-package zju.cst.aces.utils;
+package zju.cst.aces.util;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -14,6 +15,7 @@ public class Config {
     public static MavenSession session;
     public static MavenProject project;
     public static DependencyGraphBuilder dependencyGraphBuilder;
+    public static List<String> classPaths;
     public static boolean stopWhenSuccess;
     public static boolean enableMultithreading;
     public static int maxThreads;
@@ -32,7 +34,7 @@ public class Config {
     public static int presencePenalty;
     public static String[] apiKeys;
     public static String proxy;
-
+    public static String testOutput;
     public static Path classMapPath;
 
     public static ReentrantLock lock = new ReentrantLock();
@@ -47,6 +49,10 @@ public class Config {
 
     public static void setDependencyGraphBuilder(DependencyGraphBuilder dependencyGraphBuilder) {
         Config.dependencyGraphBuilder = dependencyGraphBuilder;
+    }
+
+    public static void setClassPaths(List<String> classPaths) {
+        Config.classPaths = classPaths;
     }
 
     public static void setApiKeys(String[] apiKeys) {
@@ -122,6 +128,10 @@ public class Config {
     }
 
     public static void setProxy(String proxy){Config.proxy=proxy;}
+
+    public static void setTestOutput(String testOutput) {
+        Config.testOutput = testOutput;
+    }
 
     public static void setClassMapPath(Path classMapPath) {
         Config.classMapPath = classMapPath;

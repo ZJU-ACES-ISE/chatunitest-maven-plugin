@@ -1,7 +1,7 @@
 package zju.cst.aces.runner;
 
 import okhttp3.Response;
-import zju.cst.aces.utils.*;
+import zju.cst.aces.util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,20 +97,23 @@ public class MethodRunner extends ClassRunner {
             code = changeTestName(code, className, testName);
             code = repairPackage(code, classInfo.packageDeclaration);
             code = addTimeout(code, testTimeOut);
-
-            promptInfo.setUnitTest(code);
-
+            promptInfo.setUnitTest(code); // Before repair imports
             code = repairImports(code, classInfo.imports);
-            exportTest(code, savePath);
 
             TestCompiler compiler = new TestCompiler();
-            if (compiler.compileAndExport(savePath.toFile(),
-                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
+            boolean compileResult = compiler.compileTest(testName, code,
+                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo);
+            if (!compileResult) {
+                log.info("Test for method < " + methodInfo.methodName + " > compilation failed");
+                continue;
+            }
+            exportTest(code, savePath);
+            if (compiler.runTest(savePath.toFile(), errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
                 log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 return true;
             } else {
                 removeTestFile(savePath.toFile());
-                log.info("Test for method < " + methodInfo.methodName + " > generated failed");
+                log.info("Test for method < " + methodInfo.methodName + " > run failed");
             }
         }
         return false;

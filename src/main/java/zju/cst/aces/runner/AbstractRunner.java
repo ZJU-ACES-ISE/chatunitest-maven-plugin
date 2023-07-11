@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
 import zju.cst.aces.ProjectTestMojo;
-import zju.cst.aces.utils.*;
+import zju.cst.aces.util.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -69,7 +69,17 @@ public class AbstractRunner extends ProjectTestMojo {
                     + TokenCounter.countToken(promptInfo.info);
             ErrorProcesser errorProcesser = new ErrorProcesser();
             int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
-            String processedErrorMsg = errorProcesser.processErrorMessage(promptInfo.errorMsg, allowedTokens);
+            TestMessage errorMsg = promptInfo.errorMsg;
+            String processedErrorMsg = "";
+            if (errorMsg.getErrorType() == TestMessage.ErrorType.COMPILE_ERROR) {
+                for (String error : errorMsg.getErrorMessage()) {
+                    if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
+                        processedErrorMsg += error + "\n";
+                    }
+                }
+            } else { // mvn test command error
+                processedErrorMsg = errorProcesser.processErrorMessage(promptInfo.errorMsg.getErrorMessage(), allowedTokens);
+            }
             log.debug("Allowed tokens: " + allowedTokens);
             log.debug("Processed error message: \n" + processedErrorMsg);
 

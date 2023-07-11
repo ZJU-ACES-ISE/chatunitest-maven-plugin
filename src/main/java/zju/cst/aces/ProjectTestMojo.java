@@ -29,8 +29,8 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
-import zju.cst.aces.utils.Config;
-import zju.cst.aces.utils.TestCompiler;
+import zju.cst.aces.util.Config;
+import zju.cst.aces.util.TestCompiler;
 
 import java.io.File;
 import java.io.IOException;
@@ -185,6 +185,7 @@ public class ProjectTestMojo
         Config.setSession(session);
         Config.setProject(project);
         Config.setDependencyGraphBuilder(dependencyGraphBuilder);
+        Config.setClassPaths(TestCompiler.listClassPaths());
         Config.setApiKeys(apiKeys);
         Config.setModel(model);
         Config.setStopWhenSuccess(stopWhenSuccess);
@@ -198,6 +199,7 @@ public class ProjectTestMojo
         Config.setTopP(topP);
         Config.setFrequencyPenalty(frequencyPenalty);
         Config.setPresencePenalty(presencePenalty);
+        Config.setTestOutput(testOutput);
         Config.setProxy(proxy);
         tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getArtifactId()));
         parseOutput = tmpOutput + File.separator + "class-info";

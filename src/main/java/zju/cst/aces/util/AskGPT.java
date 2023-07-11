@@ -1,4 +1,4 @@
-package zju.cst.aces.utils;
+package zju.cst.aces.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,7 +55,7 @@ public class AskGPT extends ProjectTestMojo {
                 return response;
 
             } catch (IOException e) {
-                System.out.println("In AskGPT.askChatGPT: " + e);
+                log.error("In AskGPT.askChatGPT: " + e);
                 if (e.getMessage().contains("maximum context length is ")) {
                     break;
                 }

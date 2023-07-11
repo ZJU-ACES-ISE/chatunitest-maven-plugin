@@ -2,7 +2,7 @@ package zju.cst.aces.parser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import zju.cst.aces.utils.Config;
+import zju.cst.aces.util.Config;
 
 import java.io.File;
 import java.io.FileOutputStream;

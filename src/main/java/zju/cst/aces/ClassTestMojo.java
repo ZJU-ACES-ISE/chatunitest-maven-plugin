@@ -21,7 +21,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
-import zju.cst.aces.utils.TestCompiler;
+import zju.cst.aces.util.TestCompiler;
 
 import java.io.File;
 import java.io.IOException;

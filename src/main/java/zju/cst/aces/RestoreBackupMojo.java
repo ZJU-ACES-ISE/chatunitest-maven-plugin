@@ -18,7 +18,7 @@ package zju.cst.aces;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import zju.cst.aces.utils.TestCompiler;
+import zju.cst.aces.util.TestCompiler;
 
 /**
  * @author chenyi

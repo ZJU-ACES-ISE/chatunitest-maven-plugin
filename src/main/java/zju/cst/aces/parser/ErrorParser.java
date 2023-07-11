@@ -1,6 +1,6 @@
 package zju.cst.aces.parser;
 
-import zju.cst.aces.utils.TestMessage;
+import zju.cst.aces.util.TestMessage;
 
 import java.io.IOException;
 import java.util.ArrayList;

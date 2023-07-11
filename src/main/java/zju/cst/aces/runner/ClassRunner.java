@@ -1,10 +1,10 @@
 package zju.cst.aces.runner;
 
 import zju.cst.aces.parser.ClassParser;
-import zju.cst.aces.utils.ClassInfo;
-import zju.cst.aces.utils.Config;
-import zju.cst.aces.utils.MethodInfo;
-import zju.cst.aces.utils.PromptInfo;
+import zju.cst.aces.util.ClassInfo;
+import zju.cst.aces.util.Config;
+import zju.cst.aces.util.MethodInfo;
+import zju.cst.aces.util.PromptInfo;
 
 import java.io.File;
 import java.io.IOException;

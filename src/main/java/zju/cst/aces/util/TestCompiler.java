@@ -1,30 +1,30 @@
-package zju.cst.aces.utils;
+package zju.cst.aces.util;
 
+import org.apache.maven.project.DefaultProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.FileUtils;
 import zju.cst.aces.ProjectTestMojo;
+import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.runner.MethodRunner;
 
+import javax.tools.*;
 import java.io.*;
+import java.net.URI;
+import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
-    public boolean compileAndExport(File file, Path outputPath, PromptInfo promptInfo) {
-//        log.info("Waiting for lock: " + file.getName() + "...");
-//        long startTime = System.nanoTime();
-        Config.lock.lock();
+    public boolean runTest(File file, Path outputPath, PromptInfo promptInfo) {
         File testFile = null;
         try {
-//            long endTime = System.nanoTime();
-//            long duration = (endTime - startTime);  // 单位是纳秒
-//            log.warn("Get lock: " + file.getName() + " in " + duration / 1000000 + "ms");
             testFile = copyFileToTest(file);
             log.debug("Running test " + testFile.getName() + "...");
             if (!testFile.exists()) {
@@ -64,15 +64,84 @@ public class TestCompiler extends ProjectTestMojo {
             writer.write(output.toString()); // store the original output
             writer.close();
 
-            promptInfo.setErrorMsg(errorMessage);
+            TestMessage testMessage = new TestMessage();
+            testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
+            testMessage.setErrorMessage(errorMessage);
+            promptInfo.setErrorMsg(testMessage);
 
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileAndExport: " + e);
-        } finally {
-            Config.lock.unlock();
         }
         MethodRunner.removeTestFile(testFile);
         return false;
+    }
+
+    /**
+     * Compile test file
+     */
+    public boolean compileTest(String className, String code, Path outputPath, PromptInfo promptInfo) {
+        boolean result;
+        try {
+            if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
+                outputPath.toAbsolutePath().getParent().toFile().mkdirs();
+            }
+            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+            StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+
+            SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
+                    JavaFileObject.Kind.SOURCE){
+                public CharBuffer getCharContent(boolean b) {
+                    return CharBuffer.wrap(code);
+                }
+            };
+
+            Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
+            Iterable<String> options = Arrays.asList("-classpath", String.join(":", Config.classPaths),
+                    "-d", outputPath.getParent().toString());
+
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+
+            result = task.call();
+            if (!result) {
+                TestMessage testMessage = new TestMessage();
+                List<String> errors = new ArrayList<>();
+                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+                    errors.add("Error on line " + diagnostic.getLineNumber() +
+                            " : " + diagnostic.getMessage(null));
+                }
+                testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
+                testMessage.setErrorMessage(errors);
+                promptInfo.setErrorMsg(testMessage);
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
+                writer.write(errors.toString()); // store the full output
+                writer.close();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("In TestCompiler.compile: " + e);
+        }
+        return result;
+    }
+
+    public static List<String> listClassPaths() {
+        List<String> classPaths = new ArrayList<>();
+        classPaths.add(Paths.get(Config.project.getBasedir().getAbsolutePath(),"target", "classes").toString());
+        try {
+            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(Config.session.getProjectBuildingRequest() );
+            buildingRequest.setProject(Config.project);
+            DependencyNode root = Config.dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
+            Set<DependencyNode> depSet = new HashSet<>();
+            ClassParser.walkDep(root, depSet);
+            for (DependencyNode dep : depSet) {
+                if (dep.getArtifact().getFile() != null) {
+                    classPaths.add(dep.getArtifact().getFile().getAbsolutePath());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return classPaths;
     }
 
     /**
@@ -98,7 +167,7 @@ public class TestCompiler extends ProjectTestMojo {
      */
     public File copyFileToTest(File file) {
         Path sourceFile = file.toPath();
-        String splitString = Config.OS.contains("win") ? "chatunitest-tests\\\\" : "chatunitest-tests/";
+        String splitString = Config.OS.contains("win") ? Config.testOutput + "\\\\" : Config.testOutput + "/";
         String pathWithParent = sourceFile.toAbsolutePath().toString().split(splitString)[1];
         Path targetPath = srcTestFolder.toPath().resolve(pathWithParent);
         log.debug("In TestCompiler.copyFileToTest: file " + file.getName() + " target path" + targetPath);

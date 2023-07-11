@@ -1,4 +1,4 @@
-package zju.cst.aces.utils;
+package zju.cst.aces.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

@@ -23,9 +23,9 @@ import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.jetbrains.annotations.NotNull;
-import zju.cst.aces.utils.ClassInfo;
-import zju.cst.aces.utils.Config;
-import zju.cst.aces.utils.MethodInfo;
+import zju.cst.aces.util.ClassInfo;
+import zju.cst.aces.util.Config;
+import zju.cst.aces.util.MethodInfo;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -84,7 +84,7 @@ public class ClassParser {
         return symbolSolver;
     }
 
-    private static void walkDep(DependencyNode node, Set<DependencyNode> depSet) {
+    public static void walkDep(DependencyNode node, Set<DependencyNode> depSet) {
         depSet.add(node);
         for (DependencyNode dep : node.getChildren()) {
             walkDep(dep, depSet);

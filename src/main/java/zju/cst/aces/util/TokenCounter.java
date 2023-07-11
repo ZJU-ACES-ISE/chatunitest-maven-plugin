@@ -1,4 +1,4 @@
-package zju.cst.aces.utils;
+package zju.cst.aces.util;
 
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.Encoding;
