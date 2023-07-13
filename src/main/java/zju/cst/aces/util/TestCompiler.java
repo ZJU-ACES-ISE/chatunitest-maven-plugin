@@ -4,77 +4,94 @@ import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.FileUtils;
+import org.junit.platform.engine.TestEngine;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherConfig;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import zju.cst.aces.ProjectTestMojo;
 import zju.cst.aces.parser.ClassParser;
-import zju.cst.aces.runner.MethodRunner;
 
 import javax.tools.*;
 import java.io.*;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
-    //TODO: Delete backup folder and restore folder process after remove mvn test command.
-    public boolean runTest(File file, Path outputPath, PromptInfo promptInfo) {
-        File testFile = null;
+    public boolean executeTest(String fullTestName, Path outputPath, PromptInfo promptInfo) {
+        File file = outputPath.toAbsolutePath().getParent().toFile();
         try {
-            testFile = copyFileToTest(file);
-            log.debug("Running test " + testFile.getName() + "...");
-            if (!testFile.exists()) {
-                log.error("Test file < " + testFile.getName() + " > not exists");
-                return false; // next round
+            List<String> classpathElements = new ArrayList<>();
+            classpathElements.addAll(Config.classPaths);
+            List<URL> urls = new ArrayList<>();
+            for (String classpath : classpathElements) {
+                URL url = new File(classpath).toURI().toURL();
+                urls.add(url);
             }
-            if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
-                outputPath.toAbsolutePath().getParent().toFile().mkdirs();
+            urls.add(file.toURI().toURL());
+            ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
+
+            // Use the ServiceLoader API to load TestEngine implementations
+            ServiceLoader<TestEngine> testEngineServiceLoader = ServiceLoader.load(TestEngine.class, classLoader);
+
+            // Create a LauncherConfig with the TestEngines from the ServiceLoader
+            LauncherConfig launcherConfig = LauncherConfig.builder()
+                    .enableTestEngineAutoRegistration(false)
+                    .enableTestExecutionListenerAutoRegistration(false)
+                    .addTestEngines(testEngineServiceLoader.findFirst().orElseThrow())
+                    .build();
+
+            Launcher launcher = LauncherFactory.create(launcherConfig);
+
+            // Register a listener to collect test execution results.
+            SummaryGeneratingListener listener = new SummaryGeneratingListener();
+            launcher.registerTestExecutionListeners(listener);
+
+            LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                    .selectors(selectClass(classLoader.loadClass(fullTestName)))
+                    .build();
+            launcher.execute(request);
+
+            TestExecutionSummary summary = listener.getSummary();
+            if (summary.getTestsFailedCount() > 0) {
+                TestMessage testMessage = new TestMessage();
+                List<String> errors = new ArrayList<>();
+                summary.getFailures().forEach(failure -> {
+                    for (StackTraceElement st : failure.getException().getStackTrace()) {
+                        if (st.getClassName().equals(fullTestName)) {
+                            errors.add(failure.getTestIdentifier().getDisplayName() + ": "
+                                    + " line: "  + st.getLineNumber() + " "
+                                    + failure.getException().toString());
+                        }
+                    }
+                });
+                testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
+                testMessage.setErrorMessage(errors);
+                promptInfo.setErrorMsg(testMessage);
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
+                writer.write(errors.toString()); // store the full output
+                writer.close();
             }
-            String testFileName = testFile.getName().split("\\.")[0];
-            ProcessBuilder processBuilder = new ProcessBuilder();
-            String mvn = Config.OS.contains("win") ? "mvn.cmd" : "mvn";
-            processBuilder.command(Arrays.asList(mvn, "test", "-Dtest=" + getPackage(testFile) + testFileName));
-
-            log.debug("Running command: `"
-                    + mvn + "test -Dtest=" + getPackage(testFile) + testFileName + "`");
-            // full output text
-            StringBuilder output = new StringBuilder();
-            List<String> errorMessage = new ArrayList<>();
-
-            Process process = processBuilder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log.debug(line);
-                output.append(line).append("\n");
-                errorMessage.add(line);
-                if (line.contains("BUILD SUCCESS")){
-                    return true;
-                }
-                if (line.contains("[Help")){
-                    break;
-                }
-            }
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
-            writer.write(output.toString()); // store the original output
-            writer.close();
-
-            TestMessage testMessage = new TestMessage();
-            testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
-            testMessage.setErrorMessage(errorMessage);
-            promptInfo.setErrorMsg(testMessage);
-
+            summary.printTo(new PrintWriter(System.out));
+            return summary.getTestsFailedCount() == 0;
         } catch (Exception e) {
-            throw new RuntimeException("In TestCompiler.compileAndExport: " + e);
+            throw new RuntimeException("In TestCompiler.executeTest: " + e);
         }
-        MethodRunner.removeTestFile(testFile);
-        return false;
     }
 
     /**
@@ -98,7 +115,7 @@ public class TestCompiler extends ProjectTestMojo {
 
             Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
             Iterable<String> options = Arrays.asList("-classpath", String.join(Config.OS.contains("win") ? ";" : ":", Config.classPaths),
-                    "-d", outputPath.getParent().toString());
+                    "-d", outputPath.toAbsolutePath().getParent().toString());
 
             DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
             JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
@@ -107,28 +124,29 @@ public class TestCompiler extends ProjectTestMojo {
             if (!result) {
                 TestMessage testMessage = new TestMessage();
                 List<String> errors = new ArrayList<>();
-                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+                diagnostics.getDiagnostics().forEach(diagnostic -> {
                     errors.add("Error on line " + diagnostic.getLineNumber() +
                             " : " + diagnostic.getMessage(null));
-                }
+                });
                 testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
                 testMessage.setErrorMessage(errors);
                 promptInfo.setErrorMsg(testMessage);
 
                 BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
+                writer.write(code);
                 writer.write(errors.toString()); // store the full output
                 writer.close();
             }
         } catch (Exception e) {
-            throw new RuntimeException("In TestCompiler.compile: " + e);
+            throw new RuntimeException("In TestCompiler.compileTest: " + e);
         }
         return result;
     }
 
     public static List<String> listClassPaths() {
         List<String> classPaths = new ArrayList<>();
-        classPaths.add(Paths.get(Config.project.getBasedir().getAbsolutePath(),"target", "classes").toString());
         try {
+            classPaths.addAll(Config.project.getCompileClasspathElements());
             ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(Config.session.getProjectBuildingRequest() );
             buildingRequest.setProject(Config.project);
             DependencyNode root = Config.dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
@@ -143,24 +161,6 @@ public class TestCompiler extends ProjectTestMojo {
             System.out.println(e);
         }
         return classPaths;
-    }
-
-    /**
-     * Read the first line of the test file to get the package declaration
-     */
-    public static String getPackage(File testFile) {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(testFile));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("package")) {
-                    return line.split("package")[1].split(";")[0].trim() + ".";
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("In TestCompiler.getPackage: " + e);
-        }
-        return "";
     }
 
     /**
@@ -185,14 +185,15 @@ public class TestCompiler extends ProjectTestMojo {
     /**
      * Move the src/test/java folder to a backup folder
      */
-    public static void backupTestFolder() {
+    public static void copyAndBackupTestFolder() {
         restoreTestFolder();
         if (srcTestFolder.exists()) {
             try {
                 FileUtils.copyDirectoryStructure(srcTestFolder, backupFolder);
                 FileUtils.deleteDirectory(srcTestFolder);
+                FileUtils.copyDirectoryStructure(new File(Config.testOutput), srcTestFolder);
             } catch (IOException e) {
-                throw new RuntimeException("In TestCompiler.backupTestFolder: " + e);
+                throw new RuntimeException("In TestCompiler.copyAndBackupTestFolder: " + e);
             }
         }
     }

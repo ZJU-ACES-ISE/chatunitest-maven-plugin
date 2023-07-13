@@ -21,7 +21,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
-import zju.cst.aces.util.TestCompiler;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,13 +59,11 @@ public class ClassTestMojo
         }
 
         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-        TestCompiler.backupTestFolder();
         try {
             new ClassRunner(getFullClassName(className), parseOutput, testOutput).start();
         } catch (IOException e) {
             throw new RuntimeException("In ClassTestMojo.execute: " + e);
         }
-//        TestCompiler.restoreTestFolder();
 
         log.info("\n==========================\n[ChatTester] Generation finished");
     }

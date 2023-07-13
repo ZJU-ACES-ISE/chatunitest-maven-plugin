@@ -71,7 +71,8 @@ public class AbstractRunner extends ProjectTestMojo {
             int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
             TestMessage errorMsg = promptInfo.errorMsg;
             String processedErrorMsg = "";
-            if (errorMsg.getErrorType() == TestMessage.ErrorType.COMPILE_ERROR) {
+            // TODO: remove if else stmt
+            if (errorMsg.getErrorType() == TestMessage.ErrorType.COMPILE_ERROR || errorMsg.getErrorType() == TestMessage.ErrorType.RUNTIME_ERROR) {
                 for (String error : errorMsg.getErrorMessage()) {
                     if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
                         processedErrorMsg += error + "\n";

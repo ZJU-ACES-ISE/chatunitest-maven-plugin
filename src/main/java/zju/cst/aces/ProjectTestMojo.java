@@ -121,7 +121,6 @@ public class ProjectTestMojo
         List<String> classPaths = new ArrayList<>();
         parser.scanSourceDirectory(srcMainJavaPath.toFile(), classPaths);
 
-        TestCompiler.backupTestFolder();
         if (Config.enableMultithreading == true) {
             classJob(classPaths);
         } else {
@@ -136,7 +135,6 @@ public class ProjectTestMojo
                 }
             }
         }
-//        TestCompiler.restoreTestFolder();
 
         log.info("\n==========================\n[ChatTester] Generation finished");
     }

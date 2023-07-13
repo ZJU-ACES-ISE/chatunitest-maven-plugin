@@ -24,7 +24,6 @@ import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
 import zju.cst.aces.util.ClassInfo;
 import zju.cst.aces.util.MethodInfo;
-import zju.cst.aces.util.TestCompiler;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +66,6 @@ public class MethodTestMojo
         log.info("\n==========================\n[ChatTester] Generating tests for class: < " + className
                 + "> method: < " + methodName + " > ...");
 
-        TestCompiler.backupTestFolder();
         try {
             String fullClassName = getFullClassName(className);
             ClassRunner classRunner = new ClassRunner(fullClassName, parseOutput, testOutput);
@@ -87,7 +85,6 @@ public class MethodTestMojo
         } catch (IOException e) {
             throw new RuntimeException("In MethodTestMojo.execute: " + e);
         }
-//        TestCompiler.restoreTestFolder();
 
         log.info("\n==========================\n[ChatTester] Generation finished");
     }

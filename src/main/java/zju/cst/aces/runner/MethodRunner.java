@@ -65,6 +65,8 @@ public class MethodRunner extends ClassRunner {
         PromptInfo promptInfo = null;
         String testName = className + separator + methodInfo.methodName + separator
                 + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
+        String fullTestName = fullClassName + separator + methodInfo.methodName + separator
+                + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         log.info("\n==========================\n[ChatTester] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
         for (int rounds = 1; rounds <= Config.maxRounds; rounds++) {
@@ -83,11 +85,7 @@ public class MethodRunner extends ClassRunner {
 
             AskGPT askGPT = new AskGPT();
             Response response = askGPT.askChatGPT(prompt);
-            Path savePath = testOutputPath.resolve(classInfo.packageDeclaration
-                            .replace(".", File.separator)
-                            .replace("package ", "")
-                            .replace(";", ""))
-                    .resolve(testName + ".java");
+            Path savePath = testOutputPath.resolve(fullTestName.replace(".", File.separator) + ".java");
 
             String code = parseResponse(response);
             if (code.isEmpty()) {
@@ -102,18 +100,17 @@ public class MethodRunner extends ClassRunner {
 
             TestCompiler compiler = new TestCompiler();
             boolean compileResult = compiler.compileTest(testName, code,
-                    errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo);
+                    errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt"), promptInfo);
             if (!compileResult) {
                 log.info("Test for method < " + methodInfo.methodName + " > compilation failed");
                 continue;
             }
-            exportTest(code, savePath);
-            if (compiler.runTest(savePath.toFile(), errorOutputPath.resolve(testName + "CompilationError_" + rounds + ".txt"), promptInfo)) {
+            if (compiler.executeTest(fullTestName, errorOutputPath.resolve(testName + "_ExecutionError_" + rounds + ".txt"), promptInfo)) {
+                exportTest(code, savePath);
                 log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 return true;
             } else {
-                removeTestFile(savePath.toFile());
-                log.info("Test for method < " + methodInfo.methodName + " > run failed");
+                log.warn("Test for method < " + methodInfo.methodName + " > execution failed");
             }
         }
         return false;
