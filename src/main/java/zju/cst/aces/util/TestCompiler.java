@@ -22,6 +22,7 @@ public class TestCompiler extends ProjectTestMojo {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
 
+    //TODO: Delete backup folder and restore folder process after remove mvn test command.
     public boolean runTest(File file, Path outputPath, PromptInfo promptInfo) {
         File testFile = null;
         try {
@@ -96,7 +97,7 @@ public class TestCompiler extends ProjectTestMojo {
             };
 
             Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
-            Iterable<String> options = Arrays.asList("-classpath", String.join(":", Config.classPaths),
+            Iterable<String> options = Arrays.asList("-classpath", String.join(Config.OS.contains("win") ? ";" : ":", Config.classPaths),
                     "-d", outputPath.getParent().toString());
 
             DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
