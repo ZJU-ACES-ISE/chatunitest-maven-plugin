@@ -67,19 +67,13 @@ public class AbstractRunner extends ProjectTestMojo {
                     + TokenCounter.countToken(promptInfo.methodSignature)
                     + TokenCounter.countToken(promptInfo.className)
                     + TokenCounter.countToken(promptInfo.info);
-            ErrorProcesser errorProcesser = new ErrorProcesser();
             int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
             TestMessage errorMsg = promptInfo.errorMsg;
             String processedErrorMsg = "";
-            // TODO: remove if else stmt
-            if (errorMsg.getErrorType() == TestMessage.ErrorType.COMPILE_ERROR || errorMsg.getErrorType() == TestMessage.ErrorType.RUNTIME_ERROR) {
-                for (String error : errorMsg.getErrorMessage()) {
-                    if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
-                        processedErrorMsg += error + "\n";
-                    }
+            for (String error : errorMsg.getErrorMessage()) {
+                if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
+                    processedErrorMsg += error + "\n";
                 }
-            } else { // mvn test command error
-                processedErrorMsg = errorProcesser.processErrorMessage(promptInfo.errorMsg.getErrorMessage(), allowedTokens);
             }
             log.debug("Allowed tokens: " + allowedTokens);
             log.debug("Processed error message: \n" + processedErrorMsg);

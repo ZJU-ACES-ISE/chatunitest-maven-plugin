@@ -87,7 +87,6 @@ public class ProjectTestMojo
     public int presencePenalty;
     @Parameter(name = "proxy",defaultValue = "null:-1")
     public String proxy;
-
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;

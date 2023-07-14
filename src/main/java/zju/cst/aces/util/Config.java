@@ -1,12 +1,16 @@
 package zju.cst.aces.util;
 
+import okhttp3.OkHttpClient;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Config {
@@ -34,6 +38,9 @@ public class Config {
     public static int presencePenalty;
     public static String[] apiKeys;
     public static String proxy;
+    public static String hostname;
+    public static String port;
+    public static  OkHttpClient client;
     public static String testOutput;
     public static Path classMapPath;
 
@@ -127,7 +134,38 @@ public class Config {
         Config.presencePenalty = presencePenalty;
     }
 
-    public static void setProxy(String proxy){Config.proxy=proxy;}
+    public static void setProxy(String proxy){
+        Config.proxy=proxy;
+        setProxyStr();
+        if(!hostname.equals("null") && !port.equals("-1")){
+            setClinetwithProxy();
+        }else {
+            setClinet();
+        }
+    }
+
+    public static void setProxyStr(){
+        hostname=Config.proxy.split(":")[0];
+        port=Config.proxy.split(":")[1];
+    }
+
+    public static void setClinet(){
+        Config.client=new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .build();
+    }
+
+    public static void setClinetwithProxy(){
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(hostname, Integer.parseInt(port)));
+        Config.client=new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .writeTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .proxy(proxy)//自定义代理
+                .build();
+    }
 
     public static void setTestOutput(String testOutput) {
         Config.testOutput = testOutput;

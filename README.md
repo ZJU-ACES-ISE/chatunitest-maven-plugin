@@ -50,45 +50,15 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 
 Essentially, the only thing you need to provide are your API keys.
 
-### 1. Add following dependencies to pom.xml
+### 1. Add the following dependency to pom.xml
 
 ```xml
-
-<dependencies>
-    <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <version>5.8.2</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>3.12.4</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-junit-jupiter</artifactId>
-        <version>3.12.4</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-inline</artifactId>
-        <version>3.12.4</version>
-        <scope>test</scope>
-    </dependency>
-</dependencies>
-```
-
-```xml
-
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-surefire-plugin</artifactId>
-    <version>3.1.0</version>
-</plugin>
+<dependency>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <artifactId>chatunitest-starter</artifactId>
+    <version>1.0.0</version>
+    <type>pom</type>
+</dependency>
 ```
 
 ### 2. Run
