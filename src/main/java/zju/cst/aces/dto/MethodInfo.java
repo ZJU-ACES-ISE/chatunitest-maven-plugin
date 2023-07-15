@@ -1,4 +1,4 @@
-package zju.cst.aces.util;
+package zju.cst.aces.dto;
 
 import java.util.List;
 import java.util.Map;

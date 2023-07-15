@@ -23,9 +23,9 @@ import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.jetbrains.annotations.NotNull;
-import zju.cst.aces.util.ClassInfo;
+import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.util.Config;
-import zju.cst.aces.util.MethodInfo;
+import zju.cst.aces.dto.MethodInfo;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -1,6 +1,9 @@
 package zju.cst.aces.runner;
 
 import okhttp3.Response;
+import zju.cst.aces.dto.Message;
+import zju.cst.aces.dto.MethodInfo;
+import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.util.*;
 
 import java.io.File;
@@ -114,14 +117,5 @@ public class MethodRunner extends ClassRunner {
             }
         }
         return false;
-    }
-
-    /**
-     * Remove the failed test file
-     */
-    public static void removeTestFile(File testFile) {
-        if (testFile != null && testFile.exists()) {
-            testFile.delete();
-        }
     }
 }

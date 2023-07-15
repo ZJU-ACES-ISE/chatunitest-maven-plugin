@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.*;
 import zju.cst.aces.ProjectTestMojo;
+import zju.cst.aces.dto.Message;
 
 import java.io.IOException;
 import java.util.HashMap;

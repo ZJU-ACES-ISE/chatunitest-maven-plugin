@@ -13,6 +13,8 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import zju.cst.aces.ProjectTestMojo;
+import zju.cst.aces.dto.PromptInfo;
+import zju.cst.aces.dto.TestMessage;
 import zju.cst.aces.parser.ClassParser;
 
 import javax.tools.*;
@@ -21,9 +23,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.CharBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
@@ -163,24 +163,6 @@ public class TestCompiler extends ProjectTestMojo {
         return classPaths;
     }
 
-    /**
-     * Copy test file to src/test/java folder with the same directory structure
-     */
-    public File copyFileToTest(File file) {
-        Path sourceFile = file.toPath();
-        String splitString = Config.OS.contains("win") ? Config.testOutput + "\\\\" : Config.testOutput + "/";
-        String pathWithParent = sourceFile.toAbsolutePath().toString().split(splitString)[1];
-        Path targetPath = srcTestFolder.toPath().resolve(pathWithParent);
-        log.debug("In TestCompiler.copyFileToTest: file " + file.getName() + " target path" + targetPath);
-        try {
-            Files.createDirectories(targetPath.getParent());
-            Files.copy(sourceFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-        } catch (IOException e) {
-            log.error("In TestCompiler.copyFileToTest: " + e);
-        }
-        return targetPath.toFile();
-    }
 
     /**
      * Move the src/test/java folder to a backup folder
