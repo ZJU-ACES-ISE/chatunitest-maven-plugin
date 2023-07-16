@@ -19,13 +19,12 @@ package zju.cst.aces;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import zju.cst.aces.dto.ClassInfo;
+import zju.cst.aces.dto.MethodInfo;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
-import zju.cst.aces.dto.ClassInfo;
-import zju.cst.aces.dto.MethodInfo;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,9 +55,9 @@ public class MethodTestMojo
             return;
         }
 
-        ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
-        if (! (new File(parseOutput).exists())) {
+        if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
+            ProjectParser parser = new ProjectParser(config);
             parser.parse();
             log.info("\n==========================\n[ChatTester] Parse finished");
         }
@@ -68,7 +67,7 @@ public class MethodTestMojo
 
         try {
             String fullClassName = getFullClassName(className);
-            ClassRunner classRunner = new ClassRunner(fullClassName, parseOutput, testOutput);
+            ClassRunner classRunner = new ClassRunner(fullClassName, config);
             ClassInfo classInfo = classRunner.classInfo;
             MethodInfo methodInfo = null;
             for (String mSig : classInfo.methodSignatures.keySet()) {
@@ -80,7 +79,7 @@ public class MethodTestMojo
             if (methodInfo == null) {
                 throw new RuntimeException("Method " + methodName + " in class " + fullClassName + " not found");
             }
-            new MethodRunner(fullClassName, parseOutput, testOutput, methodInfo).start();
+            new MethodRunner(fullClassName, config, methodInfo).start();
 
         } catch (IOException e) {
             throw new RuntimeException("In MethodTestMojo.execute: " + e);

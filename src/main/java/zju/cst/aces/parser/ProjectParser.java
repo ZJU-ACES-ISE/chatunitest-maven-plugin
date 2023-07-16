@@ -1,8 +1,17 @@
 package zju.cst.aces.parser;
 
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import zju.cst.aces.util.Config;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.shared.dependency.graph.DependencyNode;
+import zju.cst.aces.config.Config;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,21 +21,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProjectParser {
 
-    private String srcFolderPath;
-    private String outputPath;
+    public static final JavaParser parser = new JavaParser();
+    public Path srcFolderPath;
+    public Path outputPath;
     public Map<String, List<String>> classMap = new HashMap<>();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    public static Config config;
 
-    public ProjectParser(String src, String output) {
-        setSrcFolderPath(src);
-        setOutputPath(output);
+    public ProjectParser(Config config) {
+        this.srcFolderPath = Paths.get(config.getProject().getBasedir().getAbsolutePath(), "src", "main", "java");
+        this.config = config;
+        this.outputPath = config.getParseOutput();
+        JavaSymbolSolver symbolSolver = getSymbolSolver();
+        parser.getParserConfiguration().setSymbolResolver(symbolSolver);
     }
 
     /**
@@ -34,16 +45,16 @@ public class ProjectParser {
      */
     public void parse() {
         List<String> classPaths = new ArrayList<>();
-        scanSourceDirectory(new File(srcFolderPath), classPaths);
+        scanSourceDirectory(srcFolderPath.toFile(), classPaths);
         if (classPaths.isEmpty()) {
             throw new RuntimeException("No java file found in " + srcFolderPath);
         }
         for (String classPath : classPaths) {
             try {
                 addClassMap(classPath);
-                String packagePath = classPath.substring(srcFolderPath.length() + 1);
-                Path output = Paths.get(outputPath, packagePath).getParent();
-                ClassParser classParser = new ClassParser(output);
+                String packagePath = classPath.substring(srcFolderPath.toString().length() + 1);
+                Path output = outputPath.resolve(packagePath).getParent();
+                ClassParser classParser = new ClassParser(parser, output);
                 classParser.extractClass(classPath);
             } catch (Exception e) {
                 throw new RuntimeException("In ProjectParser.parse: " + e);
@@ -53,7 +64,7 @@ public class ProjectParser {
     }
 
     public void addClassMap(String classPath) {
-        String fullClassName = classPath.substring(srcFolderPath.length() + 1)
+        String fullClassName = classPath.substring(srcFolderPath.toString().length() + 1)
                 .replace(".java", "")
                 .replace(File.separator, ".");
 
@@ -68,7 +79,7 @@ public class ProjectParser {
     }
 
     public void exportClassMap() {
-        Path classMapPath = Config.classMapPath;
+        Path classMapPath = config.getClassMapPath();
         if (!Files.exists(classMapPath.getParent())) {
             try {
                 Files.createDirectories(classMapPath.getParent());
@@ -99,11 +110,42 @@ public class ProjectParser {
         }
     }
 
-    public void setSrcFolderPath(String src) {
-        this.srcFolderPath = src;
+    private JavaSymbolSolver getSymbolSolver() {
+        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+        combinedTypeSolver.add(new ReflectionTypeSolver());
+        try {
+            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(config.getSession().getProjectBuildingRequest() );
+            buildingRequest.setProject(config.getProject());
+            DependencyNode root = config.getDependencyGraphBuilder().buildDependencyGraph(buildingRequest, null);
+            Set<DependencyNode> depSet = new HashSet<>();
+            walkDep(root, depSet);
+            for (DependencyNode dep : depSet) {
+                try {
+                    if (dep.getArtifact().getFile() != null) {
+                        combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
+                    }
+                } catch (Exception e) {
+                    config.getLog().warn(e.getMessage());
+                    config.getLog().debug(e);
+                }
+            }
+        } catch (Exception e) {
+            config.getLog().warn(e.getMessage());
+            config.getLog().debug(e);
+        }
+        for (String src : config.getProject().getCompileSourceRoots()) {
+            if (new File(src).exists()) {
+                combinedTypeSolver.add(new JavaParserTypeSolver(src));
+            }
+        }
+        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
+        return symbolSolver;
     }
 
-    public void setOutputPath(String output) {
-        this.outputPath = output;
+    public static void walkDep(DependencyNode node, Set<DependencyNode> depSet) {
+        depSet.add(node);
+        for (DependencyNode dep : node.getChildren()) {
+            walkDep(dep, depSet);
+        }
     }
 }

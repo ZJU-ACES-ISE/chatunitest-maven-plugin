@@ -1,6 +1,7 @@
 package zju.cst.aces.runner;
 
 import okhttp3.Response;
+import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.Message;
 import zju.cst.aces.dto.MethodInfo;
 import zju.cst.aces.dto.PromptInfo;
@@ -17,17 +18,17 @@ public class MethodRunner extends ClassRunner {
 
     public MethodInfo methodInfo;
 
-    public MethodRunner(String fullClassName, String parsePath, String testOutputPath, MethodInfo methodInfo) throws IOException {
-        super(fullClassName, parsePath, testOutputPath);
+    public MethodRunner(String fullClassName, Config config, MethodInfo methodInfo) throws IOException {
+        super(fullClassName, config);
         this.methodInfo = methodInfo;
     }
 
     @Override
     public void start() throws IOException {
-        if (Config.stopWhenSuccess == false && Config.enableMultithreading == true) {
-            ExecutorService executor = Executors.newFixedThreadPool(Config.testNumber);
+        if (!config.isStopWhenSuccess() && config.isEnableMultithreading()) {
+            ExecutorService executor = Executors.newFixedThreadPool(config.getTestNumber());
             List<Future<String>> futures = new ArrayList<>();
-            for (int num = 1; num <= Config.testNumber; num++) {
+            for (int num = 1; num <= config.getTestNumber(); num++) {
                 int finalNum = num;
                 Callable<String> callable = new Callable<String>() {
                     @Override
@@ -56,7 +57,7 @@ public class MethodRunner extends ClassRunner {
 
             executor.shutdown();
         } else {
-            for (int num = 1; num <= Config.testNumber; num++) {
+            for (int num = 1; num <= config.getTestNumber(); num++) {
                 if (startRounds(num)) {
                     break;
                 }
@@ -70,29 +71,29 @@ public class MethodRunner extends ClassRunner {
                 + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         String fullTestName = fullClassName + separator + methodInfo.methodName + separator
                 + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
-        log.info("\n==========================\n[ChatTester] Generating test for method < "
+        config.getLog().info("\n==========================\n[ChatTester] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
-        for (int rounds = 1; rounds <= Config.maxRounds; rounds++) {
+        for (int rounds = 1; rounds <= config.getMaxRounds(); rounds++) {
             if (promptInfo == null) {
-                log.info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
+                config.getLog().info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
                 if (methodInfo.dependentMethods.size() > 0) {
                     promptInfo = generatePromptInfoWithDep(classInfo, methodInfo);
                 } else {
                     promptInfo = generatePromptInfoWithoutDep(classInfo, methodInfo);
                 }
             } else {
-                log.info("Fixing test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
+                config.getLog().info("Fixing test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             }
             List<Message> prompt = generateMessages(promptInfo);
-            log.debug("[Prompt]:\n" + prompt.toString());
+            config.getLog().debug("[Prompt]:\n" + prompt.toString());
 
-            AskGPT askGPT = new AskGPT();
+            AskGPT askGPT = new AskGPT(config);
             Response response = askGPT.askChatGPT(prompt);
             Path savePath = testOutputPath.resolve(fullTestName.replace(".", File.separator) + ".java");
 
             String code = parseResponse(response);
             if (code.isEmpty()) {
-                log.info("Test for method < " + methodInfo.methodName + " > extract code failed");
+                config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
                 continue;
             }
             code = changeTestName(code, className, testName);
@@ -101,19 +102,19 @@ public class MethodRunner extends ClassRunner {
             promptInfo.setUnitTest(code); // Before repair imports
             code = repairImports(code, classInfo.imports);
 
-            TestCompiler compiler = new TestCompiler();
+            TestCompiler compiler = new TestCompiler(config);
             boolean compileResult = compiler.compileTest(testName, code,
                     errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt"), promptInfo);
             if (!compileResult) {
-                log.info("Test for method < " + methodInfo.methodName + " > compilation failed");
+                config.getLog().info("Test for method < " + methodInfo.methodName + " > compilation failed");
                 continue;
             }
             if (compiler.executeTest(fullTestName, errorOutputPath.resolve(testName + "_ExecutionError_" + rounds + ".txt"), promptInfo)) {
                 exportTest(code, savePath);
-                log.info("Test for method < " + methodInfo.methodName + " > generated successfully");
+                config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");
                 return true;
             } else {
-                log.warn("Test for method < " + methodInfo.methodName + " > execution failed");
+                config.getLog().info("Test for method < " + methodInfo.methodName + " > execution failed");
             }
         }
         return false;

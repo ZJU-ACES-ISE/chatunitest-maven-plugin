@@ -12,19 +12,10 @@ import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.maven.project.DefaultProjectBuildingRequest;
-import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.jetbrains.annotations.NotNull;
 import zju.cst.aces.dto.ClassInfo;
-import zju.cst.aces.util.Config;
 import zju.cst.aces.dto.MethodInfo;
 
 import java.io.File;
@@ -40,55 +31,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ClassParser {
-    private static final JavaParser parser = new JavaParser();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final String separator = "_";
-    private static Path outputPath = null;
+    private static Path classOutputPath = null;
     private static ClassInfo classInfo;
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static JavaParser parser;
 
-    public ClassParser(String path) {
+    public ClassParser(JavaParser parser, String path) {
+        this.parser = parser;
         setOutputPath(path);
-        JavaSymbolSolver symbolSolver = getSymbolSolver();
-        parser.getParserConfiguration().setSymbolResolver(symbolSolver);
     }
 
-    public ClassParser(Path path) {
+    public ClassParser(JavaParser parser, Path path) {
+        this.parser = parser;
         setOutputPath(path.toString());
-        JavaSymbolSolver symbolSolver = getSymbolSolver();
-        parser.getParserConfiguration().setSymbolResolver(symbolSolver);
-    }
-
-    private JavaSymbolSolver getSymbolSolver() {
-        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-        combinedTypeSolver.add(new ReflectionTypeSolver());
-        try {
-            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(Config.session.getProjectBuildingRequest() );
-            buildingRequest.setProject(Config.project);
-            DependencyNode root = Config.dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
-            Set<DependencyNode> depSet = new HashSet<>();
-            walkDep(root, depSet);
-            for (DependencyNode dep : depSet) {
-                if (dep.getArtifact().getFile() != null) {
-                    combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
-                }
-            }
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        for (String src : Config.project.getCompileSourceRoots()) {
-            if (new File(src).exists()) {
-                combinedTypeSolver.add(new JavaParserTypeSolver(src));
-            }
-        }
-        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
-        return symbolSolver;
-    }
-
-    public static void walkDep(DependencyNode node, Set<DependencyNode> depSet) {
-        depSet.add(node);
-        for (DependencyNode dep : node.getChildren()) {
-            walkDep(dep, depSet);
-        }
     }
 
     private static boolean isJavaSourceDir(Path path) {
@@ -97,7 +53,7 @@ public class ClassParser {
     }
 
     private static void setOutputPath(String path) {
-        outputPath = Paths.get(path);
+        classOutputPath = Paths.get(path);
     }
 
     private static void extractMethods(CompilationUnit cu, ClassOrInterfaceDeclaration classDeclaration) throws IOException {
@@ -439,7 +395,7 @@ public class ClassParser {
     }
 
     private static void exportClassInfo(String json, ClassOrInterfaceDeclaration classNode) throws IOException {
-        Path classOutputDir = outputPath.resolve(classNode.getName().getIdentifier());
+        Path classOutputDir = classOutputPath.resolve(classNode.getName().getIdentifier());
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }
@@ -451,7 +407,7 @@ public class ClassParser {
     }
 
     private static void exportMethodInfo(String json, ClassOrInterfaceDeclaration classNode, MethodDeclaration node) throws IOException {
-        Path classOutputDir = outputPath.resolve(classNode.getName().getIdentifier());
+        Path classOutputDir = classOutputPath.resolve(classNode.getName().getIdentifier());
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }
@@ -463,7 +419,7 @@ public class ClassParser {
     }
 
     private static void exportConstructorInfo(String json, ClassOrInterfaceDeclaration classNode, ConstructorDeclaration node) throws IOException {
-        Path classOutputDir = outputPath.resolve(classNode.getName().getIdentifier());
+        Path classOutputDir = classOutputPath.resolve(classNode.getName().getIdentifier());
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }

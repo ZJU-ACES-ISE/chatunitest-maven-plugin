@@ -22,7 +22,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,16 +50,16 @@ public class ClassTestMojo
             return;
         }
 
-        ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
-        if (! (new File(parseOutput).exists())) {
+        if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
+            ProjectParser parser = new ProjectParser(config);
             parser.parse();
             log.info("\n==========================\n[ChatTester] Parse finished");
         }
 
         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
         try {
-            new ClassRunner(getFullClassName(className), parseOutput, testOutput).start();
+            new ClassRunner(getFullClassName(className), config).start();
         } catch (IOException e) {
             throw new RuntimeException("In ClassTestMojo.execute: " + e);
         }

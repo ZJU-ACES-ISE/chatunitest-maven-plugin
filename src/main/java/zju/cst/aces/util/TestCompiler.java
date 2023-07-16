@@ -1,7 +1,10 @@
 package zju.cst.aces.util;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.platform.engine.TestEngine;
@@ -12,13 +15,16 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-import zju.cst.aces.ProjectTestMojo;
+import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.dto.TestMessage;
-import zju.cst.aces.parser.ClassParser;
+import zju.cst.aces.parser.ProjectParser;
 
 import javax.tools.*;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -28,15 +34,20 @@ import java.util.*;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
-public class TestCompiler extends ProjectTestMojo {
+public class TestCompiler {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
+    public static Config config;
+
+    public TestCompiler(Config config) {
+        this.config = config;
+    }
 
     public boolean executeTest(String fullTestName, Path outputPath, PromptInfo promptInfo) {
         File file = outputPath.toAbsolutePath().getParent().toFile();
         try {
             List<String> classpathElements = new ArrayList<>();
-            classpathElements.addAll(Config.classPaths);
+            classpathElements.addAll(config.getClassPaths());
             List<URL> urls = new ArrayList<>();
             for (String classpath : classpathElements) {
                 URL url = new File(classpath).toURI().toURL();
@@ -87,7 +98,7 @@ public class TestCompiler extends ProjectTestMojo {
                 writer.write(errors.toString()); // store the full output
                 writer.close();
             }
-            summary.printTo(new PrintWriter(System.out));
+//            summary.printTo(new PrintWriter(System.out));
             return summary.getTestsFailedCount() == 0;
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.executeTest: " + e);
@@ -114,7 +125,7 @@ public class TestCompiler extends ProjectTestMojo {
             };
 
             Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
-            Iterable<String> options = Arrays.asList("-classpath", String.join(Config.OS.contains("win") ? ";" : ":", Config.classPaths),
+            Iterable<String> options = Arrays.asList("-classpath", String.join(config.getOS().contains("win") ? ";" : ":", config.getClassPaths()),
                     "-d", outputPath.toAbsolutePath().getParent().toString());
 
             DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
@@ -143,15 +154,15 @@ public class TestCompiler extends ProjectTestMojo {
         return result;
     }
 
-    public static List<String> listClassPaths() {
+    public static List<String> listClassPaths(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
         List<String> classPaths = new ArrayList<>();
         try {
-            classPaths.addAll(Config.project.getCompileClasspathElements());
-            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(Config.session.getProjectBuildingRequest() );
-            buildingRequest.setProject(Config.project);
-            DependencyNode root = Config.dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
+            classPaths.addAll(project.getCompileClasspathElements());
+            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest() );
+            buildingRequest.setProject(project);
+            DependencyNode root = dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
             Set<DependencyNode> depSet = new HashSet<>();
-            ClassParser.walkDep(root, depSet);
+            ProjectParser.walkDep(root, depSet);
             for (DependencyNode dep : depSet) {
                 if (dep.getArtifact().getFile() != null) {
                     classPaths.add(dep.getArtifact().getFile().getAbsolutePath());
@@ -173,7 +184,7 @@ public class TestCompiler extends ProjectTestMojo {
             try {
                 FileUtils.copyDirectoryStructure(srcTestFolder, backupFolder);
                 FileUtils.deleteDirectory(srcTestFolder);
-                FileUtils.copyDirectoryStructure(new File(Config.testOutput), srcTestFolder);
+                FileUtils.copyDirectoryStructure(config.getTestOutput().toFile(), srcTestFolder);
             } catch (IOException e) {
                 throw new RuntimeException("In TestCompiler.copyAndBackupTestFolder: " + e);
             }

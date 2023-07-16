@@ -3,10 +3,11 @@ package zju.cst.aces.runner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
-import zju.cst.aces.ProjectTestMojo;
 import zju.cst.aces.dto.*;
 import zju.cst.aces.parser.ClassParser;
-import zju.cst.aces.util.*;
+import zju.cst.aces.util.CodeExtractor;
+import zju.cst.aces.config.Config;
+import zju.cst.aces.util.TokenCounter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,11 +16,10 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AbstractRunner extends ProjectTestMojo {
+public class AbstractRunner {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static final String separator = "_";
@@ -29,13 +29,16 @@ public class AbstractRunner extends ProjectTestMojo {
     public Path errorOutputPath;
     public String className;
     public String fullClassName;
+    public Config config;
 
-    public AbstractRunner(String fullClassname, String output, String testPath) throws IOException {
+    // get configuration from Config, and move init() to Config
+    public AbstractRunner(String fullClassname, Config config) throws IOException {
         fullClassName = fullClassname;
         className = fullClassname.substring(fullClassname.lastIndexOf(".") + 1);
-        parseOutputPath = Paths.get(output);
-        testOutputPath = Paths.get(testPath);
-        errorOutputPath = parseOutputPath.getParent().resolve("error-message");
+        this.config = config;
+        errorOutputPath = config.getErrorOutput();
+        parseOutputPath = config.getParseOutput();
+        testOutputPath = config.getTestOutput();
     }
 
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
@@ -69,7 +72,7 @@ public class AbstractRunner extends ProjectTestMojo {
                     + TokenCounter.countToken(promptInfo.methodSignature)
                     + TokenCounter.countToken(promptInfo.className)
                     + TokenCounter.countToken(promptInfo.info);
-            int allowedTokens = Math.max(Config.maxPromptTokens - promptTokens, Config.minErrorTokens);
+            int allowedTokens = Math.max(config.getMaxPromptTokens() - promptTokens, config.getMinErrorTokens());
             TestMessage errorMsg = promptInfo.errorMsg;
             String processedErrorMsg = "";
             for (String error : errorMsg.getErrorMessage()) {
@@ -77,8 +80,8 @@ public class AbstractRunner extends ProjectTestMojo {
                     processedErrorMsg += error + "\n";
                 }
             }
-            log.debug("Allowed tokens: " + allowedTokens);
-            log.debug("Processed error message: \n" + processedErrorMsg);
+            config.getLog().debug("Allowed tokens: " + allowedTokens);
+            config.getLog().debug("Processed error message: \n" + processedErrorMsg);
 
             user = String.format("I need you to fix an error in a unit test, an error occurred while compiling and executing\n" +
                             "The unit test is:\n" +
@@ -198,7 +201,7 @@ public class AbstractRunner extends ProjectTestMojo {
             testCase = repairImports(testCase, timeoutImport);
             return testCase.replace("@Test\n", String.format("@Test%n    @Timeout(%d)%n", timeout));
         } else {
-            log.error("Generated with unknown JUnit version, try without adding timeout.");
+            config.getLog().error("Generated with unknown JUnit version, try without adding timeout.");
         }
         return testCase;
     }

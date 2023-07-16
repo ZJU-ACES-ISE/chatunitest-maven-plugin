@@ -27,10 +27,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
+import zju.cst.aces.config.Config;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
-import zju.cst.aces.util.Config;
-import zju.cst.aces.util.TestCompiler;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,9 +55,9 @@ public class ProjectTestMojo
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
     @Parameter(defaultValue = "chatunitest-tests", property = "testOutput")
-    public String testOutput;
+    public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
-    public String tmpOutput;
+    public File tmpOutput;
     @Parameter(name = "apiKeys", required = true)
     public String[] apiKeys;
     @Parameter(name = "stopWhenSuccess", property = "stopWhenSuccess", defaultValue = "true")
@@ -90,10 +89,8 @@ public class ProjectTestMojo
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
-    public String parseOutput;
     public static Log log;
-    public static int classThreads;
-    public static int methodThreads;
+    public Config config;
 
 
     /**
@@ -110,8 +107,8 @@ public class ProjectTestMojo
             log.error("\n==========================\n[ChatTester] No compile source found in " + project);
             return;
         }
-        ProjectParser parser = new ProjectParser(srcMainJavaPath.toString(), parseOutput);
-        if (! (new File(parseOutput).exists())) {
+        ProjectParser parser = new ProjectParser(config);
+        if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
             parser.parse();
             log.info("\n==========================\n[ChatTester] Parse finished");
@@ -120,7 +117,7 @@ public class ProjectTestMojo
         List<String> classPaths = new ArrayList<>();
         parser.scanSourceDirectory(srcMainJavaPath.toFile(), classPaths);
 
-        if (Config.enableMultithreading == true) {
+        if (config.isEnableMultithreading() == true) {
             classJob(classPaths);
         } else {
             for (String classPath : classPaths) {
@@ -128,7 +125,7 @@ public class ProjectTestMojo
                 try {
                     className = getFullClassName(className);
                     log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                    new ClassRunner(className, parseOutput, testOutput).start();
+                    new ClassRunner(className, config).start();
                 } catch (IOException e) {
                     log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                 }
@@ -139,7 +136,7 @@ public class ProjectTestMojo
     }
 
     public void classJob(List<String> classPaths) {
-        ExecutorService executor = Executors.newFixedThreadPool(classThreads);
+        ExecutorService executor = Executors.newFixedThreadPool(config.getClassThreads());
         List<Future<String>> futures = new ArrayList<>();
         for (String classPath : classPaths) {
             Callable<String> callable = new Callable<String>() {
@@ -149,7 +146,7 @@ public class ProjectTestMojo
                     try {
                         className = getFullClassName(className);
                         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                        new ClassRunner(className, parseOutput, testOutput).start();
+                        new ClassRunner(className, config).start();
                     } catch (IOException e) {
                         log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                     }
@@ -179,38 +176,17 @@ public class ProjectTestMojo
     }
 
     public void init() {
-        Config.setSession(session);
-        Config.setProject(project);
-        Config.setDependencyGraphBuilder(dependencyGraphBuilder);
-        Config.setClassPaths(TestCompiler.listClassPaths());
-        Config.setApiKeys(apiKeys);
-        Config.setModel(model);
-        Config.setStopWhenSuccess(stopWhenSuccess);
-        Config.setEnableMultithreading(enableMultithreading);
-        Config.setMaxThreads(maxThreads);
-        Config.setTestNumber(testNumber);
-        Config.setMaxRounds(maxRounds);
-        Config.setMinErrorTokens(minErrorTokens);
-        Config.setMaxPromptTokens(maxPromptTokens);
-        Config.setTemperature(temperature);
-        Config.setTopP(topP);
-        Config.setFrequencyPenalty(frequencyPenalty);
-        Config.setPresencePenalty(presencePenalty);
-        Config.setTestOutput(testOutput);
-        Config.setProxy(proxy);
-        tmpOutput = String.valueOf(Paths.get(tmpOutput, project.getArtifactId()));
-        parseOutput = tmpOutput + File.separator + "class-info";
-        parseOutput = parseOutput.replace("/", File.separator);
-        Config.setClassMapPath(Paths.get(parseOutput, "class-map.json"));
         log = getLog();
-        classThreads = (int) Math.ceil((double)  Config.maxThreads / 10);
-        methodThreads = (int) Math.ceil((double) Config.maxThreads / classThreads);
-        log.info("\n==========================\n[ChatTester] Multithreading enabled >>>> " + Config.enableMultithreading);
-        if (Config.stopWhenSuccess == false) {
-            methodThreads = (int) Math.ceil((double)  methodThreads / Config.testNumber);
-        }
-        if (Config.enableMultithreading == true) {
-            log.info("Class threads: " + classThreads + ", Method threads: " + methodThreads);
+        config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
+                .apiKeys(apiKeys)
+                .enableMultithreading(enableMultithreading)
+                .tmpOutput(tmpOutput.toPath())
+                .testOutput(testOutput.toPath())
+                .maxThreads(maxThreads)
+                .build();
+        log.info("\n==========================\n[ChatTester] Multithreading enabled >>>> " + config.isEnableMultithreading());
+        if (config.isEnableMultithreading()) {
+            log.info("Class threads: " + config.getClassThreads() + ", Method threads: " + config.getMethodThreads());
         }
     }
 
@@ -218,7 +194,7 @@ public class ProjectTestMojo
         if (isFullName(name)) {
             return name;
         }
-        Path classMapPath = Config.classMapPath;
+        Path classMapPath = config.getClassMapPath();
         Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {

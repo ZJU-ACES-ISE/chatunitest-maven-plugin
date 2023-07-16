@@ -2,8 +2,11 @@ package zju.cst.aces.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import okhttp3.*;
-import zju.cst.aces.ProjectTestMojo;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.Message;
 
 import java.io.IOException;
@@ -12,23 +15,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class AskGPT extends ProjectTestMojo {
+public class AskGPT {
     private static final String URL = "https://api.openai.com/v1/chat/completions";
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    public Config config;
+
+    public AskGPT(Config config) {
+        this.config = config;
+    }
 
     public Response askChatGPT(List<Message> messages) {
-        String apiKey = Config.getRandomKey();
+        String apiKey = config.getRandomKey();
         int maxTry = 5;
         while (maxTry > 0) {
             try {
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("messages", messages);
-                payload.put("model", Config.model);
-                payload.put("temperature", Config.temperature);
-                payload.put("top_p", Config.topP);
-                payload.put("frequency_penalty", Config.frequencyPenalty);
-                payload.put("presence_penalty", Config.presencePenalty);
+                payload.put("model", config.getModel());
+                payload.put("temperature", config.getTemperature());
+                payload.put("top_p", config.getTopP());
+                payload.put("frequency_penalty", config.getFrequencyPenalty());
+                payload.put("presence_penalty", config.getPresencePenalty());
                 String jsonPayload = GSON.toJson(payload);
 
                 RequestBody body = RequestBody.create(MEDIA_TYPE, jsonPayload);
@@ -39,12 +47,12 @@ public class AskGPT extends ProjectTestMojo {
                         .addHeader("Authorization", "Bearer " + apiKey)
                         .build();
 
-                Response response = Config.client.newCall(request).execute();
+                Response response = config.getClient().newCall(request).execute();
                 if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
                 return response;
 
             } catch (IOException e) {
-                log.error("In AskGPT.askChatGPT: " + e);
+                config.getLog().error("In AskGPT.askChatGPT: " + e);
                 if (e.getMessage().contains("maximum context length is ")) {
                     break;
                 }
@@ -58,7 +66,7 @@ public class AskGPT extends ProjectTestMojo {
                 maxTry--;
             }
         }
-        log.debug("AskGPT: Failed to get response\n");
+        config.getLog().debug("AskGPT: Failed to get response\n");
         return null;
     }
 }
