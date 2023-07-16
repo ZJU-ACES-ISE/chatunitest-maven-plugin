@@ -182,7 +182,18 @@ public class ProjectTestMojo
                 .enableMultithreading(enableMultithreading)
                 .tmpOutput(tmpOutput.toPath())
                 .testOutput(testOutput.toPath())
+                .stopWhenSuccess(stopWhenSuccess)
                 .maxThreads(maxThreads)
+                .testNumber(testNumber)
+                .maxRounds(maxRounds)
+                .minErrorTokens(minErrorTokens)
+                .maxPromptTokens(maxPromptTokens)
+                .model(model)
+                .temperature(temperature)
+                .topP(topP)
+                .frequencyPenalty(frequencyPenalty)
+                .presencePenalty(presencePenalty)
+                .proxy(proxy)
                 .build();
         log.info("\n==========================\n[ChatTester] Multithreading enabled >>>> " + config.isEnableMultithreading());
         if (config.isEnableMultithreading()) {
