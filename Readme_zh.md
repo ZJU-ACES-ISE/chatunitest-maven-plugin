@@ -45,6 +45,16 @@
 - `frequencyPenalty`: (**可选**) OpenAI API参数，默认值： `0`
 - `presencePenalty`: (**可选**) OpenAI API参数，默认值： `0`
 - `proxy`: (**可选**)如果需要，填写您的主机名和端口号，示例：`127.0.0.1:7078`
+- `selectClass`: (**可选**) 被测试的类，如果项目中有同名类，需要指定完整的类名。
+- `selectMethod`: (**可选**) 被测试的方法
+- `tmpOutput`: (**可选**) 解析项目信息的输出路径，默认值： `/tmp/chatunitest-info`
+- `testOutput`: (**可选**) 由 `chatunitest`生成的测试的输出路径，默认值：`{basedir}/chatunitest`
+- `project`: (**可选**) 目标项目路径，默认值：`{basedir}`
+- `thread`: (**可选**) 开启或关闭多线程，默认值：`true`
+- `maxThread`: (**可选**) 最大线程数，默认值：`CPU核心数 * 5`
+- `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
+- `noExecution`: (**可选**) 是否跳过执行测试验证的步骤，默认值：`false`
+所有这些参数也可以在命令行中使用-D选项指定。
 
 一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
 
@@ -79,19 +89,6 @@ mvn chatunitest:class -DselectClass=className
 ```
 
 当执行 `mvn chatunitest:method` 或 `mvn chatunitest:class` 命令时，您必须指定 `selectMethod` 和 `selectClass`，可以使用 -D 选项来实现这一点。
-以下是您可以使用 `-D` 选项指定的所有参数：
-
-- `selectClass`: (**可选**) 被测试的类，如果项目中有同名类，需要指定完整的类名。
-- `selectMethod`: (**可选**) 被测试的方法
-- `tmpOutput`: (**可选**) 解析项目信息的输出路径，默认值： `/tmp/chatunitest-info`
-- `testOutput`: (**可选**) 由 `chatunitest`生成的测试的输出路径，默认值：`{basedir}/chatunitest`
-- `project`: (**可选**) 目标项目路径，默认值：`{basedir}`
-- `thread`: (**可选**) 开启或关闭多线程，默认值：`true`
-- `maxThread`: (**可选**) 最大线程数，默认值：`CPU核心数 * 5`
-- `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
-- `noExecution`: (**可选**) 是否跳过执行测试验证的步骤，默认值：`false`
-
-您也可以在pom.xml中设置插件配置，而不是使用`-D`选项，例如`<maxThreads>30</maxThreads>`
 
 示例：
 
@@ -129,10 +126,21 @@ mvn chatunitest:project
 mvn chatunitest:clean
 ```
 
-运行该命令将删除所有生成的测试代码并恢复您的测试文件夹。
+运行该命令将删除所有生成的测试代码并恢复您的测试目录。
 
-**注意:** 在运行生成的测试代码时，ChatUnitest会将您的测试文件夹备份到`src/backup/`目录，
-并将生成的测试拷贝到`src/test/java/`目录下运行，同时也便于您手动运行测试。您需要使用以下命令手动恢复测试文件夹：`mvn chatunitest:restore`
+**手动运行生成的测试：**
+
+```shell
+mvn chatunitest:copy
+```
+
+运行该命令将复制所有生成的测试代码到您的测试文件夹，同时备份您的测试目录。
+
+```shell
+mvn chatunitest:restore
+```
+
+运行该命令将恢复您的测试目录
 
 ## 可运行环境
 
