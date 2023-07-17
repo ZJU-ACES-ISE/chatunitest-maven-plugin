@@ -7,6 +7,9 @@
 ## Updates:
 💥 We have recently added a multithreading feature to generate tests more quickly!
 
+## Background
+Many people have tried using ChatGPT to help them with various programming tasks and have achieved good results. However, there are some issues with using ChatGPT directly. Firstly, the generated code often fails to execute correctly, leading to the famous saying **"five minutes to code, two hours to debug"**. Secondly, it is inconvenient to integrate with existing projects as it requires manual interaction with ChatGPT and switching between different platforms. To address these problems, we have proposed the **"Generate-Validate-Repair"** framework and implemented a prototype. Additionally, to make it easier for everyone to use, we have developed some plugins that can be seamlessly integrated into existing development workflows.
+
 ## Steps to run
 
 ### 0. Add our plugin to `pom.xml` and config
