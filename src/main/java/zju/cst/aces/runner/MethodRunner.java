@@ -102,8 +102,8 @@ public class MethodRunner extends ClassRunner {
             promptInfo.setUnitTest(code); // Before repair imports
             code = repairImports(code, classInfo.imports);
 
-            TestCompiler compiler = new TestCompiler(config);
-            boolean compileResult = compiler.compileTest(testName, code,
+            TestCompiler compiler = new TestCompiler(config, code);
+            boolean compileResult = compiler.compileTest(testName,
                     errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt"), promptInfo);
             if (!compileResult) {
                 config.getLog().info("Test for method < " + methodInfo.methodName + " > compilation failed");

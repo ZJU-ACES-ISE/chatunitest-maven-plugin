@@ -214,7 +214,7 @@ public class ProjectTestMojo
         log.info(" MaxRounds >>> " + config.getMaxRounds());
         log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
         log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
-        log.info("\n==================================================================\n");
+        log.info("\n===================================================================\n");
     }
 
     public String getFullClassName(String name) throws IOException {

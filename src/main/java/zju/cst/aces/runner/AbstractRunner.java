@@ -201,7 +201,7 @@ public class AbstractRunner {
             testCase = repairImports(testCase, timeoutImport);
             return testCase.replace("@Test\n", String.format("@Test%n    @Timeout(%d)%n", timeout));
         } else {
-            config.getLog().error("Generated with unknown JUnit version, try without adding timeout.");
+            config.getLog().warn("Generated with unknown JUnit version, try without adding timeout.");
         }
         return testCase;
     }

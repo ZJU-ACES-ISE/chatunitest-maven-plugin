@@ -38,9 +38,15 @@ public class TestCompiler {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
     public static Config config;
+    public String code;
 
     public TestCompiler(Config config) {
         this.config = config;
+        this.code = "";
+    }
+    public TestCompiler(Config config, String code) {
+        this.config = config;
+        this.code = code;
     }
 
     public boolean executeTest(String fullTestName, Path outputPath, PromptInfo promptInfo) {
@@ -94,9 +100,7 @@ public class TestCompiler {
                 testMessage.setErrorMessage(errors);
                 promptInfo.setErrorMsg(testMessage);
 
-                BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
-                writer.write(errors.toString()); // store the full output
-                writer.close();
+                exportError(errors.toString(), outputPath);
             }
 //            summary.printTo(new PrintWriter(System.out));
             return summary.getTestsFailedCount() == 0;
@@ -108,7 +112,10 @@ public class TestCompiler {
     /**
      * Compile test file
      */
-    public boolean compileTest(String className, String code, Path outputPath, PromptInfo promptInfo) {
+    public boolean compileTest(String className, Path outputPath, PromptInfo promptInfo) {
+        if (this.code == "") {
+            throw new RuntimeException("In TestCompiler.compileTest: code is empty");
+        }
         boolean result;
         try {
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
@@ -143,15 +150,23 @@ public class TestCompiler {
                 testMessage.setErrorMessage(errors);
                 promptInfo.setErrorMsg(testMessage);
 
-                BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
-                writer.write(code);
-                writer.write(errors.toString()); // store the full output
-                writer.close();
+                exportError(errors.toString(), outputPath);
             }
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileTest: " + e);
         }
         return result;
+    }
+
+    public void exportError(String error, Path outputPath) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
+            writer.write(code);
+            writer.write(error);
+            writer.close();
+        } catch (Exception e) {
+            throw new RuntimeException("In TestCompiler.exportError: " + e);
+        }
     }
 
     public static List<String> listClassPaths(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
