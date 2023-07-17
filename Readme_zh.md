@@ -87,7 +87,7 @@ mvn chatunitest:class -DselectClass=className
 - `testOutput`: (**可选**) 由 `chatunitest`生成的测试的输出路径，默认值：`{basedir}/chatunitest`
 - `project`: (**可选**) 目标项目路径，默认值：`{basedir}`
 - `thread`: (**可选**) 开启或关闭多线程，默认值：`true`
-- `maxThread`: (**可选**) 最大线程数，默认值：`CPU核心数 * 10`
+- `maxThread`: (**可选**) 最大线程数，默认值：`CPU核心数 * 5`
 - `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
 - `noExecution`: (**可选**) 是否跳过执行测试验证的步骤，默认值：`false`
 
