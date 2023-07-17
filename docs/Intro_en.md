@@ -12,7 +12,7 @@ test cases generated based on pre-trained model methods have disadvantages such 
 (such as [AthenaTest](https://athenatestdemowebsite.azurewebsites.net/) and [A3Test](http://github.com/awsm-research/a3test)).
 Therefore, we propose a unit test generation scheme based on ChatGPT and have developed a prototype tool, ChatUniTest.
 
-![Architecture](./architecture.png)
+![Architecture](img/architecture.png)
 
 In the overall architecture of ChatUniTest,
 we follow the generate-verify-fix framework. For the method to be tested,

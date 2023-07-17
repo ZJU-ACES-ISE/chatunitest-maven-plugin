@@ -10,7 +10,7 @@
 （如[AthenaTest](https://athenatestdemowebsite.azurewebsites.net/), [A3Test](http://github.com/awsm-research/a3test)）。
 因此，我们提出了一种基于ChatGPT的单元测试生成方案，并开发了原型工具ChatUniTest。
 
-![Architecture](./architecture.png)
+![Architecture](img/architecture.png)
 
 ChatUniTest的整体架构如图1所示。
 整体上是遵循生成-验证-修复框架，针对待测方法，首先收集一些待测方法中必要的上下文信息，
