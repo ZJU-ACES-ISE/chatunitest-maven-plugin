@@ -91,6 +91,7 @@ There are all parameters you can specify with the `-D` option:
 - `thread`: (**Optional**) Enable multi-threaded execution. Default: `true`.
 - `maxThread`: (**Optional**) The maximum number of threads. Default: `CPU cores * 10`.
 - `stopWhenSuccess`: (**Optional**) Stop the repair process when the test passes. Default: `true`. 
+- `noExecution`: (**Optional**) Skip the execution verification step of generated tests. Default: `false`.
  
 You can also set the plugin configuration in pom.xml instead of using `-D` option like: `<maxThreads>30</maxThreads>`
 

@@ -178,7 +178,7 @@ public class TestCompiler {
     /**
      * Move the src/test/java folder to a backup folder
      */
-    public static void copyAndBackupTestFolder() {
+    public void copyAndBackupTestFolder() {
         restoreTestFolder();
         if (srcTestFolder.exists()) {
             try {
@@ -194,7 +194,7 @@ public class TestCompiler {
     /**
      * Restore the backup folder to src/test/java
      */
-    public static void restoreTestFolder() {
+    public void restoreTestFolder() {
         if (backupFolder.exists()) {
             try {
                 if (srcTestFolder.exists()) {

@@ -37,7 +37,8 @@ public class RestoreBackupMojo
         init();
         try {
             log.info("\n==========================\n[ChatTester] Restoring test folder ...");
-            TestCompiler.restoreTestFolder();
+            TestCompiler compiler = new TestCompiler(config);
+            compiler.restoreTestFolder();
         } catch (Exception e) {
             log.error(e);
             throw new MojoExecutionException("Failed to restore test folder, please try again.");

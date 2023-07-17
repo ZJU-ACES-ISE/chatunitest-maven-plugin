@@ -89,6 +89,7 @@ mvn chatunitest:class -DselectClass=className
 - `thread`: (**可选**) 开启或关闭多线程，默认值：`true`
 - `maxThread`: (**可选**) 最大线程数，默认值：`CPU核心数 * 10`
 - `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
+- `noExecution`: (**可选**) 是否跳过执行测试验证的步骤，默认值：`false`
 
 您也可以在pom.xml中设置插件配置，而不是使用`-D`选项，例如`<maxThreads>30</maxThreads>`
 

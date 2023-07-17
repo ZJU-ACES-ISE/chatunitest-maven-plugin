@@ -62,6 +62,8 @@ public class ProjectTestMojo
     public String[] apiKeys;
     @Parameter(name = "stopWhenSuccess", property = "stopWhenSuccess", defaultValue = "true")
     public boolean stopWhenSuccess;
+    @Parameter(name = "noExecution", property = "noExecution", defaultValue = "false")
+    public boolean noExecution;
     @Parameter(alias = "thread", property = "thread", defaultValue = "true")
     public boolean enableMultithreading;
     @Parameter(property = "maxThreads", defaultValue = "0")
@@ -176,6 +178,7 @@ public class ProjectTestMojo
     }
 
     public void init() {
+        checkTargetFolder(project);
         log = getLog();
         config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
                 .apiKeys(apiKeys)
@@ -183,6 +186,7 @@ public class ProjectTestMojo
                 .tmpOutput(tmpOutput.toPath())
                 .testOutput(testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
+                .noExecution(noExecution)
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
@@ -195,10 +199,22 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .build();
-        log.info("\n==========================\n[ChatTester] Multithreading enabled >>>> " + config.isEnableMultithreading());
+        log.info("\n========================== Configuration ==========================\n");
+        log.info(" Multithreading >>>> " + config.isEnableMultithreading());
         if (config.isEnableMultithreading()) {
-            log.info("Class threads: " + config.getClassThreads() + ", Method threads: " + config.getMethodThreads());
+            log.info(" - Class threads: " + config.getClassThreads() + ", Method threads: " + config.getMethodThreads());
         }
+        log.info(" Stop when success >>>> " + config.isStopWhenSuccess());
+        log.info(" No execution >>>> " + config.isNoExecution());
+        log.info(" --- ");
+        log.info(" TestOutput Path >>> " + config.getTestOutput());
+        log.info(" TmpOutput Path >>> " + config.getTmpOutput());
+        log.info(" MaxThreads >>> " + config.getMaxThreads());
+        log.info(" TestNumber >>> " + config.getTestNumber());
+        log.info(" MaxRounds >>> " + config.getMaxRounds());
+        log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
+        log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
+        log.info("\n==================================================================\n");
     }
 
     public String getFullClassName(String name) throws IOException {
@@ -222,5 +238,18 @@ public class ProjectTestMojo
             return true;
         }
         return false;
+    }
+
+
+    /**
+     * Check if the classes is compiled
+     * @param project
+     */
+    public static void checkTargetFolder(MavenProject project) {
+        if (!new File(project.getBuild().getOutputDirectory()).exists()) {
+            throw new RuntimeException("In TestCompiler.checkTargetFolder: " +
+                    "The project is not compiled to the target directory. " +
+                    "Please run 'mvn compile' first.");
+        }
     }
 }

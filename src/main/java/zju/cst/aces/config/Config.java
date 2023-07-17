@@ -28,6 +28,7 @@ public class Config {
     public Log log;
     public String OS;
     public boolean stopWhenSuccess;
+    public boolean noExecution;
     public boolean enableMultithreading;
     public int maxThreads;
     public int classThreads;
@@ -61,8 +62,9 @@ public class Config {
         public Log log;
         public String OS = System.getProperty("os.name").toLowerCase();
         public boolean stopWhenSuccess = true;
+        public boolean noExecution = false;
         public boolean enableMultithreading = true;
-        public int maxThreads = Runtime.getRuntime().availableProcessors() * 5;;
+        public int maxThreads = Runtime.getRuntime().availableProcessors() * 5;
         public int classThreads = (int) Math.ceil((double)  this.maxThreads / 10);
         public int methodThreads = (int) Math.ceil((double) this.maxThreads / this.classThreads);
         public int testNumber = 5;
@@ -102,7 +104,11 @@ public class Config {
         }
 
         public ConfigBuilder maxThreads(int maxThreads) {
-            this.maxThreads = maxThreads;
+            if (maxThreads <= 0) {
+                this.maxThreads = Runtime.getRuntime().availableProcessors() * 5;
+            } else {
+                this.maxThreads = maxThreads;
+            }
             this.classThreads = (int) Math.ceil((double)  this.maxThreads / 10);
             this.methodThreads = (int) Math.ceil((double) this.maxThreads / this.classThreads);
             if (this.stopWhenSuccess == false) {
@@ -156,6 +162,11 @@ public class Config {
 
         public ConfigBuilder stopWhenSuccess(boolean stopWhenSuccess) {
             this.stopWhenSuccess = stopWhenSuccess;
+            return this;
+        }
+
+        public ConfigBuilder noExecution(boolean noExecution) {
+            this.noExecution = noExecution;
             return this;
         }
 
@@ -302,6 +313,7 @@ public class Config {
             config.setOS(this.OS);
             config.setStopWhenSuccess(this.stopWhenSuccess);
             config.setEnableMultithreading(this.enableMultithreading);
+            config.setNoExecution(this.noExecution);
             config.setMaxThreads(this.maxThreads);
             config.setClassThreads(this.classThreads);
             config.setMethodThreads(this.methodThreads);

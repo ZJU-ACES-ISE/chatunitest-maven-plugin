@@ -109,6 +109,11 @@ public class MethodRunner extends ClassRunner {
                 config.getLog().info("Test for method < " + methodInfo.methodName + " > compilation failed");
                 continue;
             }
+            if (config.isNoExecution()) {
+                exportTest(code, savePath);
+                config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");
+                return true;
+            }
             if (compiler.executeTest(fullTestName, errorOutputPath.resolve(testName + "_ExecutionError_" + rounds + ".txt"), promptInfo)) {
                 exportTest(code, savePath);
                 config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");

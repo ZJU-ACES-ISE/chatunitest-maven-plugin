@@ -43,7 +43,8 @@ public class CleanMojo
             log.info("\n==========================\n[ChatTester] Restoring test folder ...");
             FileUtils.deleteDirectory(tmpOutput);
             FileUtils.deleteDirectory(testOutput);
-            TestCompiler.restoreTestFolder();
+            TestCompiler compiler = new TestCompiler(config);
+            compiler.restoreTestFolder();
         } catch (Exception e) {
             log.error(e);
         }
