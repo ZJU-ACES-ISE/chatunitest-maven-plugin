@@ -58,35 +58,35 @@ public class ProjectTestMojo
     public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public File tmpOutput;
-    @Parameter(name = "apiKeys", required = true)
+    @Parameter(property = "apiKeys", required = true)
     public String[] apiKeys;
-    @Parameter(name = "stopWhenSuccess", property = "stopWhenSuccess", defaultValue = "true")
+    @Parameter(property = "stopWhenSuccess", defaultValue = "true")
     public boolean stopWhenSuccess;
-    @Parameter(name = "noExecution", property = "noExecution", defaultValue = "false")
+    @Parameter(property = "noExecution", defaultValue = "false")
     public boolean noExecution;
     @Parameter(alias = "thread", property = "thread", defaultValue = "true")
     public boolean enableMultithreading;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
-    @Parameter(name = "testNumber", defaultValue = "5")
+    @Parameter(property = "testNumber", defaultValue = "5")
     public int testNumber;
-    @Parameter(name = "maxRounds", defaultValue = "5")
+    @Parameter(property = "maxRounds", defaultValue = "5")
     public int maxRounds;
-    @Parameter(name = "minErrorTokens", defaultValue = "500")
+    @Parameter(property = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
-    @Parameter(name = "maxPromptTokens", defaultValue = "2600")
+    @Parameter(property = "maxPromptTokens", defaultValue = "2600")
     public int maxPromptTokens;
-    @Parameter(name = "model", defaultValue = "gpt-3.5-turbo")
+    @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
     public String model;
-    @Parameter(name = "temperature", defaultValue = "0.5")
+    @Parameter(property = "temperature", defaultValue = "0.5")
     public Double temperature;
-    @Parameter(name = "topP", defaultValue = "1")
+    @Parameter(property = "topP", defaultValue = "1")
     public  int topP;
-    @Parameter(name = "frequencyPenalty", defaultValue = "0")
+    @Parameter(property = "frequencyPenalty", defaultValue = "0")
     public int frequencyPenalty;
-    @Parameter(name = "presencePenalty", defaultValue = "0")
+    @Parameter(property = "presencePenalty", defaultValue = "0")
     public int presencePenalty;
-    @Parameter(name = "proxy",defaultValue = "null:-1")
+    @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
@@ -215,6 +215,11 @@ public class ProjectTestMojo
         log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
         log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
         log.info("\n===================================================================\n");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getFullClassName(String name) throws IOException {

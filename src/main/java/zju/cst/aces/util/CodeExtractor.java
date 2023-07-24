@@ -37,7 +37,7 @@ public class CodeExtractor {
             // Find all matches in the text
             while (matcher.find()) {
                 String match = matcher.group(1).trim();
-                if (match.contains("@Test") && match.contains("class") && match.contains("import")) {
+                if ((match.contains("@Test") || match.contains("@ParameterizedTest")) && match.contains("class") && match.contains("import")) {
                     extractedCode= syntacticCheck(match);
                     hasSyntacticError = !match.equals(extractedCode);
                     if (!extractedCode.equals("")) {
@@ -50,7 +50,7 @@ public class CodeExtractor {
             if (!hasCode) {
                 if (code.contains("```java")) {
                     String separateString = code.split("```java")[1];
-                    if (separateString.contains("@Test")) {
+                    if (separateString.contains("@Test") || separateString.contains("@ParameterizedTest")) {
                         extractedCode = syntacticCheck(separateString);
                         hasSyntacticError = !separateString.equals(extractedCode);
                         if (!extractedCode.equals("")) {
@@ -60,7 +60,7 @@ public class CodeExtractor {
                 } else if (code.contains("```")) {
                     String[] separateStrings = code.split("```");
                     for (String separateString : separateStrings) {
-                        if (separateString.contains("@Test")) {
+                        if (separateString.contains("@Test") || separateString.contains("@ParameterizedTest")) {
                             extractedCode = syntacticCheck(separateString);
                             hasSyntacticError = !separateString.equals(extractedCode);
                             if (!extractedCode.equals("")) {

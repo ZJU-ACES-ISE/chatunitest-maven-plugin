@@ -98,7 +98,7 @@ public class MethodRunner extends ClassRunner {
             }
             code = changeTestName(code, className, testName);
             code = repairPackage(code, classInfo.packageDeclaration);
-            code = addTimeout(code, testTimeOut);
+//            code = addTimeout(code, testTimeOut);
             promptInfo.setUnitTest(code); // Before repair imports
             code = repairImports(code, classInfo.imports);
 

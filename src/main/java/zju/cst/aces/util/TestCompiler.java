@@ -31,6 +31,7 @@ import java.net.URLClassLoader;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
@@ -100,7 +101,7 @@ public class TestCompiler {
                 testMessage.setErrorMessage(errors);
                 promptInfo.setErrorMsg(testMessage);
 
-                exportError(errors.toString(), outputPath);
+                exportError(errors, outputPath);
             }
 //            summary.printTo(new PrintWriter(System.out));
             return summary.getTestsFailedCount() == 0;
@@ -150,7 +151,7 @@ public class TestCompiler {
                 testMessage.setErrorMessage(errors);
                 promptInfo.setErrorMsg(testMessage);
 
-                exportError(errors.toString(), outputPath);
+                exportError(errors, outputPath);
             }
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileTest: " + e);
@@ -158,11 +159,12 @@ public class TestCompiler {
         return result;
     }
 
-    public void exportError(String error, Path outputPath) {
+    public void exportError(List<String> errors, Path outputPath) {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
             writer.write(code);
-            writer.write(error);
+            writer.write("\n--------------------------------------------\n");
+            writer.write(errors.stream().collect(Collectors.joining("\n")));
             writer.close();
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.exportError: " + e);
