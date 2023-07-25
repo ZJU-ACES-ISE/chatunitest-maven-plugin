@@ -92,31 +92,17 @@ public class AbstractRunner {
                             "the source code of the method under test and its class is:\n" +
                             "```\n%s```\n" +
                             "Please fix the error and return the whole fixed unit test." +
-                            " You can use Junit 5 and reflection. No explanation is needed.\n",
+                            " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n",
                     promptInfo.unitTest, processedErrorMsg, promptInfo.methodSignature, promptInfo.className, promptInfo.info);
         }
         return user;
     }
 
     public String generateSystemPrompt(PromptInfo promptInfo) {
-        String system = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
-                "I will provide the following information of the focal method:\n" +
-                "1. Required dependencies to import.\n" +
-                "2. The focal class signature.\n" +
-                "3. Source code of the focal method.\n" +
-                "4. Signatures of other methods and fields in the class.\n";
         if (promptInfo.hasDep) {
-            system += "I will provide following brief information if the focal method has dependencies:\n" +
-                    "1. Signatures of dependent classes.\n" +
-                    "2. Signatures of dependent methods and fields in the dependent classes.\n";
+            return config.systemPromptWithDep;
         }
-        system += "I need you to create a whole unit test using JUnit 5, " +
-                "ensuring optimal branch and line coverage. " +
-                "The whole test should be include necessary imports for JUnit 5, " +
-                "compile without errors, and use reflection to invoke private methods. " +
-                "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
-                "No additional explanations required.\n";
-        return system;
+        return config.systemPromptWithoutDep;
     }
 
     public String joinLines(List<String> lines) {

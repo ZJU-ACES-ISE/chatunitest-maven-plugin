@@ -35,6 +35,9 @@ public class ClassRunner extends AbstractRunner {
                 if (methodInfo == null) {
                     continue;
                 }
+                if (methodInfo.isConstructor || methodInfo.isGetSet) {
+                    continue;
+                }
                 new MethodRunner(fullClassName, config, methodInfo).start();
             }
         }
@@ -50,6 +53,9 @@ public class ClassRunner extends AbstractRunner {
                     MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
                     if (methodInfo == null) {
                         return "No parsed info found for " + mSig + " in " + fullClassName;
+                    }
+                    if (methodInfo.isConstructor || methodInfo.isGetSet) {
+                        return "Skip " + mSig + " in " + fullClassName;
                     }
                     new MethodRunner(fullClassName, config, methodInfo).start();
                     return "Processed " + mSig;

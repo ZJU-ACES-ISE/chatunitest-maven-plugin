@@ -52,6 +52,10 @@ public class Config {
     public String hostname;
     public String port;
     public OkHttpClient client;
+    public String systemPromptWithDep;
+    public String systemPromptWithoutDep;
+    public String userPromptWithDep;
+    public String userPromptWithoutDep;
 
     public static class ConfigBuilder {
         public MavenSession session;
@@ -91,6 +95,11 @@ public class Config {
                 .readTimeout(5, TimeUnit.MINUTES)
                 .build();
 
+        public String systemPromptWithDep;
+        public String systemPromptWithoutDep;
+        public String userPromptWithDep;
+        public String userPromptWithoutDep;
+
         public ConfigBuilder(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder, Log log) {
             this.session = session;
             this.project = project;
@@ -101,6 +110,33 @@ public class Config {
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.systemPromptWithoutDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
+                    "I will provide the following information:\n" +
+                    "1. Required dependencies to import.\n" +
+                    "2. The focal class signature.\n" +
+                    "3. Source code of the focal method.\n" +
+                    "4. Signatures of other methods and fields in the class.\n" +
+                    "I need you to create a whole unit test using JUnit 5 and Mockito 3, " +
+                    "ensuring optimal branch and line coverage. " +
+                    "The test should include necessary imports for JUnit 5 and Mockito 3, " +
+                    "compile without errors, and use reflection to invoke private methods. " +
+                    "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
+                    "No additional explanations required.\n";
+            this.systemPromptWithDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
+                    "I will provide the following information of the focal method:\n" +
+                    "1. Required dependencies to import.\n" +
+                    "2. The focal class signature.\n" +
+                    "3. Source code of the focal method.\n" +
+                    "4. Signatures of other methods and fields in the class.\n" +
+                    "I will provide following brief information if the focal method has dependencies:\n" +
+                    "1. Signatures of dependent classes.\n" +
+                    "2. Signatures of dependent methods and fields in the dependent classes.\n" +
+                    "I need you to create a whole unit test using JUnit 5 and Mockito 3, " +
+                    "ensuring optimal branch and line coverage. " +
+                    "The test should include necessary imports for JUnit 5 and Mockito 3, " +
+                    "compile without errors, and use reflection to invoke private methods. " +
+                    "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
+                    "No additional explanations required.\n";
         }
 
         public ConfigBuilder maxThreads(int maxThreads) {
@@ -336,6 +372,8 @@ public class Config {
             config.setPort(this.port);
             config.setClient(this.client);
             config.setLog(this.log);
+            config.setSystemPromptWithDep(this.systemPromptWithDep);
+            config.setSystemPromptWithoutDep(this.systemPromptWithoutDep);
             return config;
         }
     }
