@@ -1,11 +1,15 @@
 package zju.cst.aces.runner;
 
 import okhttp3.Response;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.Message;
 import zju.cst.aces.dto.MethodInfo;
 import zju.cst.aces.dto.PromptInfo;
-import zju.cst.aces.util.*;
+import zju.cst.aces.dto.TestMessage;
+import zju.cst.aces.util.AskGPT;
+import zju.cst.aces.util.TestCompiler;
+import zju.cst.aces.util.TestProcessor;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,27 +105,70 @@ public class MethodRunner extends ClassRunner {
 //            code = addTimeout(code, testTimeOut);
             promptInfo.setUnitTest(code); // Before repair imports
             code = repairImports(code, classInfo.imports);
-
-            TestCompiler compiler = new TestCompiler(config, code);
-            boolean compileResult = compiler.compileTest(testName,
-                    errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt"), promptInfo);
-            if (!compileResult) {
-                config.getLog().info("Test for method < " + methodInfo.methodName + " > compilation failed");
-                continue;
-            }
-            if (config.isNoExecution()) {
-                exportTest(code, savePath);
-                config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");
+            if (runTest(code, testName, fullTestName, savePath, promptInfo, rounds)) {
                 return true;
-            }
-            if (compiler.executeTest(fullTestName, errorOutputPath.resolve(testName + "_ExecutionError_" + rounds + ".txt"), promptInfo)) {
-                exportTest(code, savePath);
-                config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully");
-                return true;
-            } else {
-                config.getLog().info("Test for method < " + methodInfo.methodName + " > execution failed");
             }
         }
         return false;
+    }
+
+    public boolean runTest(String code, String testName, String fullTestName, Path savePath, PromptInfo promptInfo, int rounds) {
+        TestCompiler compiler = new TestCompiler(config, code);
+        Path compilationErrorPath = errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt");
+        Path executionErrorPath = errorOutputPath.resolve(testName + "_ExecutionError_" + rounds + ".txt");
+        boolean compileResult = compiler.compileTest(testName, compilationErrorPath, promptInfo);
+        if (!compileResult) {
+            config.getLog().info("Test for method < " + methodInfo.methodName + " > compilation failed round " + rounds);
+            return false;
+        }
+        if (config.isNoExecution()) {
+            exportTest(code, savePath);
+            config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully round " + rounds);
+            return true;
+        }
+
+        TestExecutionSummary summary = compiler.executeTest(fullTestName, executionErrorPath);
+        if (summary.getTestsFailedCount() > 0) {
+            TestProcessor testProcessor = new TestProcessor(fullTestName, summary, code);
+            String testProcessed = testProcessor.removeErrorTest();
+
+            if (testProcessed != null) {
+                config.getLog().debug("[Original Test]:\n" + code);
+                TestCompiler newCompiler = new TestCompiler(config, testProcessed);
+                if (!newCompiler.compileTest(testName, compilationErrorPath, null)) {
+                    return false;
+                }
+                TestExecutionSummary newSummary = newCompiler.executeTest(fullTestName, executionErrorPath);
+                if (newSummary.getTestsFailedCount() > 0) {
+                    return false;
+                }
+                exportTest(testProcessed, savePath);
+                config.getLog().debug("[Processed Test]:\n" + testProcessed);
+                config.getLog().info("Processed test for method < " + methodInfo.methodName + " > generated successfully round " + rounds);
+                return true;
+            }
+
+            TestMessage testMessage = new TestMessage();
+            List<String> errors = new ArrayList<>();
+            summary.getFailures().forEach(failure -> {
+                for (StackTraceElement st : failure.getException().getStackTrace()) {
+                    if (st.getClassName().contains(fullTestName)) {
+                        errors.add("Error in " + failure.getTestIdentifier().getLegacyReportingName()
+                                + ": line " + st.getLineNumber() + " : "
+                                + failure.getException().toString());
+                    }
+                }
+            });
+            testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
+            testMessage.setErrorMessage(errors);
+            promptInfo.setErrorMsg(testMessage);
+            compiler.exportError(errors, executionErrorPath);
+            config.getLog().info("Test for method < " + methodInfo.methodName + " > execution failed round " + rounds);
+            return false;
+        }
+//            summary.printTo(new PrintWriter(System.out));
+        exportTest(code, savePath);
+        config.getLog().info("Test for method < " + methodInfo.methodName + " > generated successfully round " + rounds);
+        return true;
     }
 }

@@ -138,7 +138,12 @@ public class AbstractRunner {
     }
 
     public String extractCode(String content) {
-        return new CodeExtractor(content).getExtractedCode();
+        try {
+            return new CodeExtractor(content).getExtractedCode();
+        } catch (Exception e) {
+            config.getLog().error("In AbstractRunner.extractCode: " + e);
+        }
+        return "";
     }
 
     public String repairImports(String code, List<String> imports) {

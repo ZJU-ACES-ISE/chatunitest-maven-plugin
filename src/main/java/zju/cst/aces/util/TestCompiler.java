@@ -39,6 +39,8 @@ public class TestCompiler {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File backupFolder = new File("src" + File.separator + "backup");
     public static Config config;
+    public String testName;
+    public String fullTestName;
     public String code;
 
     public TestCompiler(Config config) {
@@ -50,8 +52,9 @@ public class TestCompiler {
         this.code = code;
     }
 
-    public boolean executeTest(String fullTestName, Path outputPath, PromptInfo promptInfo) {
+    public TestExecutionSummary executeTest(String fullTestName, Path outputPath) {
         File file = outputPath.toAbsolutePath().getParent().toFile();
+        this.fullTestName = fullTestName;
         try {
             List<String> classpathElements = new ArrayList<>();
             classpathElements.addAll(config.getClassPaths());
@@ -85,26 +88,7 @@ public class TestCompiler {
             launcher.execute(request);
 
             TestExecutionSummary summary = listener.getSummary();
-            if (summary.getTestsFailedCount() > 0) {
-                TestMessage testMessage = new TestMessage();
-                List<String> errors = new ArrayList<>();
-                summary.getFailures().forEach(failure -> {
-                    for (StackTraceElement st : failure.getException().getStackTrace()) {
-                        if (st.getClassName().equals(fullTestName)) {
-                            errors.add(failure.getTestIdentifier().getDisplayName() + ": "
-                                    + " line: "  + st.getLineNumber() + " "
-                                    + failure.getException().toString());
-                        }
-                    }
-                });
-                testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
-                testMessage.setErrorMessage(errors);
-                promptInfo.setErrorMsg(testMessage);
-
-                exportError(errors, outputPath);
-            }
-//            summary.printTo(new PrintWriter(System.out));
-            return summary.getTestsFailedCount() == 0;
+            return summary;
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.executeTest: " + e);
         }
@@ -117,6 +101,7 @@ public class TestCompiler {
         if (this.code == "") {
             throw new RuntimeException("In TestCompiler.compileTest: code is empty");
         }
+        this.testName = className;
         boolean result;
         try {
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
@@ -140,12 +125,13 @@ public class TestCompiler {
             JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
 
             result = task.call();
-            if (!result) {
+            if (!result && promptInfo != null) {
                 TestMessage testMessage = new TestMessage();
                 List<String> errors = new ArrayList<>();
                 diagnostics.getDiagnostics().forEach(diagnostic -> {
-                    errors.add("Error on line " + diagnostic.getLineNumber() +
-                            " : " + diagnostic.getMessage(null));
+                    errors.add("Error in " + testName +
+                            ": line " + diagnostic.getLineNumber() + " : "
+                            + diagnostic.getMessage(null));
                 });
                 testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
                 testMessage.setErrorMessage(errors);
