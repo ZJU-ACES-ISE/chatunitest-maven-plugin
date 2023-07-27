@@ -36,6 +36,7 @@ public class ClassParser {
     private static ClassInfo classInfo;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static JavaParser parser;
+    public int methodCount = 0;
 
     public ClassParser(JavaParser parser, String path) {
         this.parser = parser;
@@ -467,6 +468,7 @@ public class ClassParser {
                 exportClassInfo(GSON.toJson(classInfo), classDeclaration);
                 extractMethods(cu, classDeclaration);
                 extractConstructors(cu, classDeclaration);
+                methodCount += classInfo.briefMethods.size();
             }
         } catch (Exception e) {
             System.out.println("In ClassParser.extractClass Exception: " + e);

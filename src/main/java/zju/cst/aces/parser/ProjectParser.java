@@ -31,6 +31,8 @@ public class ProjectParser {
     public Map<String, List<String>> classMap = new HashMap<>();
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static Config config;
+    public int classCount = 0;
+    public int methodCount = 0;
 
     public ProjectParser(Config config) {
         this.srcFolderPath = Paths.get(config.getProject().getBasedir().getAbsolutePath(), "src", "main", "java");
@@ -56,11 +58,14 @@ public class ProjectParser {
                 Path output = outputPath.resolve(packagePath).getParent();
                 ClassParser classParser = new ClassParser(parser, output);
                 classParser.extractClass(classPath);
+                classCount++;
+                methodCount += classParser.methodCount;
             } catch (Exception e) {
                 throw new RuntimeException("In ProjectParser.parse: " + e);
             }
         }
         exportClassMap();
+        config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
     }
 
     public void addClassMap(String classPath) {
