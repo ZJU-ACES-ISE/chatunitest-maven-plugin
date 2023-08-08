@@ -135,8 +135,9 @@ public class ProjectParser {
             for (DependencyNode dep : depSet) {
                 try {
                     if (dep.getArtifact().getFile() == null || dep.getArtifact().getType().equals("pom")) {
-                        combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
+                        continue;
                     }
+                    combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
                 } catch (Exception e) {
                     config.getLog().warn(e.getMessage());
                     config.getLog().debug(e);
