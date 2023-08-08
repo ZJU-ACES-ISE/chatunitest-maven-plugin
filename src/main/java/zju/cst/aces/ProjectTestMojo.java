@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -101,14 +100,14 @@ public class ProjectTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            return;
+        }
+        printConfiguration();
         log.info("\n==========================\n[ChatTester] Generating tests for project " + project.getBasedir().getName() + " ...");
         log.warn("[ChatTester] It may consume a significant number of tokens!");
 
-        Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
-        if (!srcMainJavaPath.toFile().exists()) {
-            log.error("\n==========================\n[ChatTester] No compile source found in " + project);
-            return;
-        }
         ProjectParser parser = new ProjectParser(config);
         if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
@@ -117,7 +116,7 @@ public class ProjectTestMojo
         }
 
         List<String> classPaths = new ArrayList<>();
-        parser.scanSourceDirectory(srcMainJavaPath.toFile(), classPaths);
+        parser.scanSourceDirectory(project, classPaths);
 
         if (config.isEnableMultithreading() == true) {
             classJob(classPaths);
@@ -199,6 +198,9 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .build();
+    }
+
+    public void printConfiguration() {
         log.info("\n========================== Configuration ==========================\n");
         log.info(" Multithreading >>>> " + config.isEnableMultithreading());
         if (config.isEnableMultithreading()) {
@@ -251,8 +253,11 @@ public class ProjectTestMojo
      * @param project
      */
     public static void checkTargetFolder(MavenProject project) {
+        if (project.getPackaging().equals("pom")) {
+            return;
+        }
         if (!new File(project.getBuild().getOutputDirectory()).exists()) {
-            throw new RuntimeException("In TestCompiler.checkTargetFolder: " +
+            throw new RuntimeException("In ProjectTestMojo.checkTargetFolder: " +
                     "The project is not compiled to the target directory. " +
                     "Please run 'mvn compile' first.");
         }

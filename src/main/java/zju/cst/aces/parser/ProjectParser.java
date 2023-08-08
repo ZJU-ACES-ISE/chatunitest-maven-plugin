@@ -2,6 +2,7 @@ package zju.cst.aces.parser;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -9,6 +10,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import zju.cst.aces.config.Config;
@@ -40,6 +42,9 @@ public class ProjectParser {
         this.outputPath = config.getParseOutput();
         JavaSymbolSolver symbolSolver = getSymbolSolver();
         parser.getParserConfiguration().setSymbolResolver(symbolSolver);
+        if (config.parser == null) {
+            config.setParser(parser);
+        }
     }
 
     /**
@@ -47,24 +52,26 @@ public class ProjectParser {
      */
     public void parse() {
         List<String> classPaths = new ArrayList<>();
-        scanSourceDirectory(srcFolderPath.toFile(), classPaths);
+        scanSourceDirectory(config.getProject(), classPaths);
         if (classPaths.isEmpty()) {
-            throw new RuntimeException("No java file found in " + srcFolderPath);
+            config.getLog().warn("No java file found in " + srcFolderPath);
+            return;
         }
         for (String classPath : classPaths) {
             try {
                 addClassMap(classPath);
                 String packagePath = classPath.substring(srcFolderPath.toString().length() + 1);
                 Path output = outputPath.resolve(packagePath).getParent();
-                ClassParser classParser = new ClassParser(parser, output);
+                ClassParser classParser = new ClassParser(config, output);
                 classParser.extractClass(classPath);
+
                 classCount++;
                 methodCount += classParser.methodCount;
             } catch (Exception e) {
                 throw new RuntimeException("In ProjectParser.parse: " + e);
             }
         }
-        exportClassMap();
+        exportJson(config.getClassMapPath(), classMap);
         config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
     }
 
@@ -83,33 +90,33 @@ public class ProjectParser {
         }
     }
 
-    public void exportClassMap() {
-        Path classMapPath = config.getClassMapPath();
-        if (!Files.exists(classMapPath.getParent())) {
+    public void exportJson(Path path, Object obj) {
+        if (!Files.exists(path.getParent())) {
             try {
-                Files.createDirectories(classMapPath.getParent());
+                Files.createDirectories(path.getParent());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(classMapPath.toFile()), StandardCharsets.UTF_8)){
-            writer.write(GSON.toJson(classMap));
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path.toFile()), StandardCharsets.UTF_8)){
+            writer.write(GSON.toJson(obj));
         } catch (Exception e) {
-            throw new RuntimeException("In ProjectParser.exportNameMap: " + e);
+            throw new RuntimeException("In ProjectParser.exportJson: " + e);
         }
     }
 
-    public static void scanSourceDirectory(File directory, List<String> classPaths) {
-        if (directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        scanSourceDirectory(file, classPaths);
-                    } else if (file.getName().endsWith(".java")) {
-                        String classPath = file.getPath();
-                        classPaths.add(classPath);
-                    }
+    public static void scanSourceDirectory(MavenProject project, List<String> classPaths) {
+        File[] files = Paths.get(project.getCompileSourceRoots().get(0)).toFile().listFiles();
+        if (files != null) {
+            for (File file : files) {
+                try {
+                    Files.walk(file.toPath()).forEach(path -> {
+                        if (path.toString().endsWith(".java")) {
+                            classPaths.add(path.toString());
+                        }
+                    });
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
@@ -124,9 +131,10 @@ public class ProjectParser {
             DependencyNode root = config.getDependencyGraphBuilder().buildDependencyGraph(buildingRequest, null);
             Set<DependencyNode> depSet = new HashSet<>();
             walkDep(root, depSet);
+
             for (DependencyNode dep : depSet) {
                 try {
-                    if (dep.getArtifact().getFile() != null) {
+                    if (dep.getArtifact().getFile() == null || dep.getArtifact().getType().equals("pom")) {
                         combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
                     }
                 } catch (Exception e) {
@@ -144,6 +152,7 @@ public class ProjectParser {
             }
         }
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
+        config.setParserFacade(JavaParserFacade.get(combinedTypeSolver));
         return symbolSolver;
     }
 

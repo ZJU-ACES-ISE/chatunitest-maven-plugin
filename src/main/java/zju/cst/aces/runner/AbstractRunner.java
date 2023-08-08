@@ -1,12 +1,15 @@
 package zju.cst.aces.runner;
 
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
+import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.*;
 import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.util.CodeExtractor;
-import zju.cst.aces.config.Config;
 import zju.cst.aces.util.TokenCounter;
 
 import java.io.File;
@@ -54,26 +57,30 @@ public class AbstractRunner {
         String user = null;
         if (promptInfo.errorMsg == null) {
             user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
-                    promptInfo.methodSignature, promptInfo.className, promptInfo.info);
+                    promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
+            if (!promptInfo.getOtherMethods().trim().isEmpty()) {
+                user += String.format("\nSignatures of Other methods in the focal class are\n```%s```", promptInfo.getOtherMethods());
+            }
             if (promptInfo.hasDep) {
-                for (Map<String, String> cDeps : promptInfo.constructorDeps) {
+                for (Map<String, String> cDeps : promptInfo.getConstructorDeps()) {
                     for (Map.Entry<String, String> entry : cDeps.entrySet()) {
                         user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
                     }
                 }
-                for (Map<String, String> mDeps : promptInfo.methodDeps) {
+                for (Map<String, String> mDeps : promptInfo.getMethodDeps()) {
                     for (Map.Entry<String, String> entry : mDeps.entrySet()) {
                         user += String.format("\nThe brief information of dependent method `%s` is\n```%s```", entry.getKey(), entry.getValue());
                     }
                 }
             }
         } else {
-            int promptTokens = TokenCounter.countToken(promptInfo.unitTest)
-                    + TokenCounter.countToken(promptInfo.methodSignature)
-                    + TokenCounter.countToken(promptInfo.className)
-                    + TokenCounter.countToken(promptInfo.info);
+            int promptTokens = TokenCounter.countToken(promptInfo.getUnitTest())
+                    + TokenCounter.countToken(promptInfo.getMethodSignature())
+                    + TokenCounter.countToken(promptInfo.getClassName())
+                    + TokenCounter.countToken(promptInfo.getInfo())
+                    + TokenCounter.countToken(promptInfo.getOtherMethods());
             int allowedTokens = Math.max(config.getMaxPromptTokens() - promptTokens, config.getMinErrorTokens());
-            TestMessage errorMsg = promptInfo.errorMsg;
+            TestMessage errorMsg = promptInfo.getErrorMsg();
             String processedErrorMsg = "";
             for (String error : errorMsg.getErrorMessage()) {
                 if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
@@ -90,16 +97,19 @@ public class AbstractRunner {
                             "```\n%s```\n" +
                             "The unit test is testing the method %s in the class %s,\n" +
                             "the source code of the method under test and its class is:\n" +
-                            "```\n%s```\n" +
-                            "Please fix the error and return the whole fixed unit test." +
-                            " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n",
-                    promptInfo.unitTest, processedErrorMsg, promptInfo.methodSignature, promptInfo.className, promptInfo.info);
+                            "```\n%s```\n",
+                    promptInfo.getUnitTest(), processedErrorMsg, promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
+            if (!promptInfo.getOtherMethods().trim().isEmpty()) {
+                user += String.format("The signatures of other methods in its class are:\n```\n%s```\n", promptInfo.getOtherMethods());
+            }
+            user += "Please fix the error and return the whole fixed unit test." +
+                    " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n";
         }
         return user;
     }
 
     public String generateSystemPrompt(PromptInfo promptInfo) {
-        if (promptInfo.hasDep) {
+        if (promptInfo.isHasDep()) {
             return config.systemPromptWithDep;
         }
         return config.systemPromptWithoutDep;
@@ -121,7 +131,7 @@ public class AbstractRunner {
         }
         Map<String, Object> body = GSON.fromJson(response.body().charStream(), Map.class);
         String content = ((Map<String, String>) ((Map<String, Object>) ((ArrayList<?>) body.get("choices")).get(0)).get("message")).get("content");
-        return extractCode(content);
+        return content;
     }
 
     public void exportTest(String code, Path savePath) {
@@ -160,18 +170,9 @@ public class AbstractRunner {
     }
 
     public String repairPackage(String code, String packageInfo) {
-        String[] lines = code.split("\n");
-        String firstLine = lines[0];
-
-        if (packageInfo.isEmpty() || firstLine.contains(packageInfo)) {
-            return code;
-        }
-
-        StringBuilder repairedCode = new StringBuilder();
-        repairedCode.append(packageInfo).append("\n");
-        repairedCode.append(code);
-
-        return repairedCode.toString();
+        CompilationUnit cu = StaticJavaParser.parse(code).setPackageDeclaration(packageInfo
+                .replace("package ", "").replace(";", ""));
+        return cu.toString();
     }
 
     public String addTimeout(String testCase, int timeout) {
@@ -199,8 +200,9 @@ public class AbstractRunner {
     }
 
     public String changeTestName(String code, String className, String newName) {
-        String oldName = className + "Test";
-        return code.replace(oldName, newName);
+        CompilationUnit cu = StaticJavaParser.parse(code);
+        cu.findFirst(ClassOrInterfaceDeclaration.class).ifPresent(c -> c.setName(newName));
+        return cu.toString();
     }
 
     public PromptInfo generatePromptInfoWithoutDep(ClassInfo classInfo, MethodInfo methodInfo) {
@@ -208,8 +210,7 @@ public class AbstractRunner {
                 false,
                 classInfo.className,
                 methodInfo.methodName,
-                methodInfo.methodSignature,
-                methodInfo.sourceCode);
+                methodInfo.methodSignature);
         String fields = joinLines(classInfo.fields);
         String methods = filterAndJoinLines(classInfo.briefMethods, methodInfo.brief);
         String imports = joinLines(classInfo.imports);
@@ -219,11 +220,11 @@ public class AbstractRunner {
                 + "\n" + classInfo.classSignature
                 + " {"
                 + "\n" + fields
-                + "\n" + methods
                 + "\n" + methodInfo.sourceCode
                 + "\n}";
 
         promptInfo.setInfo(information);
+        promptInfo.setOtherMethods(methods);
 
         return promptInfo;
     }
@@ -233,8 +234,7 @@ public class AbstractRunner {
                 true,
                 classInfo.className,
                 methodInfo.methodName,
-                methodInfo.methodSignature,
-                methodInfo.sourceCode);
+                methodInfo.methodSignature);
         List<String> otherBriefMethods = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
             String depClassName = entry.getKey();
@@ -269,16 +269,19 @@ public class AbstractRunner {
                 + "\n" + classInfo.classSignature
                 + " {\n";
         //TODO: handle used fields instead of all fields
-        if (methodInfo.useField) {
-            information += fields + "\n" + joinLines(classInfo.getterSetters) + "\n";
-        }
+        String otherMethods = "";
         if (classInfo.hasConstructor) {
-            information += joinLines(classInfo.constructors) + "\n";
+            otherMethods += joinLines(classInfo.constructors) + "\n";
         }
-        information += joinLines(otherBriefMethods) + "\n";
+        if (methodInfo.useField) {
+            information += fields + "\n";
+            otherMethods +=  joinLines(classInfo.getterSetters) + "\n";
+        }
+        otherMethods += joinLines(otherBriefMethods) + "\n";
         information += methodInfo.sourceCode + "\n}";
 
         promptInfo.setInfo(information);
+        promptInfo.setOtherMethods(otherMethods);
         return promptInfo;
     }
 

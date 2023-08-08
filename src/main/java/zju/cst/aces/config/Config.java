@@ -1,5 +1,7 @@
 package zju.cst.aces.config;
 
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import lombok.Getter;
 import lombok.Setter;
 import okhttp3.OkHttpClient;
@@ -14,6 +16,7 @@ import java.net.Proxy;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +26,8 @@ public class Config {
     public MavenSession session;
     public MavenProject project;
     public DependencyGraphBuilder dependencyGraphBuilder;
+    public JavaParser parser;
+    public JavaParserFacade parserFacade;
     public List<String> classPaths;
     public String[] apiKeys;
     public Log log;
@@ -47,6 +52,8 @@ public class Config {
     public Path parseOutput;
     public Path errorOutput;
     public Path classMapPath;
+    public Path cryptoMapPath;
+    public Path obNamesPath;
 
     public String proxy;
     public String hostname;
@@ -61,6 +68,8 @@ public class Config {
         public MavenSession session;
         public MavenProject project;
         public DependencyGraphBuilder dependencyGraphBuilder;
+        public JavaParser parser;
+        public JavaParserFacade parserFacade;
         public List<String> classPaths;
         public String[] apiKeys;
         public Log log;
@@ -85,6 +94,8 @@ public class Config {
         public Path parseOutput;
         public Path errorOutput;
         public Path classMapPath;
+        public Path cryptoMapPath;
+        public Path obNamesPath;
 
         public String proxy = "null:-1";
         public String hostname = "null";
@@ -99,6 +110,7 @@ public class Config {
         public String systemPromptWithoutDep;
         public String userPromptWithDep;
         public String userPromptWithoutDep;
+        public Map<String, String> cryptoMap;
 
         public ConfigBuilder(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder, Log log) {
             this.session = session;
@@ -106,19 +118,28 @@ public class Config {
             this.dependencyGraphBuilder = dependencyGraphBuilder;
             this.classPaths = TestCompiler.listClassPaths(session, project, dependencyGraphBuilder);
             this.log = log;
+
+            MavenProject parent = project.getParent();
+            while(parent != null && parent.getBasedir() != null) {
+                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
+                parent = parent.getParent();
+            }
             this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.cryptoMapPath = this.tmpOutput.resolve("crypto-map.json");
+            this.obNamesPath = this.tmpOutput.resolve("ob-names.json");
+
             this.systemPromptWithoutDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
                     "I will provide the following information:\n" +
                     "1. Required dependencies to import.\n" +
                     "2. The focal class signature.\n" +
                     "3. Source code of the focal method.\n" +
                     "4. Signatures of other methods and fields in the class.\n" +
-                    "I need you to create a whole unit test using JUnit 5 and Mockito 3, " +
+                    "I need you to create a whole unit test using JUnit 5, " +
                     "ensuring optimal branch and line coverage. " +
-                    "The test should include necessary imports for JUnit 5 and Mockito 3, " +
+                    "The test should include necessary imports for JUnit 5, " +
                     "compile without errors, and use reflection to invoke private methods. " +
                     "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
                     "No additional explanations required.\n";
@@ -131,9 +152,9 @@ public class Config {
                     "I will provide following brief information if the focal method has dependencies:\n" +
                     "1. Signatures of dependent classes.\n" +
                     "2. Signatures of dependent methods and fields in the dependent classes.\n" +
-                    "I need you to create a whole unit test using JUnit 5 and Mockito 3, " +
+                    "I need you to create a whole unit test using JUnit 5, " +
                     "ensuring optimal branch and line coverage. " +
-                    "The test should include necessary imports for JUnit 5 and Mockito 3, " +
+                    "The test should include necessary imports for JUnit 5, " +
                     "compile without errors, and use reflection to invoke private methods. " +
                     "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
                     "No additional explanations required.\n";
@@ -159,10 +180,18 @@ public class Config {
         }
 
         public ConfigBuilder tmpOutput(Path tmpOutput) {
-            this.tmpOutput = tmpOutput.resolve(project.getArtifactId());
+            this.tmpOutput = tmpOutput;
+            MavenProject parent = project.getParent();
+            while(parent != null && parent.getBasedir() != null) {
+                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
+                parent = parent.getParent();
+            }
+            this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.cryptoMapPath = this.tmpOutput.resolve("crypto-map.json");
+            this.obNamesPath = this.tmpOutput.resolve("ob-names.json");
             return this;
         }
 
@@ -178,6 +207,16 @@ public class Config {
 
         public ConfigBuilder dependencyGraphBuilder(DependencyGraphBuilder dependencyGraphBuilder) {
             this.dependencyGraphBuilder = dependencyGraphBuilder;
+            return this;
+        }
+
+        public ConfigBuilder parser(JavaParser parser) {
+            this.parser = parser;
+            return this;
+        }
+
+        public ConfigBuilder parserFacade(JavaParserFacade parserFacade) {
+            this.parserFacade = parserFacade;
             return this;
         }
 
@@ -272,7 +311,7 @@ public class Config {
         }
 
         public ConfigBuilder testOutput(Path testOutput) {
-            this.testOutput = testOutput;
+            this.testOutput = project.getBasedir().toPath().resolve(testOutput);
             return this;
         }
 
@@ -288,6 +327,16 @@ public class Config {
 
         public ConfigBuilder classMapPath(Path classMapPath) {
             this.classMapPath = classMapPath;
+            return this;
+        }
+
+        public ConfigBuilder cryptoMapPath(Path cryptoMapPath) {
+            this.cryptoMapPath = cryptoMapPath;
+            return this;
+        }
+
+        public ConfigBuilder obNamesPath(Path obNamesPath) {
+            this.obNamesPath = obNamesPath;
             return this;
         }
 
@@ -344,12 +393,14 @@ public class Config {
             config.setSession(this.session);
             config.setProject(this.project);
             config.setDependencyGraphBuilder(this.dependencyGraphBuilder);
+            config.setParser(this.parser);
+            config.setParserFacade(this.parserFacade);
             config.setClassPaths(this.classPaths);
             config.setApiKeys(this.apiKeys);
             config.setOS(this.OS);
             config.setStopWhenSuccess(this.stopWhenSuccess);
-            config.setEnableMultithreading(this.enableMultithreading);
             config.setNoExecution(this.noExecution);
+            config.setEnableMultithreading(this.enableMultithreading);
             config.setMaxThreads(this.maxThreads);
             config.setClassThreads(this.classThreads);
             config.setMethodThreads(this.methodThreads);
@@ -367,6 +418,8 @@ public class Config {
             config.setParseOutput(this.parseOutput);
             config.setErrorOutput(this.errorOutput);
             config.setClassMapPath(this.classMapPath);
+            config.setCryptoMapPath(this.cryptoMapPath);
+            config.setObNamesPath(this.obNamesPath);
             config.setProxy(this.proxy);
             config.setHostname(this.hostname);
             config.setPort(this.port);

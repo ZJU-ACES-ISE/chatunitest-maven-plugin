@@ -77,6 +77,7 @@ public class MethodRunner extends ClassRunner {
                 + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         config.getLog().info("\n==========================\n[ChatTester] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
+
         for (int rounds = 1; rounds <= config.getMaxRounds(); rounds++) {
             if (promptInfo == null) {
                 config.getLog().info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
@@ -88,6 +89,7 @@ public class MethodRunner extends ClassRunner {
             } else {
                 config.getLog().info("Fixing test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             }
+
             List<Message> prompt = generateMessages(promptInfo);
             config.getLog().debug("[Prompt]:\n" + prompt.toString());
 
@@ -95,11 +97,16 @@ public class MethodRunner extends ClassRunner {
             Response response = askGPT.askChatGPT(prompt);
             Path savePath = testOutputPath.resolve(fullTestName.replace(".", File.separator) + ".java");
 
-            String code = parseResponse(response);
+            String content = parseResponse(response);
+            String code = extractCode(content);
             if (code.isEmpty()) {
-                config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
-                continue;
+                if (extractCode(content).isEmpty()) {
+                    config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
+                    continue;
+                }
+                code = extractCode(content);
             }
+
             code = changeTestName(code, className, testName);
             code = repairPackage(code, classInfo.packageDeclaration);
 //            code = addTimeout(code, testTimeOut);

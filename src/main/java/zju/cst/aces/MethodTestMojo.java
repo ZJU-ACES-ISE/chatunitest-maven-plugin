@@ -26,8 +26,6 @@ import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * @author chenyi
@@ -46,14 +44,13 @@ public class MethodTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
-        String className = selectMethod.split("#")[0];
-        String methodName = selectMethod.split("#")[1];
-
-        Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
-        if (!srcMainJavaPath.toFile().exists()) {
-            log.error("\n==========================\n[ChatTester] No compile source found in " + project);
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
             return;
         }
+        printConfiguration();
+        String className = selectMethod.split("#")[0];
+        String methodName = selectMethod.split("#")[1];
 
         if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
@@ -82,7 +79,7 @@ public class MethodTestMojo
             new MethodRunner(fullClassName, config, methodInfo).start();
 
         } catch (IOException e) {
-            throw new RuntimeException("In MethodTestMojo.execute: " + e);
+            log.warn("Method not found: " + methodName + " in " + className + " " + project.getArtifactId());
         }
 
         log.info("\n==========================\n[ChatTester] Generation finished");

@@ -23,8 +23,6 @@ import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * @author chenyi
@@ -43,13 +41,12 @@ public class ClassTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
-        String className = selectClass;
-        Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
-        if (!srcMainJavaPath.toFile().exists()) {
-            log.error("\n==========================\n[ChatTester] No compile source found in " + project);
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
             return;
         }
-
+        printConfiguration();
+        String className = selectClass;
         if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
             ProjectParser parser = new ProjectParser(config);
@@ -61,7 +58,7 @@ public class ClassTestMojo
         try {
             new ClassRunner(getFullClassName(className), config).start();
         } catch (IOException e) {
-            throw new RuntimeException("In ClassTestMojo.execute: " + e);
+            log.warn("Class not found: " + className + " in " + project.getArtifactId());
         }
 
         log.info("\n==========================\n[ChatTester] Generation finished");

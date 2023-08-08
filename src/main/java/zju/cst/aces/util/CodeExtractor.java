@@ -1,7 +1,7 @@
 package zju.cst.aces.util;
 
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseResult;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.*;
@@ -19,12 +19,12 @@ public class CodeExtractor {
     }
 
     public String extract(String code) {
-        String extractedCode = "";
+        String ec = "";
 
         // If the string is valid code, return true
         if (isSyntacticCorrect(code)) {
             hasCode = true;
-            extractedCode = code;
+            ec = code;
             hasSyntacticError = false;
         } else {
             hasCode = false;
@@ -38,9 +38,9 @@ public class CodeExtractor {
             while (matcher.find()) {
                 String match = matcher.group(1).trim();
                 if ((match.contains("@Test") || match.contains("@ParameterizedTest")) && match.contains("class") && match.contains("import")) {
-                    extractedCode= syntacticCheck(match);
-                    hasSyntacticError = !match.equals(extractedCode);
-                    if (!extractedCode.equals("")) {
+                    ec= syntacticCheck(match);
+                    hasSyntacticError = !match.equals(ec);
+                    if (!ec.equals("")) {
                         hasCode = true;
                         break;
                     }
@@ -51,9 +51,9 @@ public class CodeExtractor {
                 if (code.contains("```java")) {
                     String separateString = code.split("```java")[1];
                     if (separateString.contains("@Test") || separateString.contains("@ParameterizedTest")) {
-                        extractedCode = syntacticCheck(separateString);
-                        hasSyntacticError = !separateString.equals(extractedCode);
-                        if (!extractedCode.equals("")) {
+                        ec = syntacticCheck(separateString);
+                        hasSyntacticError = !separateString.equals(ec);
+                        if (!ec.equals("")) {
                             hasCode = true;
                         }
                     }
@@ -61,9 +61,9 @@ public class CodeExtractor {
                     String[] separateStrings = code.split("```");
                     for (String separateString : separateStrings) {
                         if (separateString.contains("@Test") || separateString.contains("@ParameterizedTest")) {
-                            extractedCode = syntacticCheck(separateString);
-                            hasSyntacticError = !separateString.equals(extractedCode);
-                            if (!extractedCode.equals("")) {
+                            ec = syntacticCheck(separateString);
+                            hasSyntacticError = !separateString.equals(ec);
+                            if (!ec.equals("")) {
                                 hasCode = true;
                                 break;
                             }
@@ -117,9 +117,9 @@ public class CodeExtractor {
                         }
 
                         String tempCode = String.join("\n", Arrays.copyOfRange(codeLines, start, end + 1));
-                        extractedCode = syntacticCheck(tempCode);
-                        hasSyntacticError = !tempCode.equals(extractedCode);
-                        if (!extractedCode.equals("")) {
+                        ec = syntacticCheck(tempCode);
+                        hasSyntacticError = !tempCode.equals(ec);
+                        if (!ec.equals("")) {
                             hasCode = true;
                         }
                     }
@@ -127,25 +127,26 @@ public class CodeExtractor {
             }
         }
 
-        extractedCode = extractedCode.trim();
+        ec = ec.trim();
 //        System.out.println("Has Code: " + hasCode);
-//        System.out.println("Extracted Code:\n" + extractedCode);
+//        System.out.println("Extracted Code:\n" + ec);
 //        System.out.println("Has Syntactic Error: " + hasSyntacticError);
-        return extractedCode;
+        return ec;
     }
 
-    private static boolean isSyntacticCorrect(String code) {
-        ParseResult<CompilationUnit> parseResult = java_parser.parse(code);
-        if (parseResult.isSuccessful()) {
+    private boolean isSyntacticCorrect(String code) {
+        try {
+            CompilationUnit cu = StaticJavaParser.parse(code);
             return true;
+        } catch (Exception e) {
+            return false;
         }
-        return false;
     }
 
     /**
      * Check and fix the syntax.
      */
-    public static String syntacticCheck(String code) {
+    public String syntacticCheck(String code) {
         if (isSyntacticCorrect(code)) {
             return code;
         } else {
@@ -190,7 +191,7 @@ public class CodeExtractor {
         }
     }
 
-    private static boolean contains(String[] arr, char target) {
+    private boolean contains(String[] arr, char target) {
         for (String c : arr) {
             if (c.charAt(0) == target) {
                 return true;
@@ -199,7 +200,7 @@ public class CodeExtractor {
         return false;
     }
 
-    private static int countOccurrences(String str, String target) {
+    private int countOccurrences(String str, String target) {
         int count = 0;
         int idx = 0;
         while ((idx = str.indexOf(target, idx)) != -1) {
@@ -219,6 +220,7 @@ public class CodeExtractor {
 
     public String getExtractedCode() {
         if (extractedCode == null) {
+            System.out.println("=^^^^^^^^^^^^^^^^^^^^^^\n    Extracted code is null!");
             return "";
         }
         return extractedCode;

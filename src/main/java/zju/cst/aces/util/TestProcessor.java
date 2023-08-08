@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
  * @ClassName TestProcessor
  * @Description Process generated tests, remove the error test case in the test class
  */
+
+//TODO: remove correct test case in the repair prompt.
 public class TestProcessor {
     private static final JavaParser parser = new JavaParser();
     private String fullTestName;
