@@ -145,6 +145,7 @@ public class CodeExtractor {
 
     /**
      * Check and fix the syntax.
+     * TODO: match @ParameterizedTest anotation
      */
     public String syntacticCheck(String code) {
         if (isSyntacticCorrect(code)) {

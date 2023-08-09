@@ -100,26 +100,30 @@ public class MethodRunner extends ClassRunner {
             String content = parseResponse(response);
             String code = extractCode(content);
             if (code.isEmpty()) {
-                if (extractCode(content).isEmpty()) {
-                    config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
-                    continue;
-                }
-                code = extractCode(content);
+                config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
+                continue;
             }
 
             code = changeTestName(code, className, testName);
             code = repairPackage(code, classInfo.packageDeclaration);
 //            code = addTimeout(code, testTimeOut);
-            promptInfo.setUnitTest(code); // Before repair imports
             code = repairImports(code, classInfo.imports);
-            if (runTest(code, testName, fullTestName, savePath, promptInfo, rounds)) {
+            promptInfo.setUnitTest(code); // Before repair imports
+            if (runTest(testName, fullTestName, savePath, promptInfo, rounds)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean runTest(String code, String testName, String fullTestName, Path savePath, PromptInfo promptInfo, int rounds) {
+    public boolean runTest(String testName, String fullTestName, Path savePath, PromptInfo promptInfo, int rounds) {
+        TestProcessor testProcessor = new TestProcessor(fullTestName);
+        String code = promptInfo.getUnitTest();
+        if (rounds > 1) {
+            code = testProcessor.addCorrectTest(promptInfo);
+        }
+
+        // Compilation
         TestCompiler compiler = new TestCompiler(config, code);
         Path compilationErrorPath = errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt");
         Path executionErrorPath = errorOutputPath.resolve(testName + "_ExecutionError_" + rounds + ".txt");
@@ -134,19 +138,22 @@ public class MethodRunner extends ClassRunner {
             return true;
         }
 
+        // Execution
         TestExecutionSummary summary = compiler.executeTest(fullTestName, executionErrorPath);
         if (summary.getTestsFailedCount() > 0) {
-            TestProcessor testProcessor = new TestProcessor(fullTestName, summary, code);
-            String testProcessed = testProcessor.removeErrorTest();
+            String testProcessed = testProcessor.removeErrorTest(promptInfo, summary);
 
+            // Remove errors successfully, recompile and re-execute test
             if (testProcessed != null) {
                 config.getLog().debug("[Original Test]:\n" + code);
                 TestCompiler newCompiler = new TestCompiler(config, testProcessed);
                 if (!newCompiler.compileTest(testName, compilationErrorPath, null)) {
+                    testProcessor.removeCorrectTest(promptInfo, summary);
                     return false;
                 }
                 TestExecutionSummary newSummary = newCompiler.executeTest(fullTestName, executionErrorPath);
                 if (newSummary.getTestsFailedCount() > 0) {
+                    testProcessor.removeCorrectTest(promptInfo, summary); // remove corrects and use original summary
                     return false;
                 }
                 exportTest(testProcessed, savePath);
@@ -155,6 +162,7 @@ public class MethodRunner extends ClassRunner {
                 return true;
             }
 
+            // Set promptInfo error message
             TestMessage testMessage = new TestMessage();
             List<String> errors = new ArrayList<>();
             summary.getFailures().forEach(failure -> {
@@ -170,6 +178,7 @@ public class MethodRunner extends ClassRunner {
             testMessage.setErrorMessage(errors);
             promptInfo.setErrorMsg(testMessage);
             compiler.exportError(errors, executionErrorPath);
+            testProcessor.removeCorrectTest(promptInfo, summary);
             config.getLog().info("Test for method < " + methodInfo.methodName + " > execution failed round " + rounds);
             return false;
         }

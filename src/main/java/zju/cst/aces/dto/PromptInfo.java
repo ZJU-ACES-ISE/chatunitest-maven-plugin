@@ -1,8 +1,11 @@
 package zju.cst.aces.dto;
 
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,8 +19,9 @@ public class PromptInfo {
     public String otherMethods;
     public List<Map<String, String>> constructorDeps = new ArrayList<>(); // dependent classes in constructor.
     public List<Map<String, String>> methodDeps = new ArrayList<>(); // dependent classes in method parameters and body.
-    public TestMessage errorMsg = null;
+    public TestMessage errorMsg;
     public String unitTest = "";
+    public Map<String, List<MethodDeclaration>> correctTests = new HashMap<>();
 
     public PromptInfo(boolean hasDep, String className, String methodName,
                       String methodSignature) {
@@ -52,5 +56,18 @@ public class PromptInfo {
             return;
         }
         this.constructorDeps.add(constructorDep);
+    }
+
+    public void addCorrectTest(MethodDeclaration m) {
+        ClassOrInterfaceDeclaration c = (ClassOrInterfaceDeclaration) m.getParentNode().orElseThrow();
+        String className = c.getNameAsString();
+        if (this.correctTests.containsKey(className)) {
+            this.correctTests.get(className).add(m);
+            return;
+        } else {
+            List<MethodDeclaration> methods = new ArrayList<>();
+            methods.add(m);
+            this.correctTests.put(className, methods);
+        }
     }
 }

@@ -3,8 +3,10 @@ package zju.cst.aces.util;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import zju.cst.aces.dto.PromptInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,16 +21,12 @@ import java.util.stream.Collectors;
 public class TestProcessor {
     private static final JavaParser parser = new JavaParser();
     private String fullTestName;
-    private TestExecutionSummary summary;
-    private String uniTest;
 
-    public TestProcessor(String fullTestName, TestExecutionSummary summary, String uniTest) {
+    public TestProcessor(String fullTestName) {
         this.fullTestName = fullTestName;
-        this.summary = summary;
-        this.uniTest = uniTest;
     }
 
-    public List<Integer> getErrorLineNum() {
+    public List<Integer> getErrorLineNum(TestExecutionSummary summary) {
         List<Integer> errorLineNum = new ArrayList<>();
         summary.getFailures().forEach(failure -> {
             for (StackTraceElement st : failure.getException().getStackTrace()) {
@@ -55,12 +53,13 @@ public class TestProcessor {
         }).collect(Collectors.toList()).isEmpty();
     }
 
-    public String removeErrorTest() {
+    public String removeErrorTest(PromptInfo promptInfo, TestExecutionSummary summary) {
+        String result = promptInfo.getUnitTest();
         try {
-            ParseResult<CompilationUnit> parseResult = parser.parse(uniTest);
+            ParseResult<CompilationUnit> parseResult = parser.parse(result);
             CompilationUnit cu = parseResult.getResult().orElseThrow();
             List<MethodDeclaration> methods = cu.findAll(MethodDeclaration.class);
-            List<Integer> errorLineNum = getErrorLineNum();
+            List<Integer> errorLineNum = getErrorLineNum(summary);
             for (MethodDeclaration method : methods) {
                 //TODO: remove error test case and other methods with errors
                 if (containError(errorLineNum, method)) {
@@ -70,10 +69,68 @@ public class TestProcessor {
             if (cu.findAll(MethodDeclaration.class).stream().filter(this::isTestCase).collect(Collectors.toList()).isEmpty()) {
                 return null;
             }
-            this.uniTest = cu.toString();
+            result = cu.toString();
         } catch (Exception e) {
             System.out.println("In TestProcessor.removeErrorTest: " + e);
+            return null;
         }
-        return this.uniTest;
+        return result;
+    }
+
+    public String removeCorrectTest(PromptInfo promptInfo, TestExecutionSummary summary) {
+        String result = promptInfo.getUnitTest();
+        try {
+            ParseResult<CompilationUnit> parseResult = parser.parse(result);
+            CompilationUnit cu = parseResult.getResult().orElseThrow();
+            List<MethodDeclaration> methods = cu.findAll(MethodDeclaration.class);
+            List<Integer> errorLineNum = getErrorLineNum(summary);
+            for (MethodDeclaration method : methods) {
+                if (!containError(errorLineNum, method) && isTestCase(method)) {
+                    promptInfo.addCorrectTest(method);
+                    method.remove();
+                }
+            }
+            if (cu.findAll(MethodDeclaration.class).stream().filter(this::isTestCase).collect(Collectors.toList()).isEmpty()) {
+                // TODO: should not throw this
+                throw new Exception("In TestProcessor.removeCorrectTest: No test case left");
+//                return null;
+            }
+            result = cu.toString();
+        } catch (Exception e) {
+            System.out.println("In TestProcessor.removeCorrectTest: " + e);
+        }
+        promptInfo.setUnitTest(result);
+        return result;
+    }
+
+    public String addCorrectTest(PromptInfo promptInfo) {
+        String result = promptInfo.getUnitTest();
+        try {
+            ParseResult<CompilationUnit> parseResult = parser.parse(result);
+            CompilationUnit cu = parseResult.getResult().orElseThrow();
+            for (String classname : promptInfo.getCorrectTests().keySet()) {
+                if(cu.getClassByName(classname).isPresent()) {
+                    ClassOrInterfaceDeclaration c = cu.getClassByName(classname).get();
+                    for (MethodDeclaration methodDeclaration : promptInfo.getCorrectTests().get(classname)) {
+                        c.addMember(methodDeclaration);
+                        // TODO: remove this print
+                        System.out.println("^^^^^^^^^^^^^^^^^\nIn TestProcessor.addCorrectTest: "
+                                + methodDeclaration + "\n^^^^^^^^^^^^^^^^^");
+                    }
+                }
+            }
+//            promptInfo.getCorrectTests().keySet().forEach(className -> {
+//                cu.getClassByName(className).ifPresent(classOrInterfaceDeclaration -> {
+//                    promptInfo.getCorrectTests().get(className).forEach(methodDeclaration -> {
+//                        classOrInterfaceDeclaration.addMember(methodDeclaration);
+//                    });
+//                });
+//            });
+            result = cu.toString();
+        } catch (Exception e) {
+            System.out.println("In TestProcessor.addCorrectTest: " + e);
+        }
+        promptInfo.setUnitTest(result);
+        return result;
     }
 }
