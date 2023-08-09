@@ -80,7 +80,7 @@ Essentially, the only thing you need to provide are your API keys.
 
 ### 2. Run
 
-**First, you need to download all necessary dependencies, which can be done by running `mvn compile` or `mvn install` command.**
+**First, you need to install your project and download all necessary dependencies, which can be done by running `mvn install` command.**
 
 **You can run the plugin with the following command:**
 
