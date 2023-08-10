@@ -67,8 +67,10 @@ public class MethodRunner extends ClassRunner {
                 }
             }
         }
+        generateTestSuite();
     }
 
+    // TODO: 支持保存所有记录（在每个log.debug()的地方增加记录即可）
     public boolean startRounds(final int num) throws IOException {
         PromptInfo promptInfo = null;
         String testName = className + separator + methodInfo.methodName + separator
@@ -99,6 +101,7 @@ public class MethodRunner extends ClassRunner {
 
             String content = parseResponse(response);
             String code = extractCode(content);
+            code = wrapTestMethod(code);
             if (code.isEmpty()) {
                 config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
                 continue;

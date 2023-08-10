@@ -53,8 +53,10 @@ public class AbstractRunner {
         return messages;
     }
 
+    // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateUserPrompt(PromptInfo promptInfo) throws IOException {
         String user = null;
+        // round 1
         if (promptInfo.errorMsg == null) {
             user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
                     promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
@@ -73,7 +75,7 @@ public class AbstractRunner {
                     }
                 }
             }
-        } else {
+        } else { // round > 1 -- repair prompt
             int promptTokens = TokenCounter.countToken(promptInfo.getUnitTest())
                     + TokenCounter.countToken(promptInfo.getMethodSignature())
                     + TokenCounter.countToken(promptInfo.getClassName())
@@ -108,6 +110,7 @@ public class AbstractRunner {
         return user;
     }
 
+    // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateSystemPrompt(PromptInfo promptInfo) {
         if (promptInfo.isHasDep()) {
             return config.systemPromptWithDep;
@@ -329,5 +332,15 @@ public class AbstractRunner {
         String getterSetter = joinLines(depClassInfo.getterSetters) + "\n";
         methodDeps.put(depClassName, basicInfo + getterSetter + briefDepMethods + "}");
         return methodDeps;
+    }
+
+    // TODO: 将单个测试方法包装到具有适当imports的测试类中
+    public String wrapTestMethod(String testMethod) {
+        return testMethod;
+    }
+
+    // TODO: 将每轮的生成结果合并为最终测试套件
+    public void generateTestSuite() {
+
     }
 }
