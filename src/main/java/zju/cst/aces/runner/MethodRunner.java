@@ -107,7 +107,7 @@ public class MethodRunner extends ClassRunner {
             code = changeTestName(code, className, testName);
             code = repairPackage(code, classInfo.packageDeclaration);
 //            code = addTimeout(code, testTimeOut);
-            code = repairImports(code, classInfo.imports);
+            code = repairImports(code, classInfo.imports, true);
             promptInfo.setUnitTest(code); // Before repair imports
             if (runTest(testName, fullTestName, savePath, promptInfo, rounds)) {
                 return true;

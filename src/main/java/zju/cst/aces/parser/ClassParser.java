@@ -470,7 +470,7 @@ public class ClassParser {
                 extractMethods(cu, classDeclaration);
                 extractConstructors(cu, classDeclaration);
 
-                methodCount += classInfo.briefMethods.size();
+                methodCount += classDeclaration.getMethods().size();
             } catch (Exception e) {
                 config.getLog().warn("In ClassParser.extractClass Exception: " + e);
             }

@@ -156,17 +156,17 @@ public class AbstractRunner {
         return "";
     }
 
-    public String repairImports(String code, List<String> imports) {
-        String[] codeParts = code.trim().split("\\n", 2);
-        String firstLine = codeParts[0];
-        String _code = codeParts[1];
-        for (int i = imports.size() - 1; i >= 0; i--) {
-            String _import = imports.get(i);
-            if (!_code.contains(_import)) {
-                _code = _import + "\n" + _code;
-            }
+    // TODO: manually import * and source class improts
+    public String repairImports(String code, List<String> imports, boolean asterisk) {
+        CompilationUnit cu = StaticJavaParser.parse(code);
+        if (asterisk) {
+            cu.addImport("org.mockito", false, true);
+            cu.addImport("org.junit.jupiter.api", false, true);
+            cu.addImport("org.mockito.Mockito", true, true);
+            cu.addImport("org.junit.jupiter.api.Assertions", true, true);
         }
-        return firstLine + "\n" + _code;
+        imports.forEach(i -> cu.addImport(i.replace("import ", "").replace(";", "")));
+        return cu.toString();
     }
 
     public String repairPackage(String code, String packageInfo) {
@@ -191,7 +191,7 @@ public class AbstractRunner {
             }
             List<String> timeoutImport = new ArrayList<>();
             timeoutImport.add("import org.junit.jupiter.api.Timeout;");
-            testCase = repairImports(testCase, timeoutImport);
+            testCase = repairImports(testCase, timeoutImport, true);
             return testCase.replace("@Test\n", String.format("@Test%n    @Timeout(%d)%n", timeout));
         } else {
             config.getLog().warn("Generated with unknown JUnit version, try without adding timeout.");

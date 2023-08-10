@@ -89,7 +89,7 @@ public class Config {
         public int topP = 1;
         public int frequencyPenalty = 0;
         public int presencePenalty = 0;
-        public Path testOutput = Paths.get("chatunitest-tests");
+        public Path testOutput;
         public Path tmpOutput = Paths.get(System.getProperty("java.io.tmpdir"), "chatunitest-info");
         public Path parseOutput;
         public Path errorOutput;
@@ -133,15 +133,12 @@ public class Config {
 
             this.systemPromptWithoutDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
                     "I will provide the following information:\n" +
-                    "1. Required dependencies to import.\n" +
-                    "2. The focal class signature.\n" +
-                    "3. Source code of the focal method.\n" +
-                    "4. Signatures of other methods and fields in the class.\n" +
-                    "I need you to create a whole unit test using JUnit 5, " +
+                    "1. The focal class signature.\n" +
+                    "2. Source code of the focal method.\n" +
+                    "3. Signatures of other methods and fields in the class.\n" +
+                    "I need you to create a unit test case using JUnit 5, " +
                     "ensuring optimal branch and line coverage. " +
-                    "The test should include necessary imports for JUnit 5, " +
                     "compile without errors, and use reflection to invoke private methods. " +
-                    "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
                     "No additional explanations required.\n";
             this.systemPromptWithDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
                     "I will provide the following information of the focal method:\n" +
@@ -154,9 +151,7 @@ public class Config {
                     "2. Signatures of dependent methods and fields in the dependent classes.\n" +
                     "I need you to create a whole unit test using JUnit 5, " +
                     "ensuring optimal branch and line coverage. " +
-                    "The test should include necessary imports for JUnit 5, " +
                     "compile without errors, and use reflection to invoke private methods. " +
-                    "Each test case should be Junit 5 parameterized and has ability to accept input parameters." +
                     "No additional explanations required.\n";
         }
 
@@ -311,7 +306,7 @@ public class Config {
         }
 
         public ConfigBuilder testOutput(Path testOutput) {
-            this.testOutput = project.getBasedir().toPath().resolve(testOutput);
+            this.testOutput = testOutput;
             return this;
         }
 

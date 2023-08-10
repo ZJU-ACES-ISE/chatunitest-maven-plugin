@@ -53,7 +53,7 @@ public class ProjectTestMojo
     public MavenSession session;
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
-    @Parameter(defaultValue = "chatunitest-tests", property = "testOutput")
+    @Parameter(defaultValue = "${project.basedir}/chatunitest-tests", property = "testOutput")
     public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public File tmpOutput;
