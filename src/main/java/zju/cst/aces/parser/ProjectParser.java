@@ -138,6 +138,7 @@ public class ProjectParser {
                 combinedTypeSolver.add(new JavaParserTypeSolver(src));
             }
         }
+
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         return symbolSolver;
     }
