@@ -5,10 +5,12 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import freemarker.template.TemplateException;
 import okhttp3.Response;
 import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.*;
 import zju.cst.aces.parser.ClassParser;
+import zju.cst.aces.prompt.PromptGenerator;
 import zju.cst.aces.util.CodeExtractor;
 import zju.cst.aces.util.TokenCounter;
 
@@ -33,7 +35,7 @@ public class AbstractRunner {
     public String className;
     public String fullClassName;
     public Config config;
-
+    public PromptGenerator promptGenerator = new PromptGenerator();
     // get configuration from Config, and move init() to Config
     public AbstractRunner(String fullClassname, Config config) throws IOException {
         fullClassName = fullClassname;
@@ -42,6 +44,7 @@ public class AbstractRunner {
         errorOutputPath = config.getErrorOutput();
         parseOutputPath = config.getParseOutput();
         testOutputPath = config.getTestOutput();
+        promptGenerator.setConfig(config);
     }
 
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
@@ -55,67 +58,13 @@ public class AbstractRunner {
 
     // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateUserPrompt(PromptInfo promptInfo) throws IOException {
-        String user = null;
-        // round 1
-        if (promptInfo.errorMsg == null) {
-            user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
-                    promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
-            if (!promptInfo.getOtherMethods().trim().isEmpty()) {
-                user += String.format("\nSignatures of Other methods in the focal class are\n```%s```", promptInfo.getOtherMethods());
-            }
-            if (promptInfo.hasDep) {
-                for (Map<String, String> cDeps : promptInfo.getConstructorDeps()) {
-                    for (Map.Entry<String, String> entry : cDeps.entrySet()) {
-                        user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
-                    }
-                }
-                for (Map<String, String> mDeps : promptInfo.getMethodDeps()) {
-                    for (Map.Entry<String, String> entry : mDeps.entrySet()) {
-                        user += String.format("\nThe brief information of dependent method `%s` is\n```%s```", entry.getKey(), entry.getValue());
-                    }
-                }
-            }
-        } else { // round > 1 -- repair prompt
-            int promptTokens = TokenCounter.countToken(promptInfo.getUnitTest())
-                    + TokenCounter.countToken(promptInfo.getMethodSignature())
-                    + TokenCounter.countToken(promptInfo.getClassName())
-                    + TokenCounter.countToken(promptInfo.getInfo())
-                    + TokenCounter.countToken(promptInfo.getOtherMethods());
-            int allowedTokens = Math.max(config.getMaxPromptTokens() - promptTokens, config.getMinErrorTokens());
-            TestMessage errorMsg = promptInfo.getErrorMsg();
-            String processedErrorMsg = "";
-            for (String error : errorMsg.getErrorMessage()) {
-                if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
-                    processedErrorMsg += error + "\n";
-                }
-            }
-            config.getLog().debug("Allowed tokens: " + allowedTokens);
-            config.getLog().debug("Processed error message: \n" + processedErrorMsg);
-
-            user = String.format("I need you to fix an error in a unit test, an error occurred while compiling and executing\n" +
-                            "The unit test is:\n" +
-                            "```\n%s```\n" +
-                            "The error message is:\n" +
-                            "```\n%s```\n" +
-                            "The unit test is testing the method %s in the class %s,\n" +
-                            "the source code of the method under test and its class is:\n" +
-                            "```\n%s```\n",
-                    promptInfo.getUnitTest(), processedErrorMsg, promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
-            if (!promptInfo.getOtherMethods().trim().isEmpty()) {
-                user += String.format("The signatures of other methods in its class are:\n```\n%s```\n", promptInfo.getOtherMethods());
-            }
-            user += "Please fix the error and return the whole fixed unit test." +
-                    " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n";
-        }
-        return user;
+        return promptGenerator.getUserPrompt(promptInfo);
     }
+
 
     // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateSystemPrompt(PromptInfo promptInfo) {
-        if (promptInfo.isHasDep()) {
-            return config.systemPromptWithDep;
-        }
-        return config.systemPromptWithoutDep;
+       return promptGenerator.getSystemPrompt(promptInfo);
     }
 
     public String joinLines(List<String> lines) {

@@ -31,6 +31,8 @@ public class PromptInfo {
         this.methodSignature = methodSignature;
     }
 
+    public PromptInfo(){}
+
     public PromptInfo(PromptInfo p) {
         this.setHasDep(p.isHasDep());
         this.setClassName(p.getClassName());
