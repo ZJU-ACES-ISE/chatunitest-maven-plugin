@@ -214,6 +214,7 @@ public class ProjectTestMojo
         log.info(" --- ");
         log.info(" TestOutput Path >>> " + config.getTestOutput());
         log.info(" TmpOutput Path >>> " + config.getTmpOutput());
+        log.info(" Prompt path >>> " + config.getPromptPath());
         log.info(" MaxThreads >>> " + config.getMaxThreads());
         log.info(" TestNumber >>> " + config.getTestNumber());
         log.info(" MaxRounds >>> " + config.getMaxRounds());
