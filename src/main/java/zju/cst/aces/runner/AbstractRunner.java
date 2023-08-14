@@ -5,14 +5,15 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import freemarker.template.TemplateException;
 import okhttp3.Response;
 import zju.cst.aces.config.Config;
-import zju.cst.aces.dto.*;
+import zju.cst.aces.dto.ClassInfo;
+import zju.cst.aces.dto.Message;
+import zju.cst.aces.dto.MethodInfo;
+import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.prompt.PromptGenerator;
 import zju.cst.aces.util.CodeExtractor;
-import zju.cst.aces.util.TokenCounter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,20 +50,18 @@ public class AbstractRunner {
 
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
         List<Message> messages = new ArrayList<>();
-        if (promptInfo.errorMsg == null) { // round 1
+        if (promptInfo.errorMsg == null) { // round 0
             messages.add(Message.ofSystem(generateSystemPrompt(promptInfo)));
         }
         messages.add(Message.of(generateUserPrompt(promptInfo)));
         return messages;
     }
 
-    // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateUserPrompt(PromptInfo promptInfo) throws IOException {
         return promptGenerator.getUserPrompt(promptInfo);
     }
 
 
-    // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateSystemPrompt(PromptInfo promptInfo) {
        return promptGenerator.getSystemPrompt(promptInfo);
     }
@@ -108,7 +107,6 @@ public class AbstractRunner {
         return "";
     }
 
-    // TODO: manually import * and source class improts
     public String repairImports(String code, List<String> imports, boolean asterisk) {
         CompilationUnit cu = StaticJavaParser.parse(code);
         if (asterisk) {
@@ -281,6 +279,95 @@ public class AbstractRunner {
         String getterSetter = joinLines(depClassInfo.getterSetters) + "\n";
         methodDeps.put(depClassName, basicInfo + getterSetter + briefDepMethods + "}");
         return methodDeps;
+    }
+
+    public void exportRecord(PromptInfo promptInfo, ClassInfo classInfo, int attempt) {
+        String methodIndex = classInfo.methodSignatures.get(promptInfo.methodSignature);
+        Path recordPath = config.getHistoryPath();
+        exportClassMapping(recordPath);
+
+        recordPath = recordPath.resolve("class" + classInfo.index);
+        exportMethodMapping(classInfo, recordPath);
+
+        recordPath = recordPath.resolve("method" + methodIndex);
+        exportAttemptMapping(promptInfo, recordPath);
+
+        recordPath = recordPath.resolve("attempt" + attempt);
+        if (!recordPath.toFile().exists()) {
+            recordPath.toFile().mkdirs();
+        }
+        File recordFile = recordPath.resolve("records.json").toFile();
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(recordFile), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(promptInfo.getRecords()));
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportRecord: " + e);
+        }
+    }
+
+    public void exportClassMapping(Path savePath) {
+        if (!savePath.toFile().exists()) {
+            savePath.toFile().mkdirs();
+        }
+        File classMappingFile = savePath.resolve("classMapping.json").toFile();
+        if (classMappingFile.exists()) {
+            return;
+        }
+        Path sourcePath = config.tmpOutput.resolve("classMapping.json");
+        try {
+            Files.copy(sourcePath, classMappingFile.toPath());
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportClassMapping: " + e);
+        }
+    }
+
+    public void exportMethodMapping(ClassInfo classInfo, Path savePath) {
+        if (!savePath.toFile().exists()) {
+            savePath.toFile().mkdirs();
+        }
+        File methodMappingFile = savePath.resolve("methodMapping.json").toFile();
+        if (methodMappingFile.exists()) {
+            return;
+        }
+        Map<String, Map<String, String>> methodMapping = new TreeMap<>();
+        classInfo.methodSignatures.forEach((sig, index) -> {
+            Map<String, String> map = new LinkedHashMap<>();
+            map.put("methodName", sig.split("\\(")[0]);
+            map.put("signature", sig);
+            methodMapping.put("method" + index, map);
+        });
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(methodMappingFile), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(methodMapping));
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportMethodMapping: " + e);
+        }
+    }
+
+    public void exportAttemptMapping(PromptInfo promptInfo, Path savePath) {
+        if (!savePath.toFile().exists()) {
+            savePath.toFile().mkdirs();
+        }
+        File attemptMappingFile = savePath.resolve("attemptMapping.json").toFile();
+        if (attemptMappingFile.exists()) {
+            return;
+        }
+        Map<String, Map<String, String>> attemptMapping = new TreeMap<>();
+        String fullNamePrefix = promptInfo.getFullTestName().substring(0, promptInfo.getFullTestName().indexOf("_Test") - 1);
+        for (int i = 0; i < config.getTestNumber(); i++) {
+            Map<String, String> map = new LinkedHashMap<>();
+            String fullTestName = fullNamePrefix + i + "_Test";
+            map.put("testClassName", fullTestName.substring(fullTestName.lastIndexOf(".") + 1));
+            map.put("fullName", fullTestName);
+            map.put("path", promptInfo.getTestPath().toString());
+            attemptMapping.put("attempt" + i, map);
+        }
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(attemptMappingFile), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(attemptMapping));
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportAttemptMapping: " + e);
+        }
     }
 
     // TODO: 将单个测试方法包装到具有适当imports的测试类中

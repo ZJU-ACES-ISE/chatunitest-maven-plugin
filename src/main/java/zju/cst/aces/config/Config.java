@@ -11,24 +11,30 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.util.TestCompiler;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 @Setter
 public class Config {
+    public String date;
     public MavenSession session;
     public MavenProject project;
     public DependencyGraphBuilder dependencyGraphBuilder;
     public JavaParser parser;
     public JavaParserFacade parserFacade;
     public List<String> classPaths;
+    public Path promptPath;
     public String[] apiKeys;
     public Log log;
     public String OS;
@@ -52,25 +58,24 @@ public class Config {
     public Path parseOutput;
     public Path errorOutput;
     public Path classMapPath;
-    public Path cryptoMapPath;
-    public Path obNamesPath;
+    public Path historyPath;
 
     public String proxy;
     public String hostname;
     public String port;
     public OkHttpClient client;
-    public String systemPromptWithDep;
-    public String systemPromptWithoutDep;
-    public String userPromptWithDep;
-    public String userPromptWithoutDep;
+    public static AtomicInteger sharedInteger = new AtomicInteger(0);
+    public static Map<String, Map<String, String>> classMapping;
 
     public static class ConfigBuilder {
+        public String date;
         public MavenSession session;
         public MavenProject project;
         public DependencyGraphBuilder dependencyGraphBuilder;
         public JavaParser parser;
         public JavaParserFacade parserFacade;
         public List<String> classPaths;
+        public Path promptPath;
         public String[] apiKeys;
         public Log log;
         public String OS = System.getProperty("os.name").toLowerCase();
@@ -94,9 +99,7 @@ public class Config {
         public Path parseOutput;
         public Path errorOutput;
         public Path classMapPath;
-        public Path cryptoMapPath;
-        public Path obNamesPath;
-
+        public Path historyPath;
         public String proxy = "null:-1";
         public String hostname = "null";
         public String port = "-1";
@@ -106,13 +109,9 @@ public class Config {
                 .readTimeout(5, TimeUnit.MINUTES)
                 .build();
 
-        public String systemPromptWithDep;
-        public String systemPromptWithoutDep;
-        public String userPromptWithDep;
-        public String userPromptWithoutDep;
-        public Map<String, String> cryptoMap;
 
         public ConfigBuilder(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder, Log log) {
+            this.date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")).toString();
             this.session = session;
             this.project = project;
             this.dependencyGraphBuilder = dependencyGraphBuilder;
@@ -128,31 +127,7 @@ public class Config {
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classMapPath = this.tmpOutput.resolve("class-map.json");
-            this.cryptoMapPath = this.tmpOutput.resolve("crypto-map.json");
-            this.obNamesPath = this.tmpOutput.resolve("ob-names.json");
-
-            this.systemPromptWithoutDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
-                    "I will provide the following information:\n" +
-                    "1. The focal class signature.\n" +
-                    "2. Source code of the focal method.\n" +
-                    "3. Signatures of other methods and fields in the class.\n" +
-                    "I need you to create a unit test case using JUnit 5, " +
-                    "ensuring optimal branch and line coverage. " +
-                    "compile without errors, and use reflection to invoke private methods. " +
-                    "No additional explanations required.\n";
-            this.systemPromptWithDep = "Please help me generate a whole JUnit test for a focal method in a focal class.\n" +
-                    "I will provide the following information of the focal method:\n" +
-                    "1. Required dependencies to import.\n" +
-                    "2. The focal class signature.\n" +
-                    "3. Source code of the focal method.\n" +
-                    "4. Signatures of other methods and fields in the class.\n" +
-                    "I will provide following brief information if the focal method has dependencies:\n" +
-                    "1. Signatures of dependent classes.\n" +
-                    "2. Signatures of dependent methods and fields in the dependent classes.\n" +
-                    "I need you to create a whole unit test using JUnit 5, " +
-                    "ensuring optimal branch and line coverage. " +
-                    "compile without errors, and use reflection to invoke private methods. " +
-                    "No additional explanations required.\n";
+            this.historyPath = this.tmpOutput.resolve("history" + this.date);
         }
 
         public ConfigBuilder maxThreads(int maxThreads) {
@@ -185,8 +160,7 @@ public class Config {
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classMapPath = this.tmpOutput.resolve("class-map.json");
-            this.cryptoMapPath = this.tmpOutput.resolve("crypto-map.json");
-            this.obNamesPath = this.tmpOutput.resolve("ob-names.json");
+            this.historyPath = this.tmpOutput.resolve("history" + this.date);
             return this;
         }
 
@@ -202,6 +176,13 @@ public class Config {
 
         public ConfigBuilder dependencyGraphBuilder(DependencyGraphBuilder dependencyGraphBuilder) {
             this.dependencyGraphBuilder = dependencyGraphBuilder;
+            return this;
+        }
+
+        public ConfigBuilder promptPath(File promptPath) {
+            if (promptPath != null) {
+                this.promptPath = promptPath.toPath();
+            }
             return this;
         }
 
@@ -325,16 +306,6 @@ public class Config {
             return this;
         }
 
-        public ConfigBuilder cryptoMapPath(Path cryptoMapPath) {
-            this.cryptoMapPath = cryptoMapPath;
-            return this;
-        }
-
-        public ConfigBuilder obNamesPath(Path obNamesPath) {
-            this.obNamesPath = obNamesPath;
-            return this;
-        }
-
         public ConfigBuilder hostname(String hostname) {
             this.hostname = hostname;
             return this;
@@ -385,12 +356,14 @@ public class Config {
 
         public Config build() {
             Config config = new Config();
+            config.setDate(this.date);
             config.setSession(this.session);
             config.setProject(this.project);
             config.setDependencyGraphBuilder(this.dependencyGraphBuilder);
             config.setParser(this.parser);
             config.setParserFacade(this.parserFacade);
             config.setClassPaths(this.classPaths);
+            config.setPromptPath(this.promptPath);
             config.setApiKeys(this.apiKeys);
             config.setOS(this.OS);
             config.setStopWhenSuccess(this.stopWhenSuccess);
@@ -413,15 +386,12 @@ public class Config {
             config.setParseOutput(this.parseOutput);
             config.setErrorOutput(this.errorOutput);
             config.setClassMapPath(this.classMapPath);
-            config.setCryptoMapPath(this.cryptoMapPath);
-            config.setObNamesPath(this.obNamesPath);
+            config.setHistoryPath(this.historyPath);
             config.setProxy(this.proxy);
             config.setHostname(this.hostname);
             config.setPort(this.port);
             config.setClient(this.client);
             config.setLog(this.log);
-            config.setSystemPromptWithDep(this.systemPromptWithDep);
-            config.setSystemPromptWithoutDep(this.systemPromptWithoutDep);
             return config;
         }
     }

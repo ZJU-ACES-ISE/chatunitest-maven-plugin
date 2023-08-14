@@ -4,6 +4,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import lombok.Data;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +22,10 @@ public class PromptInfo {
     public List<Map<String, String>> methodDeps = new ArrayList<>(); // dependent classes in method parameters and body.
     public TestMessage errorMsg;
     public String unitTest = "";
+    public String fullTestName;
+    public Path testPath;
     public Map<String, List<MethodDeclaration>> correctTests = new HashMap<>();
+    public List<RoundRecord> records = new ArrayList<>();
 
     public PromptInfo(boolean hasDep, String className, String methodName,
                       String methodSignature) {
@@ -44,6 +48,10 @@ public class PromptInfo {
         this.setMethodDeps(p.getMethodDeps());
         this.setErrorMsg(p.getErrorMsg());
         this.setUnitTest(p.getUnitTest());
+        this.setFullTestName(p.getFullTestName());
+        this.setTestPath(p.getTestPath());
+        this.setCorrectTests(p.getCorrectTests());
+        this.setRecords(p.getRecords());
     }
 
     public void addMethodDeps(Map<String, String> methodDep) {
@@ -71,5 +79,9 @@ public class PromptInfo {
             methods.add(m);
             this.correctTests.put(className, methods);
         }
+    }
+
+    public void addRecord(RoundRecord r) {
+        this.records.add(r);
     }
 }

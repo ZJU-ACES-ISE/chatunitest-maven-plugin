@@ -71,6 +71,7 @@ public class ProjectParser {
                 throw new RuntimeException("In ProjectParser.parse: " + e);
             }
         }
+        exportClassMapping();
         exportJson(config.getClassMapPath(), classMap);
         config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
     }
@@ -162,5 +163,10 @@ public class ProjectParser {
         for (DependencyNode dep : node.getChildren()) {
             walkDep(dep, depSet);
         }
+    }
+
+    public void exportClassMapping() {
+        Path savePath = config.tmpOutput.resolve("classMapping.json");
+        exportJson(savePath, config.classMapping);
     }
 }

@@ -15,6 +15,7 @@ import java.util.concurrent.*;
 public class ClassRunner extends AbstractRunner {
     public ClassInfo classInfo;
     public File infoDir;
+    public int index;
 
     public ClassRunner(String fullClassName, Config config) throws IOException {
         super(fullClassName, config);

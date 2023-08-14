@@ -6,6 +6,10 @@ import java.util.Set;
 
 public class ClassInfo {
     public String className;
+    public int index;
+    public String modifier;
+    public String extend;
+    public String implement;
     public String packageDeclaration;
     public String classSignature;
     public List<String> imports;
@@ -18,11 +22,16 @@ public class ClassInfo {
     public List<String> getterSetters;
     public Map<String, Set<String>> constructorDeps;
 
-    public ClassInfo(String className, String packageDeclaration, String classSignature, List<String> imports,
+    public ClassInfo(String className, int index, String modifier, String extend, String implement,
+                     String packageDeclaration, String classSignature, List<String> imports,
                      List<String> fields, List<String> superClasses, Map<String, String> methodSignatures,
                      List<String> briefMethods, boolean hasConstructor, List<String> constructors,
                      List<String> getterSetters, Map<String, Set<String>> constructorDeps) {
         this.className = className;
+        this.index = index;
+        this.modifier = modifier;
+        this.extend = extend;
+        this.implement = implement;
         this.packageDeclaration = packageDeclaration;
         this.classSignature = classSignature;
         this.imports = imports;

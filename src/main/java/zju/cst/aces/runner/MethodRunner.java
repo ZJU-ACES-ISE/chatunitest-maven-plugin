@@ -3,10 +3,7 @@ package zju.cst.aces.runner;
 import okhttp3.Response;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import zju.cst.aces.config.Config;
-import zju.cst.aces.dto.Message;
-import zju.cst.aces.dto.MethodInfo;
-import zju.cst.aces.dto.PromptInfo;
-import zju.cst.aces.dto.TestMessage;
+import zju.cst.aces.dto.*;
 import zju.cst.aces.util.AskGPT;
 import zju.cst.aces.util.TestCompiler;
 import zju.cst.aces.util.TestProcessor;
@@ -32,7 +29,7 @@ public class MethodRunner extends ClassRunner {
         if (!config.isStopWhenSuccess() && config.isEnableMultithreading()) {
             ExecutorService executor = Executors.newFixedThreadPool(config.getTestNumber());
             List<Future<String>> futures = new ArrayList<>();
-            for (int num = 1; num <= config.getTestNumber(); num++) {
+            for (int num = 0; num < config.getTestNumber(); num++) {
                 int finalNum = num;
                 Callable<String> callable = new Callable<String>() {
                     @Override
@@ -61,7 +58,7 @@ public class MethodRunner extends ClassRunner {
 
             executor.shutdown();
         } else {
-            for (int num = 1; num <= config.getTestNumber(); num++) {
+            for (int num = 0; num < config.getTestNumber(); num++) {
                 if (startRounds(num)) {
                     break;
                 }
@@ -70,7 +67,6 @@ public class MethodRunner extends ClassRunner {
         generateTestSuite();
     }
 
-    // TODO: 支持保存所有记录（在每个log.debug()的地方增加记录即可）
     public boolean startRounds(final int num) throws IOException {
         PromptInfo promptInfo = null;
         String testName = className + separator + methodInfo.methodName + separator
@@ -80,7 +76,7 @@ public class MethodRunner extends ClassRunner {
         config.getLog().info("\n==========================\n[ChatTester] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
 
-        for (int rounds = 1; rounds <= config.getMaxRounds(); rounds++) {
+        for (int rounds = 0; rounds < config.getMaxRounds(); rounds++) {
             if (promptInfo == null) {
                 config.getLog().info("Generating test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
                 if (methodInfo.dependentMethods.size() > 0) {
@@ -91,6 +87,9 @@ public class MethodRunner extends ClassRunner {
             } else {
                 config.getLog().info("Fixing test for method < " + methodInfo.methodName + " > round " + rounds + " ...");
             }
+            promptInfo.setFullTestName(fullTestName);
+            promptInfo.addRecord(new RoundRecord(rounds));
+            RoundRecord record = promptInfo.getRecords().get(rounds);
 
             List<Message> prompt = generateMessages(promptInfo);
             config.getLog().debug("[Prompt]:\n" + prompt.toString());
@@ -98,31 +97,45 @@ public class MethodRunner extends ClassRunner {
             AskGPT askGPT = new AskGPT(config);
             Response response = askGPT.askChatGPT(prompt);
             Path savePath = testOutputPath.resolve(fullTestName.replace(".", File.separator) + ".java");
+            promptInfo.setTestPath(savePath);
 
             String content = parseResponse(response);
             String code = extractCode(content);
             code = wrapTestMethod(code);
+
+            record.setPrompt(prompt);
+            record.setResponse(content);
             if (code.isEmpty()) {
                 config.getLog().info("Test for method < " + methodInfo.methodName + " > extract code failed");
+                record.setHasCode(false);
                 continue;
             }
+            record.setHasCode(true);
 
             code = changeTestName(code, className, testName);
             code = repairPackage(code, classInfo.packageDeclaration);
 //            code = addTimeout(code, testTimeOut);
             code = repairImports(code, classInfo.imports, true);
             promptInfo.setUnitTest(code); // Before repair imports
+
+            record.setCode(code);
             if (runTest(testName, fullTestName, savePath, promptInfo, rounds)) {
+                record.setHasError(false);
+                exportRecord(promptInfo, classInfo, num);
                 return true;
             }
+            record.setHasError(true);
+            record.setErrorMsg(promptInfo.getErrorMsg());
         }
+
+        exportRecord(promptInfo, classInfo, num);
         return false;
     }
 
     public boolean runTest(String testName, String fullTestName, Path savePath, PromptInfo promptInfo, int rounds) {
         TestProcessor testProcessor = new TestProcessor(fullTestName);
         String code = promptInfo.getUnitTest();
-        if (rounds > 1) {
+        if (rounds >= 1) {
             code = testProcessor.addCorrectTest(promptInfo);
         }
 

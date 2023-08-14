@@ -5,17 +5,17 @@ import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.dto.TestMessage;
 import zju.cst.aces.util.TokenCounter;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 //该类方法于AbstratRunner中调用
 public class PromptGenerator implements Prompt {
-    PromptTemplate promptTemplate = new PromptTemplate();
     public Config config;
+    PromptTemplate promptTemplate;
 
     public void setConfig(Config config) {
         this.config = config;
+        this.promptTemplate = new PromptTemplate(config);
     }
 
     @Override
@@ -25,7 +25,7 @@ public class PromptGenerator implements Prompt {
             String userPrompt = null;
             Map<String, String> cdep_temp = new HashMap<>();
             Map<String, String> mdep_temp = new HashMap<>();
-            // round 1
+            // round 0
             if (promptInfo.errorMsg == null) {
                 promptTemplate.dataModel.put("focal_method", promptInfo.getMethodSignature());
                 promptTemplate.dataModel.put("class_name", promptInfo.getClassName());
@@ -49,11 +49,11 @@ public class PromptGenerator implements Prompt {
                             mdep_temp.put(entry.getKey(), entry.getValue());
                         }
                     }
-                    promptTemplate.dataModel.put("c_dep", cdep_temp);
-                    promptTemplate.dataModel.put("m_dep", mdep_temp);
+                    promptTemplate.dataModel.put("c_deps", cdep_temp);
+                    promptTemplate.dataModel.put("m_deps", mdep_temp);
                     userPrompt = promptTemplate.renderTemplate(promptTemplate.TEMPLATE_DEPS);
                 }
-            } else { // round > 1 -- repair prompt
+            } else { // round > 0 -- repair prompt
 
                 int promptTokens = TokenCounter.countToken(promptInfo.getUnitTest())
                         + TokenCounter.countToken(promptInfo.getMethodSignature())

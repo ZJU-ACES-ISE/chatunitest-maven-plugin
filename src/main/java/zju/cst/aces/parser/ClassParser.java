@@ -49,6 +49,26 @@ public class ClassParser {
         setOutputPath(path.toString());
     }
 
+    public void extractClass(String classPath) throws FileNotFoundException {
+        File file = new File(classPath);
+        ParseResult<CompilationUnit> parseResult = parser.parse(file);
+        CompilationUnit cu = parseResult.getResult().orElseThrow();
+        List<ClassOrInterfaceDeclaration> classes = cu.findAll(ClassOrInterfaceDeclaration.class);
+        for (ClassOrInterfaceDeclaration classDeclaration : classes) {
+            try {
+                classInfo = getInfoByClass(cu, classDeclaration);
+                exportClassInfo(GSON.toJson(classInfo), classDeclaration);
+                extractMethods(cu, classDeclaration);
+                extractConstructors(cu, classDeclaration);
+
+                addClassMapping(classInfo);
+                methodCount += classDeclaration.getMethods().size();
+            } catch (Exception e) {
+                config.getLog().warn("In ClassParser.extractClass Exception: " + e);
+            }
+        }
+    }
+
     private static boolean isJavaSourceDir(Path path) {
         return Files.isDirectory(path) && Files.exists(path.resolve(
                 "src" + File.separator + "main" + File.separator + "java"));
@@ -80,6 +100,10 @@ public class ClassParser {
     private ClassInfo getInfoByClass(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         return new ClassInfo(
                 classNode.getNameAsString(),
+                config.sharedInteger.getAndIncrement(),
+                classNode.getModifiers().toString(),
+                classNode.getExtendedTypes().toString(),
+                classNode.getImplementedTypes().toString(),
                 getPackageDeclaration(cu),
                 getClassSignature(cu, classNode),
                 getImports(getImportDeclarations(cu)),
@@ -458,22 +482,16 @@ public class ClassParser {
         }
     }
 
-    public void extractClass(String classPath) throws FileNotFoundException {
-        File file = new File(classPath);
-        ParseResult<CompilationUnit> parseResult = parser.parse(file);
-        CompilationUnit cu = parseResult.getResult().orElseThrow();
-        List<ClassOrInterfaceDeclaration> classes = cu.findAll(ClassOrInterfaceDeclaration.class);
-        for (ClassOrInterfaceDeclaration classDeclaration : classes) {
-            try {
-                classInfo = getInfoByClass(cu, classDeclaration);
-                exportClassInfo(GSON.toJson(classInfo), classDeclaration);
-                extractMethods(cu, classDeclaration);
-                extractConstructors(cu, classDeclaration);
-
-                methodCount += classDeclaration.getMethods().size();
-            } catch (Exception e) {
-                config.getLog().warn("In ClassParser.extractClass Exception: " + e);
-            }
+    public void addClassMapping(ClassInfo classInfo) {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("className", classInfo.className);
+        map.put("packageDeclaration", classInfo.packageDeclaration);
+        map.put("modifier", classInfo.modifier);
+        map.put("extend", classInfo.extend);
+        map.put("implement", classInfo.implement);
+        if (config.classMapping == null) {
+            config.classMapping = new LinkedHashMap<>();
         }
+        config.classMapping.put("class" + classInfo.index, map);
     }
 }
