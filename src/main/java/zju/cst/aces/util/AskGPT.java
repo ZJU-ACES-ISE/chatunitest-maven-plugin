@@ -47,9 +47,12 @@ public class AskGPT {
                         .addHeader("Authorization", "Bearer " + apiKey)
                         .build();
 
-                Response response = config.getClient().newCall(request).execute();
-                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-                return response;
+                try (Response response = config.getClient().newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    }
+                    return response;
+                }
 
             } catch (IOException e) {
                 config.getLog().error("In AskGPT.askChatGPT: " + e);
@@ -57,6 +60,13 @@ public class AskGPT {
                     break;
                 }
                 if (e.getMessage().contains("Rate limit reached")) {
+                    try {
+                        Thread.sleep(new Random().nextInt(60) + 60);
+                    } catch (InterruptedException ie) {
+                        throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
+                    }
+                }
+                if (e.getMessage().contains("Unexpected code Response")){
                     try {
                         Thread.sleep(new Random().nextInt(60) + 60);
                     } catch (InterruptedException ie) {
