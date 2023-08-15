@@ -112,7 +112,9 @@ public class ClassParser {
                 getMethodSignatures(classNode),
                 getBriefMethods(cu, classNode),
                 hasConstructors(classNode),
+                getConstructorSignatures(classNode),
                 getBriefConstructors(cu, classNode),
+                getGetterSetterSig(cu, classNode),
                 getGetterSetter(cu, classNode),
                 getConstructorDeps(cu, classNode));
     }
@@ -156,6 +158,16 @@ public class ClassParser {
         for (MethodDeclaration m : classNode.getMethods()) {
             if (isGetSet(m)) {
                 getterSetter.add(getBriefMethod(cu, m));
+            }
+        }
+        return getterSetter;
+    }
+
+    private List<String> getGetterSetterSig(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
+        List<String> getterSetter = new ArrayList<>();
+        for (MethodDeclaration m : classNode.getMethods()) {
+            if (isGetSet(m)) {
+                getterSetter.add(m.resolve().getSignature());
             }
         }
         return getterSetter;
@@ -226,6 +238,14 @@ public class ClassParser {
             mSigs.put(constructors.get(i - methods.size()).resolve().getSignature(), String.valueOf(i));
         }
         return mSigs;
+    }
+
+    private List<String> getConstructorSignatures(ClassOrInterfaceDeclaration node) {
+        List<String> cSigs = new ArrayList<>();
+        node.getConstructors().forEach(c -> {
+            cSigs.add(c.resolve().getSignature());
+        });
+        return cSigs;
     }
 
     private List<String> getBriefConstructors(CompilationUnit cu, ClassOrInterfaceDeclaration node) {
@@ -460,7 +480,7 @@ public class ClassParser {
      * Generate a filename for the focal method json file by method signature.
      */
     private Path getFilePathBySig(String sig) {
-        Map<String, String> mSigs = classInfo.methodSignatures;
+        Map<String, String> mSigs = classInfo.methodSigs;
         return Paths.get(mSigs.get(sig) + ".json");
     }
 
@@ -468,7 +488,7 @@ public class ClassParser {
      * Get the filename of the focal method by finding method name and parameters in mSig.
      */
     public static Path getFilePathBySig(String mSig, ClassInfo info) {
-        Map<String, String> mSigs = info.methodSignatures;
+        Map<String, String> mSigs = info.methodSigs;
         return Paths.get(mSigs.get(mSig) + ".json");
     }
 

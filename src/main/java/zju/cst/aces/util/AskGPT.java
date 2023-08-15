@@ -53,6 +53,10 @@ public class AskGPT {
 
             } catch (IOException e) {
                 config.getLog().error("In AskGPT.askChatGPT: " + e);
+                maxTry--;
+                if (e.getMessage() == null) {
+                    break;
+                }
                 if (e.getMessage().contains("maximum context length is ")) {
                     break;
                 }
@@ -70,7 +74,6 @@ public class AskGPT {
                         throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
                     }
                 }
-                maxTry--;
             }
         }
         config.getLog().debug("AskGPT: Failed to get response\n");

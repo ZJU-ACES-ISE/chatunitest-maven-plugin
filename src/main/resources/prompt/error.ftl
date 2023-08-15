@@ -10,14 +10,14 @@ The error message is:
 ${error_message}
 ```
 
-The unit test is testing the method `${method_name}` in the class `${class_name}`,
+The unit test is testing the method `${method_sig}` in the class `${class_name}`,
 the source code of the method under test and its class is:
 ```
-${method_code}
+${full_fm}
 ```
-<#if other_methods_code?has_content>
+<#if other_method_sigs?has_content>
 ```
-The signatures of other methods in its class are `${other_methods_code}`
+The signatures of other methods in its class are `${other_method_sigs}`
 ```
 </#if>
 

@@ -17,13 +17,17 @@ public class PromptInfo {
     public String methodName;
     public String methodSignature;
     public String info; // move other methods and constructors to otherMethods.
-    public String otherMethods;
+    public String otherMethodBrief;
+    public String otherMethodBodies;
     public List<Map<String, String>> constructorDeps = new ArrayList<>(); // dependent classes in constructor.
     public List<Map<String, String>> methodDeps = new ArrayList<>(); // dependent classes in method parameters and body.
     public TestMessage errorMsg;
     public String unitTest = "";
     public String fullTestName;
     public Path testPath;
+    public MethodInfo methodInfo;
+    public ClassInfo classInfo;
+
     public Map<String, List<MethodDeclaration>> correctTests = new HashMap<>();
     public List<RoundRecord> records = new ArrayList<>();
 
@@ -43,7 +47,7 @@ public class PromptInfo {
         this.setMethodName(p.getMethodName());
         this.setMethodSignature(p.getMethodSignature());
         this.setInfo(p.getInfo());
-        this.setOtherMethods(p.getOtherMethods());
+        this.setOtherMethodBrief(p.getOtherMethodBrief());
         this.setConstructorDeps(p.getConstructorDeps());
         this.setMethodDeps(p.getMethodDeps());
         this.setErrorMsg(p.getErrorMsg());

@@ -15,18 +15,20 @@ public class ClassInfo {
     public List<String> imports;
     public List<String> fields;
     public List<String> superClasses;
-    public Map<String, String> methodSignatures;
-    public List<String> briefMethods;
+    public Map<String, String> methodSigs;
+    public List<String> methodsBrief;
     public boolean hasConstructor;
-    public List<String> constructors;
-    public List<String> getterSetters;
+    public List<String> constructorSigs;
+    public List<String> constructorsBrief;
+    public List<String> getterSetterSigs;
+    public List<String> getterSetterBrief;
     public Map<String, Set<String>> constructorDeps;
 
     public ClassInfo(String className, int index, String modifier, String extend, String implement,
                      String packageDeclaration, String classSignature, List<String> imports,
-                     List<String> fields, List<String> superClasses, Map<String, String> methodSignatures,
-                     List<String> briefMethods, boolean hasConstructor, List<String> constructors,
-                     List<String> getterSetters, Map<String, Set<String>> constructorDeps) {
+                     List<String> fields, List<String> superClasses, Map<String, String> methodSigs,
+                     List<String> methodsBrief, boolean hasConstructor, List<String> constructorSigs,
+                     List<String> constructorsBrief, List<String> getterSetterSigs, List<String> getterSetterBrief, Map<String, Set<String>> constructorDeps) {
         this.className = className;
         this.index = index;
         this.modifier = modifier;
@@ -37,11 +39,13 @@ public class ClassInfo {
         this.imports = imports;
         this.fields = fields;
         this.superClasses = superClasses;
-        this.methodSignatures = methodSignatures;
-        this.briefMethods = briefMethods;
+        this.methodSigs = methodSigs;
+        this.methodsBrief = methodsBrief;
         this.hasConstructor = hasConstructor;
-        this.constructors = constructors;
-        this.getterSetters = getterSetters;
+        this.constructorSigs = constructorSigs;
+        this.constructorsBrief = constructorsBrief;
+        this.getterSetterSigs = getterSetterSigs;
+        this.getterSetterBrief = getterSetterBrief;
         this.constructorDeps = constructorDeps;
     }
 }

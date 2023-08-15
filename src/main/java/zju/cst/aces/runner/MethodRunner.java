@@ -70,9 +70,9 @@ public class MethodRunner extends ClassRunner {
     public boolean startRounds(final int num) throws IOException {
         PromptInfo promptInfo = null;
         String testName = className + separator + methodInfo.methodName + separator
-                + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
+                + classInfo.methodSigs.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         String fullTestName = fullClassName + separator + methodInfo.methodName + separator
-                + classInfo.methodSignatures.get(methodInfo.methodSignature) + separator + num + separator + "Test";
+                + classInfo.methodSigs.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         config.getLog().info("\n==========================\n[ChatTester] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
 

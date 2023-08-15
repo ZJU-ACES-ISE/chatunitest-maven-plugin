@@ -67,9 +67,9 @@ public class MethodTestMojo
             ClassRunner classRunner = new ClassRunner(fullClassName, config);
             ClassInfo classInfo = classRunner.classInfo;
             MethodInfo methodInfo = null;
-            for (String mSig : classInfo.methodSignatures.keySet()) {
+            for (String mSig : classInfo.methodSigs.keySet()) {
                 if (mSig.split("\\(")[0].equals(methodName)) {
-                    methodInfo = classRunner.getMethodInfo(classInfo, mSig);
+                    methodInfo = classRunner.getMethodInfo(config, classInfo, mSig);
                     break;
                 }
             }

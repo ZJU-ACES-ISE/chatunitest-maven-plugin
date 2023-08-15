@@ -155,14 +155,16 @@ public class AbstractRunner {
         return cu.toString();
     }
 
-    public PromptInfo generatePromptInfoWithoutDep(ClassInfo classInfo, MethodInfo methodInfo) {
+    public PromptInfo generatePromptInfoWithoutDep(ClassInfo classInfo, MethodInfo methodInfo) throws IOException {
         PromptInfo promptInfo = new PromptInfo(
                 false,
                 classInfo.className,
                 methodInfo.methodName,
                 methodInfo.methodSignature);
+        promptInfo.setClassInfo(classInfo);
+        promptInfo.setMethodInfo(methodInfo);
         String fields = joinLines(classInfo.fields);
-        String methods = filterAndJoinLines(classInfo.briefMethods, methodInfo.brief);
+        String methods = filterAndJoinLines(classInfo.methodsBrief, methodInfo.brief);
         String imports = joinLines(classInfo.imports);
 
         String information = classInfo.packageDeclaration
@@ -174,7 +176,16 @@ public class AbstractRunner {
                 + "\n}";
 
         promptInfo.setInfo(information);
-        promptInfo.setOtherMethods(methods);
+        promptInfo.setOtherMethodBrief(methods);
+
+        String otherMethodBodies = "";
+        for (String sig : classInfo.methodSigs.keySet()) {
+            if (sig.equals(methodInfo.methodSignature)) {
+                continue;
+            }
+            otherMethodBodies += getBody(config, classInfo, sig);
+        }
+        promptInfo.setOtherMethodBodies(otherMethodBodies);
 
         return promptInfo;
     }
@@ -185,17 +196,21 @@ public class AbstractRunner {
                 classInfo.className,
                 methodInfo.methodName,
                 methodInfo.methodSignature);
+        promptInfo.setClassInfo(classInfo);
+        promptInfo.setMethodInfo(methodInfo);
         List<String> otherBriefMethods = new ArrayList<>();
+        List<String> otherMethodBodies = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
             String depClassName = entry.getKey();
             if (depClassName.equals(className)) {
                 Set<String> otherSig = methodInfo.dependentMethods.get(depClassName);
                 for (String otherMethod : otherSig) {
-                    MethodInfo otherMethodInfo = getMethodInfo(classInfo, otherMethod);
+                    MethodInfo otherMethodInfo = getMethodInfo(config, classInfo, otherMethod);
                     if (otherMethodInfo == null) {
                         continue;
                     }
                     otherBriefMethods.add(otherMethodInfo.brief);
+                    otherMethodBodies.add(otherMethodInfo.sourceCode);
                 }
                 continue;
             }
@@ -220,27 +235,32 @@ public class AbstractRunner {
                 + " {\n";
         //TODO: handle used fields instead of all fields
         String otherMethods = "";
+        String otherFullMethods = "";
         if (classInfo.hasConstructor) {
-            otherMethods += joinLines(classInfo.constructors) + "\n";
+            otherMethods += joinLines(classInfo.constructorsBrief) + "\n";
+            otherFullMethods += getBodies(config, classInfo, classInfo.constructorSigs) + "\n";
         }
         if (methodInfo.useField) {
             information += fields + "\n";
-            otherMethods +=  joinLines(classInfo.getterSetters) + "\n";
+            otherMethods +=  joinLines(classInfo.getterSetterBrief) + "\n";
+            otherFullMethods += getBodies(config, classInfo, classInfo.getterSetterSigs) + "\n";
         }
         otherMethods += joinLines(otherBriefMethods) + "\n";
+        otherFullMethods += joinLines(otherMethodBodies) + "\n";
         information += methodInfo.sourceCode + "\n}";
 
         promptInfo.setInfo(information);
-        promptInfo.setOtherMethods(otherMethods);
+        promptInfo.setOtherMethodBrief(otherMethods);
+        promptInfo.setOtherMethodBodies(otherFullMethods);
         return promptInfo;
     }
 
-    public MethodInfo getMethodInfo(ClassInfo info, String mSig) throws IOException {
+    public static MethodInfo getMethodInfo(Config config, ClassInfo info, String mSig) throws IOException {
         String packagePath = info.packageDeclaration
                 .replace("package ", "")
                 .replace(".", File.separator)
                 .replace(";", "");
-        Path depMethodInfoPath = parseOutputPath
+        Path depMethodInfoPath = config.getParseOutput()
                 .resolve(packagePath)
                 .resolve(info.className)
                 .resolve(ClassParser.getFilePathBySig(mSig, info));
@@ -259,7 +279,7 @@ public class AbstractRunner {
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);
-        String constructors = joinLines(depClassInfo.constructors);
+        String constructors = joinLines(depClassInfo.constructorsBrief);
         Map<String, String> methodDeps = new HashMap<>();
 
         String basicInfo = classSig + " {\n" + fields + "\n";
@@ -270,19 +290,32 @@ public class AbstractRunner {
         String briefDepMethods = "";
         for (String sig : depMethods) {
             //TODO: identify used fields in dependent class
-            MethodInfo depMethodInfo = getMethodInfo(depClassInfo, sig);
+            MethodInfo depMethodInfo = getMethodInfo(config, depClassInfo, sig);
             if (depMethodInfo == null) {
                 continue;
             }
             briefDepMethods += depMethodInfo.brief + "\n";
         }
-        String getterSetter = joinLines(depClassInfo.getterSetters) + "\n";
+        String getterSetter = joinLines(depClassInfo.getterSetterBrief) + "\n";
         methodDeps.put(depClassName, basicInfo + getterSetter + briefDepMethods + "}");
         return methodDeps;
     }
 
+    public static String getBodies(Config config, ClassInfo info, List<String> sigs) throws IOException {
+        String bodies = "";
+        for (String sig : sigs) {
+            bodies += getBody(config, info, sig) + "\n";
+        }
+        return bodies;
+    }
+
+    public static String getBody(Config config, ClassInfo info, String Sig) throws IOException {
+        MethodInfo mi = getMethodInfo(config, info, Sig);
+        return mi.sourceCode;
+    }
+
     public void exportRecord(PromptInfo promptInfo, ClassInfo classInfo, int attempt) {
-        String methodIndex = classInfo.methodSignatures.get(promptInfo.methodSignature);
+        String methodIndex = classInfo.methodSigs.get(promptInfo.methodSignature);
         Path recordPath = config.getHistoryPath();
         exportClassMapping(recordPath);
 
@@ -330,7 +363,7 @@ public class AbstractRunner {
             return;
         }
         Map<String, Map<String, String>> methodMapping = new TreeMap<>();
-        classInfo.methodSignatures.forEach((sig, index) -> {
+        classInfo.methodSigs.forEach((sig, index) -> {
             Map<String, String> map = new LinkedHashMap<>();
             map.put("methodName", sig.split("\\(")[0]);
             map.put("signature", sig);

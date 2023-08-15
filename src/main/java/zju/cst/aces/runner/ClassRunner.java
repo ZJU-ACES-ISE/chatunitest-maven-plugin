@@ -31,8 +31,8 @@ public class ClassRunner extends AbstractRunner {
         if (config.isEnableMultithreading() == true) {
             methodJob();
         } else {
-            for (String mSig : classInfo.methodSignatures.keySet()) {
-                MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+            for (String mSig : classInfo.methodSigs.keySet()) {
+                MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
                 if (methodInfo == null) {
                     continue;
                 }
@@ -47,11 +47,11 @@ public class ClassRunner extends AbstractRunner {
     public void methodJob() {
         ExecutorService executor = Executors.newFixedThreadPool(config.getMethodThreads());
         List<Future<String>> futures = new ArrayList<>();
-        for (String mSig : classInfo.methodSignatures.keySet()) {
+        for (String mSig : classInfo.methodSigs.keySet()) {
             Callable<String> callable = new Callable<String>() {
                 @Override
                 public String call() throws Exception {
-                    MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+                    MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
                     if (methodInfo == null) {
                         return "No parsed info found for " + mSig + " in " + fullClassName;
                     }

@@ -1,8 +1,8 @@
-The focal method is `${focal_method}` in the focal class `${class_name}`, and their information is
-```${information}```.
+The focal method is `${method_sig}` in the focal class `${class_name}`, and their information is
+```${full_fm}```.
 
-<#if other_methods?has_content>
-    Signatures of Other methods in the focal class are `${other_methods}`.
+<#if other_method_sigs?has_content>
+    Signatures of Other methods in the focal class are `${other_method_sigs}`.
 </#if>
 <#list c_deps?keys as key>
     The brief information of dependent class `${key}` is
