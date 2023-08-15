@@ -47,12 +47,9 @@ public class AskGPT {
                         .addHeader("Authorization", "Bearer " + apiKey)
                         .build();
 
-                try (Response response = config.getClient().newCall(request).execute()) {
-                    if (!response.isSuccessful()) {
-                        throw new IOException("Unexpected code " + response);
-                    }
-                    return response;
-                }
+                Response response = config.getClient().newCall(request).execute();
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                return response;
 
             } catch (IOException e) {
                 config.getLog().error("In AskGPT.askChatGPT: " + e);
