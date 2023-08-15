@@ -106,6 +106,11 @@ public class MethodRunner extends ClassRunner {
             boolean compileResult = compiler.compileTest(testName,
                     errorOutputPath.resolve(testName + "_CompilationError_" + rounds + ".txt"), promptInfo);
             if (!compileResult) {
+                if(rounds==config.getMaxRounds()){
+                    exportTest(code, savePath);
+                    config.getLog().info("Test for method < " + methodInfo.methodName + " >  compilation failed,fix fail then generated");
+                    return true;
+                }
                 config.getLog().info("Test for method < " + methodInfo.methodName + " > compilation failed");
                 continue;
             }

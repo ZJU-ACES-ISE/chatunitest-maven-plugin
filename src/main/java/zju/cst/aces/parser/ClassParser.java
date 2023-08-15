@@ -236,17 +236,14 @@ public class ClassParser {
         if (node instanceof MethodDeclaration) {
             MethodDeclaration methodNode = (MethodDeclaration) node;
             if (methodNode.getBody().isPresent()) {
-                sig = getSourceCodeByPosition(getTokenString(cu),
-                        methodNode.getBegin().orElseThrow(), methodNode.getBody().get().getBegin().orElseThrow());
+                sig = getSourceCodeByPosition(getTokenString(cu), methodNode.getBegin().orElseThrow(() -> new NoSuchElementException("Value cannot be null")), methodNode.getBody().get().getBegin().orElseThrow(() -> new NoSuchElementException("Value cannot be null")));
                 sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
             } else {
-                sig = getSourceCodeByPosition(getTokenString(cu),
-                        methodNode.getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
+                sig = getSourceCodeByPosition(getTokenString(cu), methodNode.getBegin().orElseThrow(() -> new NoSuchElementException("Value cannot be null")), methodNode.getEnd().orElseThrow(() -> new NoSuchElementException("Value cannot be null")));
             }
         } else if (node instanceof ConstructorDeclaration) {
             ConstructorDeclaration constructorNode = (ConstructorDeclaration) node.removeComment();
-            sig = getSourceCodeByPosition(getTokenString(cu),
-                    constructorNode.getBegin().orElseThrow(), constructorNode.getBody().getBegin().orElseThrow());
+            sig = getSourceCodeByPosition(getTokenString(cu), constructorNode.getBegin().orElseThrow(() -> new NoSuchElementException("Value cannot be null")), constructorNode.getBody().getBegin().orElseThrow(() -> new NoSuchElementException("Value cannot be null")));
             sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
         }
         return sig;
@@ -256,14 +253,14 @@ public class ClassParser {
      * Get class signature
      */
     private static String getClassSignature(CompilationUnit cu, ClassOrInterfaceDeclaration node) {
-        return getSourceCodeByPosition(getTokenString(cu), node.getBegin().orElseThrow(), node.getName().getEnd().orElseThrow());
+        return getSourceCodeByPosition(getTokenString(cu), node.getBegin().orElseThrow(() -> new NoSuchElementException("Value cannot be null")), node.getName().getEnd().orElseThrow(() -> new NoSuchElementException("Value cannot be null")));
     }
 
     /**
      * Get method(constructor) source code start from the first modifier to the end of the node.
      */
     private static String getMethodCode(CompilationUnit cu, CallableDeclaration node) {
-        return node.getTokenRange().orElseThrow().toString();
+        return node.getTokenRange().orElseThrow(() -> new NoSuchElementException("Value cannot be null")).toString();
     }
 
     /**
@@ -281,7 +278,7 @@ public class ClassParser {
      * Get field source code start from the first modifier to the end of the node
      */
     private static String getFieldCode(CompilationUnit cu, FieldDeclaration node) {
-        return node.getTokenRange().orElseThrow().toString();
+        return node.getTokenRange().orElseThrow(() -> new NoSuchElementException("Value cannot be null")).toString();
     }
 
     /**
@@ -309,7 +306,7 @@ public class ClassParser {
                 return true;
             }
             // setter: assign field
-            if (fa.getParentNode().orElse(null) instanceof AssignExpr && ((AssignExpr) fa.getParentNode().orElseThrow()).getTarget().equals(fa)) {
+            if (fa.getParentNode().orElse(null) instanceof AssignExpr && ((AssignExpr) fa.getParentNode().orElseThrow(() -> new NoSuchElementException("Value cannot be null"))).getTarget().equals(fa)) {
                 return true;
             }
         }
@@ -447,20 +444,29 @@ public class ClassParser {
     }
 
     private List<Path> getSources() {
-        try (Stream<Path> paths = Files.walk(Path.of(System.getProperty("user.dir")))) {
+    /*    try (Stream<Path> paths = Files.walk(Path.of(System.getProperty("user.dir")))) {
+            return paths
+                    .filter(ClassParser::isJavaSourceDir)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException("In ClassParser.getSources: " + e);
+        }*/
+
+        try (Stream<Path> paths = Files.walk(Paths.get(System.getProperty("user.dir")))) {
             return paths
                     .filter(ClassParser::isJavaSourceDir)
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new RuntimeException("In ClassParser.getSources: " + e);
         }
+
     }
 
     public void extractClass(String classPath) {
         File file = new File(classPath);
         try {
             ParseResult<CompilationUnit> parseResult = parser.parse(file);
-            CompilationUnit cu = parseResult.getResult().orElseThrow();
+            CompilationUnit cu = parseResult.getResult().orElseThrow(() -> new NoSuchElementException("Value cannot be null"));
             List<ClassOrInterfaceDeclaration> classes = cu.findAll(ClassOrInterfaceDeclaration.class);
             for (ClassOrInterfaceDeclaration classDeclaration : classes) {
                 classInfo = getInfoByClass(cu, classDeclaration);

@@ -302,7 +302,10 @@ public class AbstractRunner {
         if (!depMethodInfoPath.toFile().exists()) {
             return null;
         }
-        return GSON.fromJson(Files.readString(depMethodInfoPath, StandardCharsets.UTF_8), MethodInfo.class);
+        byte[] bytes = Files.readAllBytes(depMethodInfoPath);
+        String content = new String(bytes, StandardCharsets.UTF_8);
+
+        return GSON.fromJson(content, MethodInfo.class);
     }
 
     public Map<String, String> getDepInfo(PromptInfo promptInfo, String depClassName, Set<String> depMethods) throws IOException {
@@ -310,7 +313,10 @@ public class AbstractRunner {
         if (!depClassInfoPath.toFile().exists()) {
             return null;
         }
-        ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+        byte[] bytes = Files.readAllBytes(depClassInfoPath);
+        String content = new String(bytes, StandardCharsets.UTF_8);
+
+        ClassInfo depClassInfo = GSON.fromJson(content, ClassInfo.class);
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);

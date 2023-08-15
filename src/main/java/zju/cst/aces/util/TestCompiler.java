@@ -69,11 +69,10 @@ public class TestCompiler {
             LauncherConfig launcherConfig = LauncherConfig.builder()
                     .enableTestEngineAutoRegistration(false)
                     .enableTestExecutionListenerAutoRegistration(false)
-                    .addTestEngines(testEngineServiceLoader.findFirst().orElseThrow())
+                    .addTestEngines(testEngineServiceLoader.iterator().next())
                     .build();
 
             Launcher launcher = LauncherFactory.create(launcherConfig);
-
             // Register a listener to collect test execution results.
             SummaryGeneratingListener listener = new SummaryGeneratingListener();
             launcher.registerTestExecutionListeners(listener);

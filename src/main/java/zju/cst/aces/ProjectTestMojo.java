@@ -222,7 +222,9 @@ public class ProjectTestMojo
             return name;
         }
         Path classMapPath = config.getClassMapPath();
-        Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
+        byte[] bytes = Files.readAllBytes(classMapPath);
+        String content = new String(bytes, StandardCharsets.UTF_8);
+        Map<String, List<String>> classMap = GSON.fromJson(content, Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {
                 throw new RuntimeException("[ChatTester] Multiple classes Named " + name + ": " + classMap.get(name)
