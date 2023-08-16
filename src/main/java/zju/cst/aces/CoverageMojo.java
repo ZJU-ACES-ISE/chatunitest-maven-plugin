@@ -24,6 +24,10 @@ public class CoverageMojo extends AbstractMojo {
     public MavenProject project;
     public static Log log;
 
+    @Parameter(name = "target")
+    public String target;
+    @Parameter(name="mavenHome")
+    public String mavenHome;
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log=getLog();
@@ -34,7 +38,8 @@ public class CoverageMojo extends AbstractMojo {
         Invoker invoker = new DefaultInvoker();
 //        invoker.setMavenHome(new File(System.getProperty("user.home"), ".m2"));
         //环境变量中配置的MavenHome
-        invoker.setMavenHome(new File("C:\\software\\apache-maven-3.9.2"));
+//        invoker.setMavenHome(new File("C:\\software\\apache-maven-3.9.2"));
+        invoker.setMavenHome(new File(mavenHome));
 
         try {
             InvocationResult result = invoker.execute(request);
@@ -45,7 +50,7 @@ public class CoverageMojo extends AbstractMojo {
             throw new MojoExecutionException("Failed to execute goals.", e);
         }
         Path sourcePath = Paths.get(project.getBasedir().toString(), "target", "site", "jacoco", "jacoco.csv");
-        String target="D:\\coverage";
+//        String target="D:\\coverage";
         Path targetPath = Paths.get(target);
         if (!Files.exists(targetPath)) {
             try {
@@ -57,7 +62,7 @@ public class CoverageMojo extends AbstractMojo {
             }
         }
         try {
-            Files.copy(sourcePath,targetPath.resolve("testcoverage.csv"), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(sourcePath,targetPath.resolve("jacoco.csv"), StandardCopyOption.REPLACE_EXISTING);
             log.info("copy succesful");
         } catch (IOException e) {
             log.info("copy failed");
