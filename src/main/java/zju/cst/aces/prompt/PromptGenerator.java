@@ -30,24 +30,35 @@ public class PromptGenerator implements Prompt {
             promptTemplate.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
             promptTemplate.dataModel.put("class_name", promptInfo.getClassName());
             promptTemplate.dataModel.put("class_sig", promptInfo.getClassInfo().classSignature);
+            promptTemplate.dataModel.put("package", promptInfo.getClassInfo().packageDeclaration);
             promptTemplate.dataModel.put("full_fm", promptInfo.getInfo());
-            promptTemplate.dataModel.put("constructor_sig", promptInfo.getClassInfo().constructorsBrief);
-            promptTemplate.dataModel.put("constructor_body", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().constructorSigs));
-            promptTemplate.dataModel.put("fields", promptInfo.getClassInfo().fields);
-            promptTemplate.dataModel.put("getter_setters_sig", promptInfo.getClassInfo().getterSetterBrief);
-            promptTemplate.dataModel.put("getter_setters_body", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().getterSetterSigs));
+            promptTemplate.dataModel.put("imports", AbstractRunner.joinLines(promptInfo.getClassInfo().imports));
+            promptTemplate.dataModel.put("fields", AbstractRunner.joinLines(promptInfo.getClassInfo().fields));
+
+            if (!promptInfo.getClassInfo().constructorSigs.isEmpty()) {
+                promptTemplate.dataModel.put("constructor_sigs", promptInfo.getClassInfo().constructorBrief);
+                promptTemplate.dataModel.put("constructor_bodies", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().constructorSigs));
+            } else {
+                promptTemplate.dataModel.put("constructor_sigs", null);
+                promptTemplate.dataModel.put("constructor_bodies", null);
+            }
+            if (!promptInfo.getClassInfo().getterSetterSigs.isEmpty()) {
+                promptTemplate.dataModel.put("getter_setter_sigs", promptInfo.getClassInfo().getterSetterBrief);
+                promptTemplate.dataModel.put("getter_setter_bodies", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().getterSetterSigs));
+            } else {
+                promptTemplate.dataModel.put("getter_setter_sigs", null);
+                promptTemplate.dataModel.put("getter_setter_bodies", null);
+            }
+            if (!promptInfo.getOtherMethodBrief().trim().isEmpty()) {
+                promptTemplate.dataModel.put("other_method_sigs", promptInfo.getOtherMethodBrief());
+                promptTemplate.dataModel.put("other_method_bodies", promptInfo.getOtherMethodBodies());
+            }else {
+                promptTemplate.dataModel.put("other_method_sigs", null);
+                promptTemplate.dataModel.put("other_method_bodies", null);
+            }
 
             // round 0
             if (promptInfo.errorMsg == null) {
-                if (!promptInfo.getOtherMethodBrief().trim().isEmpty()) {
-                    //≈ d1
-                    promptTemplate.dataModel.put("other_method_sigs", promptInfo.getOtherMethodBrief());
-                    promptTemplate.dataModel.put("other_method_bodies", promptInfo.getOtherMethodBodies());
-
-                }else {
-                    promptTemplate.dataModel.put("other_method_sigs", null);
-                    promptTemplate.dataModel.put("other_method_bodies", null);
-                }
                 userPrompt = promptTemplate.renderTemplate(promptTemplate.TEMPLATE_NO_DEPS);
                 if (promptInfo.hasDep) {
                     for (Map<String, String> cDeps : promptInfo.getConstructorDeps()) {
@@ -84,14 +95,6 @@ public class PromptGenerator implements Prompt {
 
                 promptTemplate.dataModel.put("unit_test", promptInfo.getUnitTest());
                 promptTemplate.dataModel.put("error_message", processedErrorMsg);
-
-                if (!promptInfo.getOtherMethodBrief().trim().isEmpty()) {
-                    promptTemplate.dataModel.put("other_method_sigs", promptInfo.getOtherMethodBrief());
-                    promptTemplate.dataModel.put("other_method_bodies", promptInfo.getOtherMethodBodies());
-                }else {
-                    promptTemplate.dataModel.put("other_method_sigs",null);
-                    promptTemplate.dataModel.put("other_method_bodies", null);
-                }
 
                 userPrompt = promptTemplate.renderTemplate(promptTemplate.TEMPLATE_ERROR);
             }

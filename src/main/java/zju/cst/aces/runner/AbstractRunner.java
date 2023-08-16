@@ -66,7 +66,7 @@ public class AbstractRunner {
        return promptGenerator.getSystemPrompt(promptInfo);
     }
 
-    public String joinLines(List<String> lines) {
+    public static String joinLines(List<String> lines) {
         return lines.stream().collect(Collectors.joining("\n"));
     }
 
@@ -237,7 +237,7 @@ public class AbstractRunner {
         String otherMethods = "";
         String otherFullMethods = "";
         if (classInfo.hasConstructor) {
-            otherMethods += joinLines(classInfo.constructorsBrief) + "\n";
+            otherMethods += joinLines(classInfo.constructorBrief) + "\n";
             otherFullMethods += getBodies(config, classInfo, classInfo.constructorSigs) + "\n";
         }
         if (methodInfo.useField) {
@@ -279,7 +279,7 @@ public class AbstractRunner {
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);
-        String constructors = joinLines(depClassInfo.constructorsBrief);
+        String constructors = joinLines(depClassInfo.constructorBrief);
         Map<String, String> methodDeps = new HashMap<>();
 
         String basicInfo = classSig + " {\n" + fields + "\n";

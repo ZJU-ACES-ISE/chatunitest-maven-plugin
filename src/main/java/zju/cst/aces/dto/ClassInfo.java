@@ -19,7 +19,7 @@ public class ClassInfo {
     public List<String> methodsBrief;
     public boolean hasConstructor;
     public List<String> constructorSigs;
-    public List<String> constructorsBrief;
+    public List<String> constructorBrief;
     public List<String> getterSetterSigs;
     public List<String> getterSetterBrief;
     public Map<String, Set<String>> constructorDeps;
@@ -28,7 +28,7 @@ public class ClassInfo {
                      String packageDeclaration, String classSignature, List<String> imports,
                      List<String> fields, List<String> superClasses, Map<String, String> methodSigs,
                      List<String> methodsBrief, boolean hasConstructor, List<String> constructorSigs,
-                     List<String> constructorsBrief, List<String> getterSetterSigs, List<String> getterSetterBrief, Map<String, Set<String>> constructorDeps) {
+                     List<String> constructorBrief, List<String> getterSetterSigs, List<String> getterSetterBrief, Map<String, Set<String>> constructorDeps) {
         this.className = className;
         this.index = index;
         this.modifier = modifier;
@@ -43,7 +43,7 @@ public class ClassInfo {
         this.methodsBrief = methodsBrief;
         this.hasConstructor = hasConstructor;
         this.constructorSigs = constructorSigs;
-        this.constructorsBrief = constructorsBrief;
+        this.constructorBrief = constructorBrief;
         this.getterSetterSigs = getterSetterSigs;
         this.getterSetterBrief = getterSetterBrief;
         this.constructorDeps = constructorDeps;
