@@ -6,7 +6,7 @@
   <artifactId>chatunitest-maven-plugin</artifactId>
   <!--Uploading to the SNAPSHOT repository, the version suffix must include 'SNAPSHOT'-->
   <!--<version>1.0.0-SNAPSHOT</version>-->
-  <version>1.2.1</version>
+  <version>1.2.3</version>
   <packaging>maven-plugin</packaging>
   <name>chatunitest-maven-plugin</name>
   <description>A Maven plugin for generating unit tests using ChatGPT</description>
@@ -106,6 +106,12 @@
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-invoker</artifactId>
       <version>3.1.0</version>
+    </dependency>
+<!--    解析html-->
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.14.3</version>
     </dependency>
   </dependencies>
 
@@ -209,6 +215,18 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.1.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.7</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

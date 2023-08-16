@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 
+
 @Mojo(name = "generateCoverage")
 public class CoverageMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
@@ -62,5 +63,6 @@ public class CoverageMojo extends AbstractMojo {
             log.info("copy failed");
             throw new RuntimeException(e);
         }
+
     }
 }
