@@ -57,6 +57,7 @@ public class ClassParser {
         for (ClassOrInterfaceDeclaration classDeclaration : classes) {
             try {
                 classInfo = getInfoByClass(cu, classDeclaration);
+                classInfo.setCode(cu.toString(), classDeclaration.toString());
                 exportClassInfo(GSON.toJson(classInfo), classDeclaration);
                 extractMethods(cu, classDeclaration);
                 extractConstructors(cu, classDeclaration);

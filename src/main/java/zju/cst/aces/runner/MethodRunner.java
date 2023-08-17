@@ -26,6 +26,8 @@ public class MethodRunner extends ClassRunner {
 
     @Override
     public void start() throws IOException {
+        Path recordPath = config.getHistoryPath();
+        exportClassMapping(recordPath);
         if (!config.isStopWhenSuccess() && config.isEnableMultithreading()) {
             ExecutorService executor = Executors.newFixedThreadPool(config.getTestNumber());
             List<Future<String>> futures = new ArrayList<>();
