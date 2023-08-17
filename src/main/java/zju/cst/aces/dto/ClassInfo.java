@@ -17,6 +17,7 @@ public class ClassInfo {
     public List<String> superClasses;
     public Map<String, String> methodSigs;
     public List<String> methodsBrief;
+    public List<String> shortMethodSigs;
     public boolean hasConstructor;
     public List<String> constructorSigs;
     public List<String> constructorBrief;

@@ -9,6 +9,7 @@ public class MethodInfo {
     public String methodName;
     public String brief;
     public String methodSignature;
+    public String shortSignature;
     public String sourceCode;
     public boolean isConstructor;
     public boolean useField;
@@ -17,13 +18,14 @@ public class MethodInfo {
     public List<String> parameters;
     public Map<String, Set<String>> dependentMethods;
 
-    public MethodInfo(String className, String methodName, String brief, String methodSignature, String sourceCode,
-                      boolean isConstructor, boolean useField, boolean isGetSet, boolean isPublic,
+    public MethodInfo(String className, String methodName, String brief, String methodSignature, String shortSignature,
+                      String sourceCode, boolean isConstructor, boolean useField, boolean isGetSet, boolean isPublic,
                       List<String> parameters, Map<String, Set<String>> dependentMethods) {
         this.className = className;
         this.methodName = methodName;
         this.brief = brief;
         this.methodSignature = methodSignature;
+        this.shortSignature = shortSignature;
         this.sourceCode = sourceCode;
         this.isConstructor = isConstructor;
         this.useField = useField;

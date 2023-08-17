@@ -6,6 +6,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
+import zju.cst.aces.ProjectTestMojo;
 import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.dto.Message;
@@ -271,7 +272,8 @@ public class AbstractRunner {
     }
 
     public Map<String, String> getDepInfo(PromptInfo promptInfo, String depClassName, Set<String> depMethods) throws IOException {
-        Path depClassInfoPath = parseOutputPath.resolve(depClassName).resolve("class.json");
+        String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+        Path depClassInfoPath = parseOutputPath.resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
         if (!depClassInfoPath.toFile().exists()) {
             return null;
         }

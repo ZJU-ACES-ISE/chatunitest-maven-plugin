@@ -59,6 +59,7 @@ public class Config {
     public Path errorOutput;
     public Path classMapPath;
     public Path historyPath;
+    public Path examplePath;
 
     public String proxy;
     public String hostname;
@@ -100,6 +101,7 @@ public class Config {
         public Path errorOutput;
         public Path classMapPath;
         public Path historyPath;
+        public Path examplePath;
         public String proxy = "null:-1";
         public String hostname = "null";
         public String port = "-1";
@@ -306,6 +308,11 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder examplePath(Path examplePath) {
+            this.examplePath = examplePath;
+            return this;
+        }
+
         public ConfigBuilder hostname(String hostname) {
             this.hostname = hostname;
             return this;
@@ -387,6 +394,7 @@ public class Config {
             config.setErrorOutput(this.errorOutput);
             config.setClassMapPath(this.classMapPath);
             config.setHistoryPath(this.historyPath);
+            config.setExamplePath(this.examplePath);
             config.setProxy(this.proxy);
             config.setHostname(this.hostname);
             config.setPort(this.port);

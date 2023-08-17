@@ -1,0 +1,153 @@
+{
+  "ChatCompletionChoice": {
+  },
+  "ChatCompletionUsage": {
+  },
+  "ChatGPTAutoConfiguration": {
+  },
+  "ChatCompletionRequest": {
+    "addFunction(ChatFunction)": [
+      "private final Map<String, ChatFunction> allChatFunctions = new HashMap<>();\n  ChatCompletionRequest request = new ChatCompletionRequest();\n  ChatFunction chatFunction = allChatFunctions.get(request.getFunctionNames().get(0));\n  request.addFunction(chatFunction);"
+    ],
+    "of(String)": [
+      "return chatGPTService.chat(ChatCompletionRequest.of(\"content\")).map(ChatCompletionResponse::getReplyText);"
+    ],
+    "of(String, String, String)": [
+      "return of(null, \"userMessage\", null);"
+    ],
+    "functions(String, List)": [
+      "final String prompt = \"Give me a simple Java example, and compile the generated source code\";\n  final ChatCompletionRequest request = ChatCompletionRequest.functions(prompt, List.of(\"compile_java\"));",
+      "final String prompt = \"Hi Jackie, could you write an email to Libing(libing.chen@gmail.com) and Sam(linux_china@hotmail.com) and invite them to join Mike's birthday party at 4 tomorrow? Thanks!\";\n  final ChatCompletionRequest request = ChatCompletionRequest.functions(prompt, List.of(\"send_email\"));"
+    ],
+    "addMessage(ChatMessage)": [
+      "final ChatCompletionRequest request = new ChatCompletionRequest();\n  request.addMessage(ChatMessage.userMessage(\"userMessage\"));",
+      "final ChatCompletionRequest request = new ChatCompletionRequest();\n  request.addMessage(ChatMessage.systemMessage(\"systemMessage\"));",
+      "final ChatCompletionRequest request = new ChatCompletionRequest();\n  request.addMessage(ChatMessage.assistantMessage(\"assistantMessage\"));"
+    ]
+  },
+  "ChatCompletionResponse": {
+    "getModel()": [
+      "response -> {\n                for (ChatMessage chatMessage : response.getReply()) {\n                    injectFunctionCallLambda(chatMessage);\n                }\n            });"
+    ],
+    "getReplyText()": [
+      "String content=\"\";return chatGPTService.chat(ChatCompletionRequest.of(content)).map(ChatCompletionResponse::getReplyText);",
+      "String content=\"\";return chatGPTService.stream(ChatCompletionRequest.of(content))\n                .map(ChatCompletionResponse::getReplyText);",
+      "ChatCompletionRequest request = ChatCompletionRequest.of(\"What's Java Language? Please give me simple example, and guide me how to run the example.\");\n        request.setStream(true);\n        openAIChatAPI.stream(request).subscribe(response -> {\n            System.out.println(response.getReplyText());\n        });",
+      "final ChatCompletionRequest request = ChatCompletionRequest.of(\"What's Java Language?\");\n        final ChatCompletionResponse response = chatGPTService.chat(request).block();\n        System.out.println(response.getReplyText());"
+    ],
+    "getReplyCombinedText()": [
+      "private ChatGPTService chatGPTService;\n  final String prompt = \"Give me a simple Java example, and compile the generated source code\";\n  final ChatCompletionRequest request = ChatCompletionRequest.functions(prompt, List.of(\"compile_java\"));\n  final ChatCompletionResponse response = chatGPTService.chat(request).block();\n  System.out.println(response.getReplyCombinedText());",
+      "private ChatGPTService chatGPTService;\n  final String prompt = \"Hi Jackie, could you write an email to Libing(libing.chen@gmail.com) and Sam(linux_china@hotmail.com) and invite them to join Mike's birthday party at 4 tomorrow? Thanks!\";\n  final ChatCompletionRequest request = ChatCompletionRequest.functions(prompt, List.of(\"send_email\"));\n  final ChatCompletionResponse response = chatGPTService.chat(request).block();System.out.println(response.getReplyCombinedText());"
+    ]
+  },
+  "ChatFunction": {
+    "setDescription(String)": [
+      "   private String description;\n     ChatFunction chatFunction = new ChatFunction();\n            chatFunction.setDescription(this.description);\n"
+    ],
+    "setParameters(Parameters)": [
+      "  private ChatFunction.Parameters parameters;\n      ChatFunction chatFunction = new ChatFunction();\n            chatFunction.setParameters(this.parameters);\n"
+    ]
+  },
+  "ChatGPTJavaFunction": {
+    "addProperty(String, String, String)": [
+      "ChatGPTJavaFunction gptJavaFunction = new ChatGPTJavaFunction();\n  gptJavaFunction.addProperty(\"fieldName\", \"fieldType\", \"functionParamAnnotation value\");"
+    ],
+    "addArrayProperty(String, String, String)": [
+      "ChatGPTJavaFunction gptJavaFunction = new ChatGPTJavaFunction();\n  gptJavaFunction.addArrayProperty(\"fieldName\", \"actualClazz json schema Type\", \"functionParamAnnotation value\");"
+    ],
+    "addRequired(String)": [
+      "ChatGPTJavaFunction gptJavaFunction = new ChatGPTJavaFunction();\n  gptJavaFunction.addRequired(\"fieldName\");"
+    ],
+    "toChatFunction()": [
+      "ChatGPTJavaFunction jsonSchemaFunction = new ChatGPTJavaFunction();\n  jsonSchemaFunction.toChatFunction();"
+    ],
+    "call(String)": [
+      "private final Map<String, ChatGPTJavaFunction> allJsonSchemaFunctions = new HashMap<>();\n  final String functionName = functionCall.getName();\n  ChatGPTJavaFunction jsonSchemaFunction = allJsonSchemaFunctions.get(functionName);\n  jsonSchemaFunction.call(functionCall.getArguments();"
+    ]
+  },
+  "ChatGPTServiceImpl": {
+    "ChatGPTServiceImpl(OpenAIChatAPI, List)": [
+      "public ChatGPTService chatGPTService(OpenAIChatAPI openAIChatAPI,\n                                         Optional<List<GPTFunctionsStub>> stubs) throws Exception {\n        return new ChatGPTServiceImpl(openAIChatAPI, stubs.orElse(Collections.emptyList()));\n    }"
+    ],
+    "chat(ChatCompletionRequest)": [
+      "return chatGPTService.chat(ChatCompletionRequest.of(\"content\")).map(ChatCompletionResponse::getReplyText);",
+      "private ChatGPTService chatGPTService;\n  final ChatCompletionRequest request = ChatCompletionRequest.of(\"What's Java Language?\");\n  final ChatCompletionResponse response = chatGPTService.chat(request).block();",
+      "private ChatGPTService chatGPTService;\n  final String prompt = \"Give me a simple Java example, and compile the generated source code\";\n  final ChatCompletionRequest request = ChatCompletionRequest.functions(prompt, List.of(\"compile_java\"));\n  final ChatCompletionResponse response = chatGPTService.chat(request).block();"
+    ],
+    "stream(ChatCompletionRequest)": [
+      "return chatGPTService.stream(ChatCompletionRequest.of(\"content\")).map(ChatCompletionResponse::getReplyText);"
+    ]
+  },
+  "ChatMessage": {
+    "ChatMessage(String, String)": [
+      "String content=\"\";        return new ChatMessage(\"system\", content);\n",
+      "String content=\"\";        return new ChatMessage(\"user\", content);\n",
+      "String content=\"\";        return new ChatMessage(\"assistant\", content);\n"
+    ],
+    "getContent()":[
+      "    private List<ChatCompletionChoice> choices;\n StringBuilder sb = new StringBuilder();\n        for (ChatCompletionChoice choice : choices) {\n            final ChatMessage message = choice.getMessage();\n            if (message != null && message.getContent() != null) {\n                sb.append(message.getContent());\n            }\n        }",
+      "StringBuilder sb = new StringBuilder();\n        for (ChatCompletionChoice choice : choices) {\n            final ChatMessage message = choice.getMessage();\n            if (message != null) {\n                if (message.getContent() != null) {\n                    sb.append(message.getContent());\n               } }"
+    ],
+    "getFunctionCall()": [
+      "StringBuilder sb = new StringBuilder();\n        for (ChatCompletionChoice choice : choices) {\n            final ChatMessage message = choice.getMessage();\n            if (message != null) {\n                if (message.getContent() != null) {\n                    sb.append(message.getContent());\n                }\n                final FunctionCall functionCall = message.getFunctionCall();\n                \n            }\n        }",
+      "ChatMessage chatMessage=new ChatMessage();        final FunctionCall functionCall = chatMessage.getFunctionCall();\n"
+    ],
+    "systemMessage(String)": [
+      "ChatCompletionRequest request = new ChatCompletionRequest();\n  request.addMessage(ChatMessage.systemMessage(\"systemMessage\"));"
+    ],
+    "userMessage(String)": [
+      "final ChatCompletionRequest request = new ChatCompletionRequest();\n  request.addMessage(ChatMessage.userMessage(\"userMessage\"));"
+    ],
+    "assistantMessage(String)": [
+      "final ChatCompletionRequest request = new ChatCompletionRequest();\n  request.addMessage(ChatMessage.assistantMessage(\"assistantMessage\"));;"
+    ]
+  },
+  "FunctionCall": {
+    "getFunctionStub()": [
+      "final FunctionCall functionCall = message.getFunctionCall();\nfinal Object result = functionCall.getFunctionStub().call();",
+      "final FunctionCall functionCall = chatMessage.getFunctionCall();\nfunctionCall.setFunctionStub(() -> jsonSchemaFunction.call(functionCall.getArguments())"
+    ],
+    "getName()": [
+      "final FunctionCall functionCall = chatMessage.getFunctionCall();\nfinal String functionName = functionCall.getName();"
+    ],
+    "getArguments()": [
+      "final FunctionCall functionCall = chatMessage.getFunctionCall();\nfunctionCall.setFunctionStub(() -> jsonSchemaFunction.call(functionCall.getArguments()));"
+    ]
+  },
+  "GPTFunctionUtils": {
+    "extractFunctions(Class)": [
+      "final Map<String, ChatGPTJavaFunction> functions = GPTFunctionUtils.extractFunctions(functionStub.getClass());",
+      "final var functions = GPTFunctionUtils.extractFunctions(GPTFunctions.class);"
+    ],
+    "getJsonSchemaType(Class)": [
+      "Field field = clazz.getMethods().get(0).getParameterTypes()[0].getDeclaredFields().get(0);\n  String fieldType = getJsonSchemaType(field.getType());",
+      "Field field = clazz.getMethods().get(0).getParameterTypes()[0].getDeclaredFields().get(0);\n  Class<?> actualClazz = parseArrayItemClass(field.getGenericType());\n  gptJavaFunction.addArrayProperty(fieldName, getJsonSchemaType(actualClazz), functionParamAnnotation.value());"
+    ],
+    "callGPTFunction(Object, ChatGPTJavaFunction, String)": [
+      "private Object target;\n return GPTFunctionUtils.callGPTFunction(target, new ChatGPTJavaFunction(), \"argumentsJson\");"
+    ],
+    "parseArrayItemClass(Type)": [
+      "Field field = clazz.getMethods().get(0).getParameterTypes()[0].getDeclaredFields().get(0);\n  Class<?> actualClazz = parseArrayItemClass(field.getGenericType());"
+    ]
+  },
+  "JsonArrayItems": {
+    "JsonArrayItems(String, String)": [
+      "private ChatFunction.Parameters parameters;\n String name=\"\"; String type=\"\"; String description=\"\";        this.parameters.getProperties().put(name, new ChatFunction.JsonSchemaProperty(name, \"array\", description, new ChatFunction.JsonArrayItems(type, null)));\n"
+    ]
+  },
+  "JsonSchemaProperty": {
+    "JsonSchemaProperty(String, String, String)": [
+      "    private ChatFunction.Parameters parameters;\n String name=\"\"; String type=\"\"; String description=\"\";        this.parameters.getProperties().put(name, new ChatFunction.JsonSchemaProperty(name, type, description));\n "
+    ],
+    "JsonSchemaProperty(String, String, String, JsonArrayItems)": [
+      " private ChatFunction.Parameters parameters;\n String name=\"\"; String type=\"\"; String description=\"\";         this.parameters.getProperties().put(name, new ChatFunction.JsonSchemaProperty(name, \"array\", description, new ChatFunction.JsonArrayItems(type, null)));\n"
+    ]
+  },
+  "Parameters": {
+    "Parameters(String, Map, List)": [
+      "private ChatFunction.Parameters parameters;\n this.parameters = new ChatFunction.Parameters(\"object\", new HashMap<>(), new ArrayList<>());",
+      "private ChatFunction.Parameters parameters;\n this.parameters = new ChatFunction.Parameters(\"object\", new HashMap<>(), new ArrayList<>());",
+      "String name=\"\" this.getParameters().getRequired().add(name);"
+    ]
+  }
+}

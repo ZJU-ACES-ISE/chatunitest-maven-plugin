@@ -30,7 +30,7 @@ public class ProjectParser {
     public static final JavaParser parser = new JavaParser();
     public Path srcFolderPath;
     public Path outputPath;
-    public Map<String, List<String>> classMap = new HashMap<>();
+    public Map<String, Set<String>> classMap = new HashMap<>();
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static Config config;
     public int classCount = 0;
@@ -59,12 +59,12 @@ public class ProjectParser {
         }
         for (String classPath : classPaths) {
             try {
-                addClassMap(classPath);
                 String packagePath = classPath.substring(srcFolderPath.toString().length() + 1);
                 Path output = outputPath.resolve(packagePath).getParent();
                 ClassParser classParser = new ClassParser(config, output);
                 classParser.extractClass(classPath);
 
+                addClassMap(outputPath, packagePath);
                 classCount++;
                 methodCount += classParser.methodCount;
             } catch (Exception e) {
@@ -76,18 +76,23 @@ public class ProjectParser {
         config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
     }
 
-    public void addClassMap(String classPath) {
-        String fullClassName = classPath.substring(srcFolderPath.toString().length() + 1)
-                .replace(".java", "")
-                .replace(File.separator, ".");
-
-        String className = Paths.get(classPath).getFileName().toString().replace(".java", "");
-        if (classMap.containsKey(className)) {
-            classMap.get(className).add(fullClassName);
-        } else {
-            List<String> fullClassNames = new ArrayList<>();
-            fullClassNames.add(fullClassName);
-            classMap.put(className, fullClassNames);
+    public void addClassMap(Path outputPath, String packagePath) {
+        Path path = outputPath.resolve(packagePath).getParent();
+        String packageDeclaration = path.toString().substring(outputPath.toString().length() + 1).replace(File.separator, ".");
+        // list the directories in the path
+        File[] files = path.toFile().listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String className = file.getName();
+                String fullClassName = packageDeclaration + "." + className;
+                if (classMap.containsKey(className)) {
+                    classMap.get(className).add(fullClassName);
+                } else {
+                    Set<String> fullClassNames = new HashSet<>();
+                    fullClassNames.add(fullClassName);
+                    classMap.put(className, fullClassNames);
+                }
+            }
         }
     }
 

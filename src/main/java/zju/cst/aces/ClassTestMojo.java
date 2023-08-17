@@ -56,7 +56,7 @@ public class ClassTestMojo
 
         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
         try {
-            new ClassRunner(getFullClassName(className), config).start();
+            new ClassRunner(getFullClassName(config, className), config).start();
         } catch (IOException e) {
             log.warn("Class not found: " + className + " in " + project.getArtifactId());
         }
