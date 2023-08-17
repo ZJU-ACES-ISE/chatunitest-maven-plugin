@@ -6,7 +6,10 @@ import zju.cst.aces.dto.TestMessage;
 import zju.cst.aces.runner.AbstractRunner;
 import zju.cst.aces.util.TokenCounter;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 //该类方法于AbstratRunner中调用
@@ -39,14 +42,14 @@ public class PromptGenerator implements Prompt {
             promptTemplate.dataModel.put("fields", AbstractRunner.joinLines(promptInfo.getClassInfo().fields));
 
             if (!promptInfo.getClassInfo().constructorSigs.isEmpty()) {
-                promptTemplate.dataModel.put("constructor_sigs", promptInfo.getClassInfo().constructorBrief);
+                promptTemplate.dataModel.put("constructor_sigs", AbstractRunner.joinLines(promptInfo.getClassInfo().constructorBrief));
                 promptTemplate.dataModel.put("constructor_bodies", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().constructorSigs));
             } else {
                 promptTemplate.dataModel.put("constructor_sigs", null);
                 promptTemplate.dataModel.put("constructor_bodies", null);
             }
             if (!promptInfo.getClassInfo().getterSetterSigs.isEmpty()) {
-                promptTemplate.dataModel.put("getter_setter_sigs", promptInfo.getClassInfo().getterSetterBrief);
+                promptTemplate.dataModel.put("getter_setter_sigs", AbstractRunner.joinLines(promptInfo.getClassInfo().getterSetterBrief));
                 promptTemplate.dataModel.put("getter_setter_bodies", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().getterSetterSigs));
             } else {
                 promptTemplate.dataModel.put("getter_setter_sigs", null);
@@ -60,8 +63,6 @@ public class PromptGenerator implements Prompt {
                 promptTemplate.dataModel.put("other_method_bodies", null);
             }
 //            promptTemplate.dataModel.put("dep_method_bodies", generateDepMethodBodies(promptInfo));
-
-
 
             promptTemplate.dataModel.put("c_deps", null);
             promptTemplate.dataModel.put("m_deps", null);
@@ -145,12 +146,12 @@ public class PromptGenerator implements Prompt {
         }
         return filename;
     }
-//
-//    public String generateDepMethodBodies(PromptInfo promptInfo) {
-//        List<String> dmSigs = new ArrayList<>();
-//        promptInfo.getMethodInfo().dependentMethods.forEach((c, methods) -> {
-//
-//        });
-//        AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getMethodInfo());
-//    }
+
+    public String generateDepMethodBodies(PromptInfo promptInfo) throws IOException {
+        List<String> dmSigs = new ArrayList<>();
+        promptInfo.getMethodInfo().dependentMethods.forEach((c, methods) -> {
+
+        });
+        return AbstractRunner.getBodies(config, promptInfo.getClassInfo(), dmSigs);
+    }
 }
