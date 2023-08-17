@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <!--gav information-->
-  <groupId>com.hhh.maven_plugin</groupId>
+  <groupId>io.github.ZJU-ACES-ISE</groupId>
   <artifactId>chatunitest-maven-plugin</artifactId>
   <!--Uploading to the SNAPSHOT repository, the version suffix must include 'SNAPSHOT'-->
   <!--<version>1.0.0-SNAPSHOT</version>-->
-  <version>1.2.3</version>
+  <version>1.2.0</version>
   <packaging>maven-plugin</packaging>
   <name>chatunitest-maven-plugin</name>
   <description>A Maven plugin for generating unit tests using ChatGPT</description>
@@ -107,11 +107,16 @@
       <artifactId>maven-invoker</artifactId>
       <version>3.1.0</version>
     </dependency>
-    <!--    解析html-->
+<!--    解析html-->
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
       <version>1.14.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
+      <version>2.3.30</version>
     </dependency>
   </dependencies>
 
@@ -123,7 +128,27 @@
       </activation>
       <build>
         <plugins>
-
+          <!--publish to the central SNAPSHOT repository-->
+          <!--
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.7</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>com.thoughtworks.xstream</groupId>
+                <artifactId>xstream</artifactId>
+                <version>1.4.15</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+          -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-release-plugin</artifactId>
@@ -215,18 +240,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.1.0</version>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.7</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

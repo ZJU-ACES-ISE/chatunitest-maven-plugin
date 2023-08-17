@@ -4,6 +4,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import lombok.Data;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,12 +17,19 @@ public class PromptInfo {
     public String methodName;
     public String methodSignature;
     public String info; // move other methods and constructors to otherMethods.
-    public String otherMethods;
+    public String otherMethodBrief;
+    public String otherMethodBodies;
     public List<Map<String, String>> constructorDeps = new ArrayList<>(); // dependent classes in constructor.
     public List<Map<String, String>> methodDeps = new ArrayList<>(); // dependent classes in method parameters and body.
     public TestMessage errorMsg;
     public String unitTest = "";
+    public String fullTestName;
+    public Path testPath;
+    public MethodInfo methodInfo;
+    public ClassInfo classInfo;
+
     public Map<String, List<MethodDeclaration>> correctTests = new HashMap<>();
+    public List<RoundRecord> records = new ArrayList<>();
 
     public PromptInfo(boolean hasDep, String className, String methodName,
                       String methodSignature) {
@@ -31,17 +39,23 @@ public class PromptInfo {
         this.methodSignature = methodSignature;
     }
 
+    public PromptInfo(){}
+
     public PromptInfo(PromptInfo p) {
         this.setHasDep(p.isHasDep());
         this.setClassName(p.getClassName());
         this.setMethodName(p.getMethodName());
         this.setMethodSignature(p.getMethodSignature());
         this.setInfo(p.getInfo());
-        this.setOtherMethods(p.getOtherMethods());
+        this.setOtherMethodBrief(p.getOtherMethodBrief());
         this.setConstructorDeps(p.getConstructorDeps());
         this.setMethodDeps(p.getMethodDeps());
         this.setErrorMsg(p.getErrorMsg());
         this.setUnitTest(p.getUnitTest());
+        this.setFullTestName(p.getFullTestName());
+        this.setTestPath(p.getTestPath());
+        this.setCorrectTests(p.getCorrectTests());
+        this.setRecords(p.getRecords());
     }
 
     public void addMethodDeps(Map<String, String> methodDep) {
@@ -69,5 +83,9 @@ public class PromptInfo {
             methods.add(m);
             this.correctTests.put(className, methods);
         }
+    }
+
+    public void addRecord(RoundRecord r) {
+        this.records.add(r);
     }
 }

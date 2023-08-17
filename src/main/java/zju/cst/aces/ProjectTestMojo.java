@@ -57,6 +57,8 @@ public class ProjectTestMojo
     public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public File tmpOutput;
+    @Parameter(property = "promptPath")
+    public File promptPath;
     @Parameter(property = "apiKeys", required = true)
     public String[] apiKeys;
     @Parameter(property = "stopWhenSuccess", defaultValue = "true")
@@ -180,6 +182,7 @@ public class ProjectTestMojo
         checkTargetFolder(project);
         log = getLog();
         config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
+                .promptPath(promptPath)
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
                 .tmpOutput(tmpOutput.toPath())
@@ -211,6 +214,7 @@ public class ProjectTestMojo
         log.info(" --- ");
         log.info(" TestOutput Path >>> " + config.getTestOutput());
         log.info(" TmpOutput Path >>> " + config.getTmpOutput());
+        log.info(" Prompt path >>> " + config.getPromptPath());
         log.info(" MaxThreads >>> " + config.getMaxThreads());
         log.info(" TestNumber >>> " + config.getTestNumber());
         log.info(" MaxRounds >>> " + config.getMaxRounds());

@@ -49,6 +49,27 @@ public class ClassParser {
         setOutputPath(path.toString());
     }
 
+    public void extractClass(String classPath) throws FileNotFoundException {
+        File file = new File(classPath);
+        ParseResult<CompilationUnit> parseResult = parser.parse(file);
+        CompilationUnit cu = parseResult.getResult().orElseThrow();
+        List<ClassOrInterfaceDeclaration> classes = cu.findAll(ClassOrInterfaceDeclaration.class);
+        for (ClassOrInterfaceDeclaration classDeclaration : classes) {
+            try {
+                classInfo = getInfoByClass(cu, classDeclaration);
+                classInfo.setCode(cu.toString(), classDeclaration.toString());
+                exportClassInfo(GSON.toJson(classInfo), classDeclaration);
+                extractMethods(cu, classDeclaration);
+                extractConstructors(cu, classDeclaration);
+
+                addClassMapping(classInfo);
+                methodCount += classDeclaration.getMethods().size();
+            } catch (Exception e) {
+                config.getLog().warn("In ClassParser.extractClass Exception: " + e);
+            }
+        }
+    }
+
     private static boolean isJavaSourceDir(Path path) {
         return Files.isDirectory(path) && Files.exists(path.resolve(
                 "src" + File.separator + "main" + File.separator + "java"));
@@ -80,6 +101,10 @@ public class ClassParser {
     private ClassInfo getInfoByClass(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         return new ClassInfo(
                 classNode.getNameAsString(),
+                config.sharedInteger.getAndIncrement(),
+                classNode.getModifiers().toString(),
+                classNode.getExtendedTypes().toString(),
+                classNode.getImplementedTypes().toString(),
                 getPackageDeclaration(cu),
                 getClassSignature(cu, classNode),
                 getImports(getImportDeclarations(cu)),
@@ -88,7 +113,9 @@ public class ClassParser {
                 getMethodSignatures(classNode),
                 getBriefMethods(cu, classNode),
                 hasConstructors(classNode),
+                getConstructorSignatures(classNode),
                 getBriefConstructors(cu, classNode),
+                getGetterSetterSig(cu, classNode),
                 getGetterSetter(cu, classNode),
                 getConstructorDeps(cu, classNode));
     }
@@ -132,6 +159,16 @@ public class ClassParser {
         for (MethodDeclaration m : classNode.getMethods()) {
             if (isGetSet(m)) {
                 getterSetter.add(getBriefMethod(cu, m));
+            }
+        }
+        return getterSetter;
+    }
+
+    private List<String> getGetterSetterSig(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
+        List<String> getterSetter = new ArrayList<>();
+        for (MethodDeclaration m : classNode.getMethods()) {
+            if (isGetSet(m)) {
+                getterSetter.add(m.resolve().getSignature());
             }
         }
         return getterSetter;
@@ -202,6 +239,14 @@ public class ClassParser {
             mSigs.put(constructors.get(i - methods.size()).resolve().getSignature(), String.valueOf(i));
         }
         return mSigs;
+    }
+
+    private List<String> getConstructorSignatures(ClassOrInterfaceDeclaration node) {
+        List<String> cSigs = new ArrayList<>();
+        node.getConstructors().forEach(c -> {
+            cSigs.add(c.resolve().getSignature());
+        });
+        return cSigs;
     }
 
     private List<String> getBriefConstructors(CompilationUnit cu, ClassOrInterfaceDeclaration node) {
@@ -436,7 +481,7 @@ public class ClassParser {
      * Generate a filename for the focal method json file by method signature.
      */
     private Path getFilePathBySig(String sig) {
-        Map<String, String> mSigs = classInfo.methodSignatures;
+        Map<String, String> mSigs = classInfo.methodSigs;
         return Paths.get(mSigs.get(sig) + ".json");
     }
 
@@ -444,7 +489,7 @@ public class ClassParser {
      * Get the filename of the focal method by finding method name and parameters in mSig.
      */
     public static Path getFilePathBySig(String mSig, ClassInfo info) {
-        Map<String, String> mSigs = info.methodSignatures;
+        Map<String, String> mSigs = info.methodSigs;
         return Paths.get(mSigs.get(mSig) + ".json");
     }
 
@@ -458,22 +503,16 @@ public class ClassParser {
         }
     }
 
-    public void extractClass(String classPath) throws FileNotFoundException {
-        File file = new File(classPath);
-        ParseResult<CompilationUnit> parseResult = parser.parse(file);
-        CompilationUnit cu = parseResult.getResult().orElseThrow();
-        List<ClassOrInterfaceDeclaration> classes = cu.findAll(ClassOrInterfaceDeclaration.class);
-        for (ClassOrInterfaceDeclaration classDeclaration : classes) {
-            try {
-                classInfo = getInfoByClass(cu, classDeclaration);
-                exportClassInfo(GSON.toJson(classInfo), classDeclaration);
-                extractMethods(cu, classDeclaration);
-                extractConstructors(cu, classDeclaration);
-
-                methodCount += classDeclaration.getMethods().size();
-            } catch (Exception e) {
-                config.getLog().warn("In ClassParser.extractClass Exception: " + e);
-            }
+    public void addClassMapping(ClassInfo classInfo) {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("className", classInfo.className);
+        map.put("packageDeclaration", classInfo.packageDeclaration);
+        map.put("modifier", classInfo.modifier);
+        map.put("extend", classInfo.extend);
+        map.put("implement", classInfo.implement);
+        if (config.classMapping == null) {
+            config.classMapping = new LinkedHashMap<>();
         }
+        config.classMapping.put("class" + classInfo.index, map);
     }
 }

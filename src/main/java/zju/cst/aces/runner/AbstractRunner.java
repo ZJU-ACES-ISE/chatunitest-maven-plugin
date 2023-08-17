@@ -7,10 +7,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.Response;
 import zju.cst.aces.config.Config;
-import zju.cst.aces.dto.*;
+import zju.cst.aces.dto.ClassInfo;
+import zju.cst.aces.dto.Message;
+import zju.cst.aces.dto.MethodInfo;
+import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.parser.ClassParser;
+import zju.cst.aces.prompt.PromptGenerator;
 import zju.cst.aces.util.CodeExtractor;
-import zju.cst.aces.util.TokenCounter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -33,7 +36,7 @@ public class AbstractRunner {
     public String className;
     public String fullClassName;
     public Config config;
-
+    public PromptGenerator promptGenerator = new PromptGenerator();
     // get configuration from Config, and move init() to Config
     public AbstractRunner(String fullClassname, Config config) throws IOException {
         fullClassName = fullClassname;
@@ -42,83 +45,28 @@ public class AbstractRunner {
         errorOutputPath = config.getErrorOutput();
         parseOutputPath = config.getParseOutput();
         testOutputPath = config.getTestOutput();
+        promptGenerator.setConfig(config);
     }
 
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
         List<Message> messages = new ArrayList<>();
-        if (promptInfo.errorMsg == null) { // round 1
+        if (promptInfo.errorMsg == null) { // round 0
             messages.add(Message.ofSystem(generateSystemPrompt(promptInfo)));
         }
         messages.add(Message.of(generateUserPrompt(promptInfo)));
         return messages;
     }
 
-    // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
     public String generateUserPrompt(PromptInfo promptInfo) throws IOException {
-        String user = null;
-        // round 1
-        if (promptInfo.errorMsg == null) {
-            user = String.format("The focal method is `%s` in the focal class `%s`, and their information is\n```%s```",
-                    promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
-            if (!promptInfo.getOtherMethods().trim().isEmpty()) {
-                user += String.format("\nSignatures of Other methods in the focal class are\n```%s```", promptInfo.getOtherMethods());
-            }
-            if (promptInfo.hasDep) {
-                for (Map<String, String> cDeps : promptInfo.getConstructorDeps()) {
-                    for (Map.Entry<String, String> entry : cDeps.entrySet()) {
-                        user += String.format("\nThe brief information of dependent class `%s` is\n```%s```", entry.getKey(), entry.getValue());
-                    }
-                }
-                for (Map<String, String> mDeps : promptInfo.getMethodDeps()) {
-                    for (Map.Entry<String, String> entry : mDeps.entrySet()) {
-                        user += String.format("\nThe brief information of dependent method `%s` is\n```%s```", entry.getKey(), entry.getValue());
-                    }
-                }
-            }
-        } else { // round > 1 -- repair prompt
-            int promptTokens = TokenCounter.countToken(promptInfo.getUnitTest())
-                    + TokenCounter.countToken(promptInfo.getMethodSignature())
-                    + TokenCounter.countToken(promptInfo.getClassName())
-                    + TokenCounter.countToken(promptInfo.getInfo())
-                    + TokenCounter.countToken(promptInfo.getOtherMethods());
-            int allowedTokens = Math.max(config.getMaxPromptTokens() - promptTokens, config.getMinErrorTokens());
-            TestMessage errorMsg = promptInfo.getErrorMsg();
-            String processedErrorMsg = "";
-            for (String error : errorMsg.getErrorMessage()) {
-                if (TokenCounter.countToken(processedErrorMsg + error + "\n") <= allowedTokens) {
-                    processedErrorMsg += error + "\n";
-                }
-            }
-            config.getLog().debug("Allowed tokens: " + allowedTokens);
-            config.getLog().debug("Processed error message: \n" + processedErrorMsg);
-
-            user = String.format("I need you to fix an error in a unit test, an error occurred while compiling and executing\n" +
-                            "The unit test is:\n" +
-                            "```\n%s```\n" +
-                            "The error message is:\n" +
-                            "```\n%s```\n" +
-                            "The unit test is testing the method %s in the class %s,\n" +
-                            "the source code of the method under test and its class is:\n" +
-                            "```\n%s```\n",
-                    promptInfo.getUnitTest(), processedErrorMsg, promptInfo.getMethodSignature(), promptInfo.getClassName(), promptInfo.getInfo());
-            if (!promptInfo.getOtherMethods().trim().isEmpty()) {
-                user += String.format("The signatures of other methods in its class are:\n```\n%s```\n", promptInfo.getOtherMethods());
-            }
-            user += "Please fix the error and return the whole fixed unit test." +
-                    " You can use Junit 5, Mockito 3 and reflection. No explanation is needed.\n";
-        }
-        return user;
+        return promptGenerator.getUserPrompt(promptInfo);
     }
 
-    // TODO: 替换为新的prompt生成方法，参考python版本的prompt(在askGPT.py里用jinja2生成)
+
     public String generateSystemPrompt(PromptInfo promptInfo) {
-        if (promptInfo.isHasDep()) {
-            return config.systemPromptWithDep;
-        }
-        return config.systemPromptWithoutDep;
+       return promptGenerator.getSystemPrompt(promptInfo);
     }
 
-    public String joinLines(List<String> lines) {
+    public static String joinLines(List<String> lines) {
         return lines.stream().collect(Collectors.joining("\n"));
     }
 
@@ -159,7 +107,6 @@ public class AbstractRunner {
         return "";
     }
 
-    // TODO: manually import * and source class improts
     public String repairImports(String code, List<String> imports, boolean asterisk) {
         CompilationUnit cu = StaticJavaParser.parse(code);
         if (asterisk) {
@@ -208,14 +155,16 @@ public class AbstractRunner {
         return cu.toString();
     }
 
-    public PromptInfo generatePromptInfoWithoutDep(ClassInfo classInfo, MethodInfo methodInfo) {
+    public PromptInfo generatePromptInfoWithoutDep(ClassInfo classInfo, MethodInfo methodInfo) throws IOException {
         PromptInfo promptInfo = new PromptInfo(
                 false,
                 classInfo.className,
                 methodInfo.methodName,
                 methodInfo.methodSignature);
+        promptInfo.setClassInfo(classInfo);
+        promptInfo.setMethodInfo(methodInfo);
         String fields = joinLines(classInfo.fields);
-        String methods = filterAndJoinLines(classInfo.briefMethods, methodInfo.brief);
+        String methods = filterAndJoinLines(classInfo.methodsBrief, methodInfo.brief);
         String imports = joinLines(classInfo.imports);
 
         String information = classInfo.packageDeclaration
@@ -227,7 +176,16 @@ public class AbstractRunner {
                 + "\n}";
 
         promptInfo.setInfo(information);
-        promptInfo.setOtherMethods(methods);
+        promptInfo.setOtherMethodBrief(methods);
+
+        String otherMethodBodies = "";
+        for (String sig : classInfo.methodSigs.keySet()) {
+            if (sig.equals(methodInfo.methodSignature)) {
+                continue;
+            }
+            otherMethodBodies += getBody(config, classInfo, sig);
+        }
+        promptInfo.setOtherMethodBodies(otherMethodBodies);
 
         return promptInfo;
     }
@@ -238,17 +196,21 @@ public class AbstractRunner {
                 classInfo.className,
                 methodInfo.methodName,
                 methodInfo.methodSignature);
+        promptInfo.setClassInfo(classInfo);
+        promptInfo.setMethodInfo(methodInfo);
         List<String> otherBriefMethods = new ArrayList<>();
+        List<String> otherMethodBodies = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
             String depClassName = entry.getKey();
             if (depClassName.equals(className)) {
                 Set<String> otherSig = methodInfo.dependentMethods.get(depClassName);
                 for (String otherMethod : otherSig) {
-                    MethodInfo otherMethodInfo = getMethodInfo(classInfo, otherMethod);
+                    MethodInfo otherMethodInfo = getMethodInfo(config, classInfo, otherMethod);
                     if (otherMethodInfo == null) {
                         continue;
                     }
                     otherBriefMethods.add(otherMethodInfo.brief);
+                    otherMethodBodies.add(otherMethodInfo.sourceCode);
                 }
                 continue;
             }
@@ -273,27 +235,32 @@ public class AbstractRunner {
                 + " {\n";
         //TODO: handle used fields instead of all fields
         String otherMethods = "";
+        String otherFullMethods = "";
         if (classInfo.hasConstructor) {
-            otherMethods += joinLines(classInfo.constructors) + "\n";
+            otherMethods += joinLines(classInfo.constructorBrief) + "\n";
+            otherFullMethods += getBodies(config, classInfo, classInfo.constructorSigs) + "\n";
         }
         if (methodInfo.useField) {
             information += fields + "\n";
-            otherMethods +=  joinLines(classInfo.getterSetters) + "\n";
+            otherMethods +=  joinLines(classInfo.getterSetterBrief) + "\n";
+            otherFullMethods += getBodies(config, classInfo, classInfo.getterSetterSigs) + "\n";
         }
         otherMethods += joinLines(otherBriefMethods) + "\n";
+        otherFullMethods += joinLines(otherMethodBodies) + "\n";
         information += methodInfo.sourceCode + "\n}";
 
         promptInfo.setInfo(information);
-        promptInfo.setOtherMethods(otherMethods);
+        promptInfo.setOtherMethodBrief(otherMethods);
+        promptInfo.setOtherMethodBodies(otherFullMethods);
         return promptInfo;
     }
 
-    public MethodInfo getMethodInfo(ClassInfo info, String mSig) throws IOException {
+    public static MethodInfo getMethodInfo(Config config, ClassInfo info, String mSig) throws IOException {
         String packagePath = info.packageDeclaration
                 .replace("package ", "")
                 .replace(".", File.separator)
                 .replace(";", "");
-        Path depMethodInfoPath = parseOutputPath
+        Path depMethodInfoPath = config.getParseOutput()
                 .resolve(packagePath)
                 .resolve(info.className)
                 .resolve(ClassParser.getFilePathBySig(mSig, info));
@@ -312,7 +279,7 @@ public class AbstractRunner {
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);
-        String constructors = joinLines(depClassInfo.constructors);
+        String constructors = joinLines(depClassInfo.constructorBrief);
         Map<String, String> methodDeps = new HashMap<>();
 
         String basicInfo = classSig + " {\n" + fields + "\n";
@@ -323,15 +290,116 @@ public class AbstractRunner {
         String briefDepMethods = "";
         for (String sig : depMethods) {
             //TODO: identify used fields in dependent class
-            MethodInfo depMethodInfo = getMethodInfo(depClassInfo, sig);
+            MethodInfo depMethodInfo = getMethodInfo(config, depClassInfo, sig);
             if (depMethodInfo == null) {
                 continue;
             }
             briefDepMethods += depMethodInfo.brief + "\n";
         }
-        String getterSetter = joinLines(depClassInfo.getterSetters) + "\n";
+        String getterSetter = joinLines(depClassInfo.getterSetterBrief) + "\n";
         methodDeps.put(depClassName, basicInfo + getterSetter + briefDepMethods + "}");
         return methodDeps;
+    }
+
+    public static String getBodies(Config config, ClassInfo info, List<String> sigs) throws IOException {
+        String bodies = "";
+        for (String sig : sigs) {
+            bodies += getBody(config, info, sig) + "\n";
+        }
+        return bodies;
+    }
+
+    public static String getBody(Config config, ClassInfo info, String Sig) throws IOException {
+        MethodInfo mi = getMethodInfo(config, info, Sig);
+        return mi.sourceCode;
+    }
+
+    public void exportRecord(PromptInfo promptInfo, ClassInfo classInfo, int attempt) {
+        String methodIndex = classInfo.methodSigs.get(promptInfo.methodSignature);
+        Path recordPath = config.getHistoryPath();
+
+        recordPath = recordPath.resolve("class" + classInfo.index);
+        exportMethodMapping(classInfo, recordPath);
+
+        recordPath = recordPath.resolve("method" + methodIndex);
+        exportAttemptMapping(promptInfo, recordPath);
+
+        recordPath = recordPath.resolve("attempt" + attempt);
+        if (!recordPath.toFile().exists()) {
+            recordPath.toFile().mkdirs();
+        }
+        File recordFile = recordPath.resolve("records.json").toFile();
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(recordFile), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(promptInfo.getRecords()));
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportRecord: " + e);
+        }
+    }
+
+    public static synchronized void exportClassMapping(Config config, Path savePath) {
+        if (!savePath.toFile().exists()) {
+            savePath.toFile().mkdirs();
+        }
+        File classMappingFile = savePath.resolve("classMapping.json").toFile();
+        if (classMappingFile.exists()) {
+            return;
+        }
+        Path sourcePath = config.tmpOutput.resolve("classMapping.json");
+        try {
+            Files.copy(sourcePath, classMappingFile.toPath());
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportClassMapping: " + e);
+        }
+    }
+
+    public void exportMethodMapping(ClassInfo classInfo, Path savePath) {
+        if (!savePath.toFile().exists()) {
+            savePath.toFile().mkdirs();
+        }
+        File methodMappingFile = savePath.resolve("methodMapping.json").toFile();
+        if (methodMappingFile.exists()) {
+            return;
+        }
+        Map<String, Map<String, String>> methodMapping = new TreeMap<>();
+        classInfo.methodSigs.forEach((sig, index) -> {
+            Map<String, String> map = new LinkedHashMap<>();
+            map.put("methodName", sig.split("\\(")[0]);
+            map.put("signature", sig);
+            methodMapping.put("method" + index, map);
+        });
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(methodMappingFile), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(methodMapping));
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportMethodMapping: " + e);
+        }
+    }
+
+    public void exportAttemptMapping(PromptInfo promptInfo, Path savePath) {
+        if (!savePath.toFile().exists()) {
+            savePath.toFile().mkdirs();
+        }
+        File attemptMappingFile = savePath.resolve("attemptMapping.json").toFile();
+        if (attemptMappingFile.exists()) {
+            return;
+        }
+        Map<String, Map<String, String>> attemptMapping = new TreeMap<>();
+        String fullNamePrefix = promptInfo.getFullTestName().substring(0, promptInfo.getFullTestName().indexOf("_Test") - 1);
+        for (int i = 0; i < config.getTestNumber(); i++) {
+            Map<String, String> map = new LinkedHashMap<>();
+            String fullTestName = fullNamePrefix + i + "_Test";
+            map.put("testClassName", fullTestName.substring(fullTestName.lastIndexOf(".") + 1));
+            map.put("fullName", fullTestName);
+            map.put("path", promptInfo.getTestPath().toString());
+            attemptMapping.put("attempt" + i, map);
+        }
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(attemptMappingFile), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(attemptMapping));
+        } catch (IOException e) {
+            throw new RuntimeException("In AbstractRunner.exportAttemptMapping: " + e);
+        }
     }
 
     // TODO: 将单个测试方法包装到具有适当imports的测试类中

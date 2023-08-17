@@ -40,12 +40,7 @@ public class AskGPT {
                 String jsonPayload = GSON.toJson(payload);
 
                 RequestBody body = RequestBody.create(MEDIA_TYPE, jsonPayload);
-                Request request = new Request.Builder()
-                        .url(URL)
-                        .post(body)
-                        .addHeader("Content-Type", "application/json")
-                        .addHeader("Authorization", "Bearer " + apiKey)
-                        .build();
+                Request request = new Request.Builder().url(URL).post(body).addHeader("Content-Type", "application/json").addHeader("Authorization", "Bearer " + apiKey).build();
 
                 Response response = config.getClient().newCall(request).execute();
                 if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
@@ -53,17 +48,27 @@ public class AskGPT {
 
             } catch (IOException e) {
                 config.getLog().error("In AskGPT.askChatGPT: " + e);
-                if (e.getMessage().contains("maximum context length is ")) {
-                    break;
-                }
-                if (e.getMessage().contains("Rate limit reached")) {
-                    try {
-                        Thread.sleep(new Random().nextInt(60) + 60);
-                    } catch (InterruptedException ie) {
-                        throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
-                    }
-                }
                 maxTry--;
+//                if (e.getMessage() == null) {
+//                    break;
+//                }
+//                if (e.getMessage().contains("maximum context length is ")) {
+//                    break;
+//                }
+//                if (e.getMessage().contains("Rate limit reached")) {
+//                    try {
+//                        Thread.sleep(new Random().nextInt(60) + 60);
+//                    } catch (InterruptedException ie) {
+//                        throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
+//                    }
+//                }
+//                if (e.getMessage().contains("Unexpected code Response")){
+//                    try {
+//                        Thread.sleep(new Random().nextInt(60) + 60);
+//                    } catch (InterruptedException ie) {
+//                        throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
+//                    }
+//                }
             }
         }
         config.getLog().debug("AskGPT: Failed to get response\n");

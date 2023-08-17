@@ -15,6 +15,7 @@ import java.util.concurrent.*;
 public class ClassRunner extends AbstractRunner {
     public ClassInfo classInfo;
     public File infoDir;
+    public int index;
 
     public ClassRunner(String fullClassName, Config config) throws IOException {
         super(fullClassName, config);
@@ -30,12 +31,12 @@ public class ClassRunner extends AbstractRunner {
         if (config.isEnableMultithreading() == true) {
             methodJob();
         } else {
-            for (String mSig : classInfo.methodSignatures.keySet()) {
-                MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+            for (String mSig : classInfo.methodSigs.keySet()) {
+                MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
                 if (methodInfo == null) {
                     continue;
                 }
-                if (methodInfo.isConstructor || methodInfo.isGetSet) {
+                if (methodInfo.isConstructor || methodInfo.isGetSet || !methodInfo.isPublic) {
                     continue;
                 }
                 new MethodRunner(fullClassName, config, methodInfo).start();
@@ -46,15 +47,15 @@ public class ClassRunner extends AbstractRunner {
     public void methodJob() {
         ExecutorService executor = Executors.newFixedThreadPool(config.getMethodThreads());
         List<Future<String>> futures = new ArrayList<>();
-        for (String mSig : classInfo.methodSignatures.keySet()) {
+        for (String mSig : classInfo.methodSigs.keySet()) {
             Callable<String> callable = new Callable<String>() {
                 @Override
                 public String call() throws Exception {
-                    MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+                    MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
                     if (methodInfo == null) {
                         return "No parsed info found for " + mSig + " in " + fullClassName;
                     }
-                    if (methodInfo.isConstructor || methodInfo.isGetSet) {
+                    if (methodInfo.isConstructor || methodInfo.isGetSet || !methodInfo.isPublic) {
                         return "Skip " + mSig + " in " + fullClassName;
                     }
                     new MethodRunner(fullClassName, config, methodInfo).start();
