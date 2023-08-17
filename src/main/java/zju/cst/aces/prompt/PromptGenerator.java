@@ -26,11 +26,14 @@ public class PromptGenerator implements Prompt {
             String userPrompt = null;
             Map<String, String> cdep_temp = new HashMap<>();
             Map<String, String> mdep_temp = new HashMap<>();
+            promptTemplate.dataModel.put("method_name", promptInfo.getMethodName());
             promptTemplate.dataModel.put("method_sig", promptInfo.getMethodSignature());
             promptTemplate.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
             promptTemplate.dataModel.put("class_name", promptInfo.getClassName());
             promptTemplate.dataModel.put("class_sig", promptInfo.getClassInfo().classSignature);
             promptTemplate.dataModel.put("package", promptInfo.getClassInfo().packageDeclaration);
+            promptTemplate.dataModel.put("class_body", promptInfo.getClassInfo().classDeclarationCode);
+            promptTemplate.dataModel.put("file_content", promptInfo.getClassInfo().compilationUnitCode);
             promptTemplate.dataModel.put("full_fm", promptInfo.getInfo());
             promptTemplate.dataModel.put("imports", AbstractRunner.joinLines(promptInfo.getClassInfo().imports));
             promptTemplate.dataModel.put("fields", AbstractRunner.joinLines(promptInfo.getClassInfo().fields));
@@ -56,6 +59,12 @@ public class PromptGenerator implements Prompt {
                 promptTemplate.dataModel.put("other_method_sigs", null);
                 promptTemplate.dataModel.put("other_method_bodies", null);
             }
+//            promptTemplate.dataModel.put("dep_method_bodies", generateDepMethodBodies(promptInfo));
+
+
+
+            promptTemplate.dataModel.put("c_deps", null);
+            promptTemplate.dataModel.put("m_deps", null);
 
             // round 0
             if (promptInfo.errorMsg == null) {
@@ -136,4 +145,12 @@ public class PromptGenerator implements Prompt {
         }
         return filename;
     }
+//
+//    public String generateDepMethodBodies(PromptInfo promptInfo) {
+//        List<String> dmSigs = new ArrayList<>();
+//        promptInfo.getMethodInfo().dependentMethods.forEach((c, methods) -> {
+//
+//        });
+//        AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getMethodInfo());
+//    }
 }

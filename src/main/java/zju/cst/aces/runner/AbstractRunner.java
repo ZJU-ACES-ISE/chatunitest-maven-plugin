@@ -317,7 +317,6 @@ public class AbstractRunner {
     public void exportRecord(PromptInfo promptInfo, ClassInfo classInfo, int attempt) {
         String methodIndex = classInfo.methodSigs.get(promptInfo.methodSignature);
         Path recordPath = config.getHistoryPath();
-        exportClassMapping(recordPath);
 
         recordPath = recordPath.resolve("class" + classInfo.index);
         exportMethodMapping(classInfo, recordPath);

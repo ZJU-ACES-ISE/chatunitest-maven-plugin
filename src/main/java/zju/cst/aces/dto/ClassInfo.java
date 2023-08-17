@@ -23,6 +23,8 @@ public class ClassInfo {
     public List<String> getterSetterSigs;
     public List<String> getterSetterBrief;
     public Map<String, Set<String>> constructorDeps;
+    public String compilationUnitCode;
+    public String classDeclarationCode;
 
     public ClassInfo(String className, int index, String modifier, String extend, String implement,
                      String packageDeclaration, String classSignature, List<String> imports,
@@ -47,5 +49,10 @@ public class ClassInfo {
         this.getterSetterSigs = getterSetterSigs;
         this.getterSetterBrief = getterSetterBrief;
         this.constructorDeps = constructorDeps;
+    }
+
+    public void setCode(String compilationUnitCode, String classDeclarationCode) {
+        this.compilationUnitCode = compilationUnitCode;
+        this.classDeclarationCode = classDeclarationCode;
     }
 }
