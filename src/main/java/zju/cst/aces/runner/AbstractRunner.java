@@ -337,7 +337,7 @@ public class AbstractRunner {
         }
     }
 
-    public void exportClassMapping(Path savePath) {
+    public static synchronized void exportClassMapping(Config config, Path savePath) {
         if (!savePath.toFile().exists()) {
             savePath.toFile().mkdirs();
         }
