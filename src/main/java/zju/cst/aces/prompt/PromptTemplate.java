@@ -38,7 +38,7 @@ public class PromptTemplate {
 
     //渲染
     public String renderTemplate(String templateFileName) throws IOException, TemplateException{
-        Configuration configuration = new Configuration(Configuration.getVersion());
+        Configuration configuration = new Configuration(Configuration.VERSION_2_3_30);
 
         if (config.getPromptPath() == null) {
             // 使用类加载器获取插件自身的resources目录下的文件
