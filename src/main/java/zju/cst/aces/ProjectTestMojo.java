@@ -59,6 +59,8 @@ public class ProjectTestMojo
     public File tmpOutput;
     @Parameter(property = "promptPath")
     public File promptPath;
+    @Parameter(property = "examplePath", defaultValue = "${project.basedir}/exampleUsage.json")
+    public File examplePath;
     @Parameter(property = "apiKeys", required = true)
     public String[] apiKeys;
     @Parameter(property = "stopWhenSuccess", defaultValue = "true")
@@ -126,7 +128,7 @@ public class ProjectTestMojo
             for (String classPath : classPaths) {
                 String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
                 try {
-                    className = getFullClassName(className);
+                    className = getFullClassName(config, className);
                     log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
                     new ClassRunner(className, config).start();
                 } catch (IOException e) {
@@ -147,7 +149,7 @@ public class ProjectTestMojo
                 public String call() throws Exception {
                     String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
                     try {
-                        className = getFullClassName(className);
+                        className = getFullClassName(config, className);
                         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
                         new ClassRunner(className, config).start();
                     } catch (IOException e) {
@@ -183,6 +185,7 @@ public class ProjectTestMojo
         log = getLog();
         config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
                 .promptPath(promptPath)
+                .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
                 .tmpOutput(tmpOutput.toPath())
@@ -215,6 +218,7 @@ public class ProjectTestMojo
         log.info(" TestOutput Path >>> " + config.getTestOutput());
         log.info(" TmpOutput Path >>> " + config.getTmpOutput());
         log.info(" Prompt path >>> " + config.getPromptPath());
+        log.info(" Example path >>> " + config.getExamplePath());
         log.info(" MaxThreads >>> " + config.getMaxThreads());
         log.info(" TestNumber >>> " + config.getTestNumber());
         log.info(" MaxRounds >>> " + config.getMaxRounds());
@@ -228,7 +232,7 @@ public class ProjectTestMojo
         }
     }
 
-    public String getFullClassName(String name) throws IOException {
+    public static String getFullClassName(Config config, String name) throws IOException {
         if (isFullName(name)) {
             return name;
         }
@@ -244,7 +248,7 @@ public class ProjectTestMojo
         return name;
     }
 
-    public boolean isFullName(String name) {
+    public static boolean isFullName(String name) {
         if (name.contains(".")) {
             return true;
         }

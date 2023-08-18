@@ -1,21 +1,25 @@
 package zju.cst.aces.prompt;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import zju.cst.aces.ProjectTestMojo;
 import zju.cst.aces.config.Config;
-import zju.cst.aces.dto.PromptInfo;
-import zju.cst.aces.dto.TestMessage;
+import zju.cst.aces.dto.*;
 import zju.cst.aces.runner.AbstractRunner;
 import zju.cst.aces.util.TokenCounter;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 //该类方法于AbstratRunner中调用
 public class PromptGenerator implements Prompt {
     public Config config;
     PromptTemplate promptTemplate;
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     public void setConfig(Config config) {
         this.config = config;
@@ -26,9 +30,12 @@ public class PromptGenerator implements Prompt {
     public String getUserPrompt(PromptInfo promptInfo) {
         try {
             promptTemplate.readProperties();
+            ExampleUsage exampleUsage = new ExampleUsage(config, promptInfo.className);
             String userPrompt = null;
             Map<String, String> cdep_temp = new HashMap<>();
             Map<String, String> mdep_temp = new HashMap<>();
+
+            // String
             promptTemplate.dataModel.put("method_name", promptInfo.getMethodName());
             promptTemplate.dataModel.put("method_sig", promptInfo.getMethodSignature());
             promptTemplate.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
@@ -40,7 +47,7 @@ public class PromptGenerator implements Prompt {
             promptTemplate.dataModel.put("full_fm", promptInfo.getInfo());
             promptTemplate.dataModel.put("imports", AbstractRunner.joinLines(promptInfo.getClassInfo().imports));
             promptTemplate.dataModel.put("fields", AbstractRunner.joinLines(promptInfo.getClassInfo().fields));
-
+            promptTemplate.dataModel.put("example_usage", exampleUsage.getShortestUsage(promptInfo.getMethodInfo().shortSignature));
             if (!promptInfo.getClassInfo().constructorSigs.isEmpty()) {
                 promptTemplate.dataModel.put("constructor_sigs", AbstractRunner.joinLines(promptInfo.getClassInfo().constructorBrief));
                 promptTemplate.dataModel.put("constructor_bodies", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().constructorSigs));
@@ -58,14 +65,21 @@ public class PromptGenerator implements Prompt {
             if (!promptInfo.getOtherMethodBrief().trim().isEmpty()) {
                 promptTemplate.dataModel.put("other_method_sigs", promptInfo.getOtherMethodBrief());
                 promptTemplate.dataModel.put("other_method_bodies", promptInfo.getOtherMethodBodies());
-            }else {
+            } else {
                 promptTemplate.dataModel.put("other_method_sigs", null);
                 promptTemplate.dataModel.put("other_method_bodies", null);
             }
-//            promptTemplate.dataModel.put("dep_method_bodies", generateDepMethodBodies(promptInfo));
+
+            // Map<String, String>, key: dependent class names
+            promptTemplate.dataModel.put("dep_sigs", getDepBrief(promptInfo.getMethodInfo()));
+            promptTemplate.dataModel.put("dep_bodies", getDepBodies(promptInfo.getMethodInfo()));
+            promptTemplate.dataModel.put("dep_c_sigs", getDepConstructorSigs(promptInfo.getClassInfo(), promptInfo.getMethodInfo()));
+            promptTemplate.dataModel.put("dep_c_bodies", getDepConstructorBodies(promptInfo.getClassInfo(), promptInfo.getMethodInfo()));
+            promptTemplate.dataModel.put("dep_fields", getDepFields(promptInfo.getClassInfo(), promptInfo.getMethodInfo()));
 
             promptTemplate.dataModel.put("c_deps", null);
             promptTemplate.dataModel.put("m_deps", null);
+
 
             // round 0
             if (promptInfo.errorMsg == null) {
@@ -111,8 +125,7 @@ public class PromptGenerator implements Prompt {
             return userPrompt;
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return "An error occurred while generating the user prompt.";
+            throw new RuntimeException("An error occurred while generating the user prompt: " + e);
         }
 
     }
@@ -147,11 +160,178 @@ public class PromptGenerator implements Prompt {
         return filename;
     }
 
-    public String generateDepMethodBodies(PromptInfo promptInfo) throws IOException {
-        List<String> dmSigs = new ArrayList<>();
-        promptInfo.getMethodInfo().dependentMethods.forEach((c, methods) -> {
+    public Map<String, String> getDepBrief(MethodInfo methodInfo) throws IOException {
+        Map<String, String> depBrief = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
+            String depClassName = entry.getKey();
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depBrief;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+            String info = "";
+            for (String depMethodSig : entry.getValue()) {
+                MethodInfo depMethodInfo = AbstractRunner.getMethodInfo(config, depClassInfo, depMethodSig);
+                if (depMethodInfo == null) {
+                    continue;
+                }
+                info += depMethodInfo.brief + "\n";
+            }
+            depBrief.put(depClassName, info.trim());
+        }
+        return depBrief;
+    }
 
-        });
-        return AbstractRunner.getBodies(config, promptInfo.getClassInfo(), dmSigs);
+    public Map<String, String> getDepBodies(MethodInfo methodInfo) throws IOException {
+        Map<String, String> depBodies = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
+            String depClassName = entry.getKey();
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depBodies;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+            String info = "";
+            for (String depMethodSig : entry.getValue()) {
+                MethodInfo depMethodInfo = AbstractRunner.getMethodInfo(config, depClassInfo, depMethodSig);
+                if (depMethodInfo == null) {
+                    continue;
+                }
+                info += depMethodInfo.sourceCode + "\n";
+            }
+            depBodies.put(depClassName, info.trim());
+        }
+        return depBodies;
+    }
+
+    public Map<String, String> getDepFields(ClassInfo classInfo, MethodInfo methodInfo) throws IOException {
+        Map<String, String> depFields = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
+            String depClassName = entry.getKey();
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depFields;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+            depFields.put(depClassName, AbstractRunner.joinLines(depClassInfo.fields));
+        }
+
+        for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
+            String depClassName = entry.getKey();
+            if (depFields.containsKey(depClassName)) {
+                continue;
+            }
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depFields;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+            depFields.put(depClassName, AbstractRunner.joinLines(depClassInfo.fields));
+        }
+        return depFields;
+    }
+
+    public Map<String, String> getDepConstructorSigs(ClassInfo classInfo, MethodInfo methodInfo) throws IOException {
+        Map<String, String> depConstructorSigs = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
+            String depClassName = entry.getKey();
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depConstructorSigs;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+            depConstructorSigs.put(depClassName, AbstractRunner.joinLines(depClassInfo.constructorBrief));
+        }
+
+        for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
+            String depClassName = entry.getKey();
+            if (depConstructorSigs.containsKey(depClassName)) {
+                continue;
+            }
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depConstructorSigs;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+            depConstructorSigs.put(depClassName, AbstractRunner.joinLines(depClassInfo.constructorBrief));
+        }
+        return depConstructorSigs;
+    }
+
+    public Map<String, String> getDepConstructorBodies(ClassInfo classInfo, MethodInfo methodInfo) throws IOException {
+        Map<String, String> depConstructorBodies = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
+            String depClassName = entry.getKey();
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depConstructorBodies;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+
+            String info = "";
+            for (String sig : depClassInfo.constructorSigs) {
+                MethodInfo depConstructorInfo = AbstractRunner.getMethodInfo(config, depClassInfo, sig);
+                if (depConstructorInfo == null) {
+                    continue;
+                }
+                info += depConstructorInfo.sourceCode + "\n";
+            }
+            depConstructorBodies.put(depClassName, info.trim());
+        }
+
+        for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
+            String depClassName = entry.getKey();
+            if (depConstructorBodies.containsKey(depClassName)) {
+                continue;
+            }
+            String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
+            Path depClassInfoPath = config.getParseOutput().resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
+            if (!depClassInfoPath.toFile().exists()) {
+                return depConstructorBodies;
+            }
+            ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+            if (depClassInfo == null) {
+                continue;
+            }
+
+            String info = "";
+            for (String sig : depClassInfo.constructorSigs) {
+                MethodInfo depConstructorInfo = AbstractRunner.getMethodInfo(config, depClassInfo, sig);
+                if (depConstructorInfo == null) {
+                    continue;
+                }
+                info += depConstructorInfo.sourceCode + "\n";
+            }
+            depConstructorBodies.put(depClassName, info.trim());
+        }
+        return depConstructorBodies;
     }
 }

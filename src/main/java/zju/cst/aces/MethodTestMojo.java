@@ -63,7 +63,7 @@ public class MethodTestMojo
                 + "> method: < " + methodName + " > ...");
 
         try {
-            String fullClassName = getFullClassName(className);
+            String fullClassName = getFullClassName(config, className);
             ClassRunner classRunner = new ClassRunner(fullClassName, config);
             ClassInfo classInfo = classRunner.classInfo;
             MethodInfo methodInfo = null;
