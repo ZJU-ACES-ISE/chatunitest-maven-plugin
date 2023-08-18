@@ -1,5 +1,7 @@
 package zju.cst.aces;
 
+import com.sun.jdi.request.WatchpointRequest;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -15,97 +17,124 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 @Mojo(name = "generateMethodCoverage")
 public class MethodCoverageMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
 
-    @Parameter(defaultValue = "com/hhh/plugin/MyTest1_sayHello2_1_1_Test#testSayHello2", required = true)
-    public String testMethod;
+
     public static Log log;
+
+    @Parameter(property = "targetDir")
+    public String targetDir;
+    @Parameter(property = "sourceDir")
+    public String sourceDir;
+    @Parameter(property = "mavenHome")
+    public String mavenHome;
+    @Parameter(property = "goalMethod")
+    public String goalMethod;
+    @Parameter(property = "executeTests")
+    public String[] executeTests;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log=getLog();
-        InvocationRequest request = new DefaultInvocationRequest();
-        request.setPomFile(new File(project.getBasedir(), "pom.xml"));
-        request.setGoals(Arrays.asList("clean", "test-compile")); // Compile tests only
-
-        Invoker invoker = new DefaultInvoker();
-        invoker.setMavenHome(new File("C:\\software\\apache-maven-3.9.2"));
-
-        try {
-            InvocationResult result = invoker.execute(request);
-            if (result.getExitCode() != 0) {
-                throw new MojoExecutionException("Compilation failed.");
-            }
-        } catch (MavenInvocationException e) {
-            log.error("Failed to execute goals.", e);
-            throw new MojoExecutionException("Failed to execute goals.", e);
+        File pomFile=new File(project.getBasedir(), "pom.xml");
+//        String goalMethod="com.hhh.plugin.Calculator#add(int,int)";
+        String target_className = goalMethod.substring(0, goalMethod.lastIndexOf(".")) + "/" + goalMethod.substring(goalMethod.lastIndexOf(".") + 1,goalMethod.lastIndexOf("#"));
+        String target_methodSignature=goalMethod.substring(goalMethod.lastIndexOf("#")+1);
+        // 复制外部目录到 src/test/java
+        String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
+        for (int i = 0; i < executeTests.length; i++) {
+            executeTests[i]=executeTests[i].replace(".","/");
         }
 
-        // Run the specified test method
-        request = new DefaultInvocationRequest();
-        request.setPomFile(new File(project.getBasedir(), "pom.xml"));
-        request.setGoals(Arrays.asList("test", "-Dtest=" + testMethod));
-
-        // Set the test method as a property in the request
-
         try {
-            InvocationResult result = invoker.execute(request);
-            if (result.getExitCode() != 0) {
-                throw new MojoExecutionException("Test execution failed.");
-            }
-        } catch (MavenInvocationException e) {
-            log.error("Failed to execute test.", e);
-            throw new MojoExecutionException("Failed to execute test.", e);
-        }
-
-        request.setGoals(Arrays.asList("jacoco:report"));
-
-        try {
-            InvocationResult result = invoker.execute(request);
-            System.out.println("Coverage of method:"+testMethod+" is "+getMethodCoverage());
-            log.info("Coverage of method:"+testMethod+" is "+getMethodCoverage());
-            if (result.getExitCode() != 0) {
-                throw new MojoExecutionException("Execution failed.");
-            }
-        } catch (MavenInvocationException e) {
-            log.error("Failed to execute goals.", e);
-            throw new MojoExecutionException("Failed to execute goals.", e);
-        }
-    }
-    public String getMethodCoverage(){
-        File htmlFile = new File(project.getBasedir()+"/target/site/jacoco/index.html"); // Replace with your HTML file path
-        try {
-            Document doc = Jsoup.parse(htmlFile, "UTF-8");
-            Element table = doc.select("table.coverage").first(); // Assuming the table has the class "coverage"
-
-            if (table != null) {
-                Elements rows = table.select("tfoot tr");
-                Element lastRow = rows.first(); // Get the first row of the tfoot section
-
-                if (lastRow != null) {
-                    Elements columns = lastRow.select("td");
-
-                    if (columns.size() >= 3) { // The second column is index 1
-                        String data = columns.get(2).text(); // Index 2 corresponds to the third column
-                        System.out.println("Data from last row, third column: " + data);
-                        return data;
-                    } else {
-                        System.out.println("Table does not have enough columns in the last row.");
-                    }
-                } else {
-                    System.out.println("Tfoot section is empty.");
-                }
-            } else {
-                System.out.println("Table with class 'coverage' not found.");
-            }
+            copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return "";
+        // 运行 Maven 测试
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setPomFile(pomFile);
+        request.setGoals(Arrays.asList("clean", "test-compile"));
+        Invoker invoker = new DefaultInvoker();
+        invoker.setMavenHome(new File(mavenHome));
+        try {
+            invoker.execute(request);
+        } catch (MavenInvocationException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        String commandTest=String.join(",",executeTests);
+        request = new DefaultInvocationRequest();
+        request.setPomFile(pomFile);
+        request.setGoals(Arrays.asList("test", "-Dtest=" + commandTest));
+        invoker = new DefaultInvoker();
+        invoker.setMavenHome(new File(mavenHome));
+        try {
+            invoker.execute(request);
+        } catch (MavenInvocationException e) {
+            throw new RuntimeException(e);
+        }
+
+        request = new DefaultInvocationRequest();
+        request.setPomFile(pomFile);
+        request.setGoals(Arrays.asList("jacoco:report"));
+        invoker = new DefaultInvoker();
+        invoker.setMavenHome(new File(mavenHome));
+        try {
+            invoker.execute(request);
+        } catch (MavenInvocationException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 删除临时复制的目录
+        try {
+            FileUtils.deleteDirectory(new File(srcTestJavaPath));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        File htmlFile = new File(project.getBasedir().toString()+"/target/site/jacoco/"+target_className+".html");
+        String htmlContent = ""; // 在这里替换为你的HTML内容
+        try {
+            htmlContent = FileUtils.readFileToString(htmlFile,"UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Document doc = Jsoup.parse(htmlContent);
+        Element coverageTable = doc.getElementById("coveragetable");
+
+        if (coverageTable != null) {
+            Elements rows = coverageTable.select("tbody > tr");
+            for (Element row : rows) {
+                Element methodNameElement = row.selectFirst("td[id^='a']");
+                String methodName = methodNameElement.text();
+                if (methodName.replace(" ","").equals(target_methodSignature.replace(" ",""))) {
+                    Element instructionCoverageElement = row.selectFirst("td.ctr2:nth-child(3)");
+                    Element branchCoverageElement = row.selectFirst("td.ctr2:nth-child(5)");
+                    String instructionCoverage = instructionCoverageElement.text();
+                    String branchCoverage = branchCoverageElement.text();
+                    log.info("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
+//                    System.out.println("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
+                    break;
+                }
+            }
+        } else {
+//            System.out.println("未找到覆盖率表格");
+            log.info("未找到覆盖率表格");
+        }
+
+    }
+    public static void copyDirectory(File sourceDirectory, File targetDirectory) throws IOException {
+        FileUtils.copyDirectory(sourceDirectory, targetDirectory);
     }
 }
