@@ -38,7 +38,7 @@ public class PromptGenerator implements Prompt {
             Map<String, String> mdep_temp = new HashMap<>();
 
             // String
-            promptTemplate.dataModel.put("project_full_code", getFullProjectCode(config));
+            promptTemplate.dataModel.put("project_full_code", getFullProjectCode(promptInfo.getClassName(), config));
             promptTemplate.dataModel.put("method_name", promptInfo.getMethodName());
             promptTemplate.dataModel.put("method_sig", promptInfo.getMethodSignature());
             promptTemplate.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
@@ -572,13 +572,16 @@ public class PromptGenerator implements Prompt {
         return depGSBodies;
     }
 
-    public String getFullProjectCode(Config config) {
+    public String getFullProjectCode(String className, Config config) {
         String fullProjectCode = "";
         List<String> classPaths = new ArrayList<>();
         ProjectParser.scanSourceDirectory(config.project, classPaths);
         // read the file content of each path and append to fullProjectCode
         for (String path : classPaths) {
-            String className = path.substring(path.lastIndexOf(File.separator) + 1, path.lastIndexOf("."));
+            String cn = path.substring(path.lastIndexOf(File.separator) + 1, path.lastIndexOf("."));
+            if (cn.equals(className)) {
+                continue;
+            }
             try {
                 fullProjectCode += Files.readString(Paths.get(path), StandardCharsets.UTF_8) + "\n";
             } catch (IOException e) {
