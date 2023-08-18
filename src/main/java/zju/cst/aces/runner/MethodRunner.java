@@ -165,22 +165,20 @@ public class MethodRunner extends ClassRunner {
             if (testProcessed != null) {
                 config.getLog().debug("[Original Test]:\n" + code);
                 TestCompiler newCompiler = new TestCompiler(config, testProcessed);
-                if (!newCompiler.compileTest(testName, compilationErrorPath, null)) {
-                    testProcessor.removeCorrectTest(promptInfo, summary);
-                    return false;
+                if (newCompiler.compileTest(testName, compilationErrorPath, null)) {
+                    TestExecutionSummary newSummary = newCompiler.executeTest(fullTestName, executionErrorPath);
+                    if (newSummary.getTestsFailedCount() == 0) {
+                        exportTest(testProcessed, savePath);
+                        config.getLog().debug("[Processed Test]:\n" + testProcessed);
+                        config.getLog().info("Processed test for method < " + methodInfo.methodName + " > generated successfully round " + rounds);
+                        return true;
+                    }
                 }
-                TestExecutionSummary newSummary = newCompiler.executeTest(fullTestName, executionErrorPath);
-                if (newSummary.getTestsFailedCount() > 0) {
-                    testProcessor.removeCorrectTest(promptInfo, summary); // remove corrects and use original summary
-                    return false;
-                }
-                exportTest(testProcessed, savePath);
-                config.getLog().debug("[Processed Test]:\n" + testProcessed);
-                config.getLog().info("Processed test for method < " + methodInfo.methodName + " > generated successfully round " + rounds);
-                return true;
+                testProcessor.removeCorrectTest(promptInfo, summary);
             }
 
             // Set promptInfo error message
+            // TODO: should be a function invoked by each return statement
             TestMessage testMessage = new TestMessage();
             List<String> errors = new ArrayList<>();
             summary.getFailures().forEach(failure -> {
