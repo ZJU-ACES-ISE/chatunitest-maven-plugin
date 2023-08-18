@@ -153,6 +153,42 @@ mvn chatunitest:restore
 
 Running this command will restore the test folder from the backup in the `src/back/` directory.
 
+```
+mvn chatunitest:generateCoverage
+```
+```xml
+<plugin>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <artifactId>chatunitest-maven-plugin</artifactId>
+    <version>1.2.0</version>
+    <configuration>
+        <targetDir>D:\\coverage</targetDir>
+        <mavenHome>C:\\software\\apache-maven-3.9.2</mavenHome>
+        <sourceDir>chatunitest</sourceDir>
+    </configuration>
+</plugin>
+```
+Running this method will execute the tests in the folder `sourceDir`, the coverage result of the project will remove to folder `targetDir`. 
+```
+mvn chatunitest:generateMethodCoverage
+```
+```xml
+<plugin>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <artifactId>chatunitest-maven-plugin</artifactId>
+    <version>1.2.0</version>
+    <configuration>
+        <mavenHome>C:\\software\\apache-maven-3.9.2</mavenHome>
+        <sourceDir>chatunitest</sourceDir>
+        <!--yourPackage.className#targetMethodName(param_type1,param_type2)-->
+        <goalMethod>zju.cst.aces.Person#getBornTime(int,int)</goalMethod>
+        <!--yourPackage.className_test#methodName1,yourPackage.className_test#methodName2...-->
+        <executeTests>zju.cst.aces.Person_getBornTime_2_1_Test#testGetBornTime,zju.cst.aces.Person_getBornTime_2_1_Test#testSetBornTime,</executeTests>
+    </configuration>
+</plugin>
+```
+Running this method will execute the tests in configuration `executeTests` in folder `sourceDir`, the coverage result of the method `goalMethod` will show in the console.
+
 ## Requirements
 
 This Maven plugin can be executed in various operating systems with different Java Development Kits (JDK) and Maven
