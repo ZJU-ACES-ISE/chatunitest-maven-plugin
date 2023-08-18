@@ -183,7 +183,7 @@ mvn chatunitest:generateMethodCoverage
         <!--yourPackage.className#targetMethodName(param_type1,param_type2)-->
         <goalMethod>zju.cst.aces.Person#getBornTime(int,int)</goalMethod>
         <!--yourPackage.className_test#methodName1,yourPackage.className_test#methodName2...-->
-        <executeTests>zju.cst.aces.Person_getBornTime_2_1_Test#testGetBornTime,zju.cst.aces.Person_getBornTime_2_1_Test#testSetBornTime,</executeTests>
+        <executeTests>zju.cst.aces.Person_getBornTime_2_1_Test#testGetBornTime,zju.cst.aces.Person_getBornTime_2_1_Test#testSetBornTime</executeTests>
     </configuration>
 </plugin>
 ```
