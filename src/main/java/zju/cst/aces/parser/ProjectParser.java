@@ -132,6 +132,7 @@ public class ProjectParser {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
         try {
+            combinedTypeSolver.add(new JarTypeSolver(config.session.getLocalRepository().find(config.project.getArtifact()).getFile()));
             ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(config.getSession().getProjectBuildingRequest() );
             buildingRequest.setProject(config.getProject());
             DependencyNode root = config.getDependencyGraphBuilder().buildDependencyGraph(buildingRequest, null);

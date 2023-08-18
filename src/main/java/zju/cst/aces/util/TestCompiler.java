@@ -159,6 +159,7 @@ public class TestCompiler {
 
     public static List<String> listClassPaths(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
         List<String> classPaths = new ArrayList<>();
+        classPaths.add(session.getLocalRepository().find(project.getArtifact()).getFile().getAbsolutePath());
         try {
             classPaths.addAll(project.getCompileClasspathElements());
             ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest() );

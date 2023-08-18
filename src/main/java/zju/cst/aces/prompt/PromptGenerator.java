@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import zju.cst.aces.ProjectTestMojo;
 import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.*;
+import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.AbstractRunner;
 import zju.cst.aces.util.TokenCounter;
 
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 //该类方法于AbstratRunner中调用
@@ -36,6 +38,7 @@ public class PromptGenerator implements Prompt {
             Map<String, String> mdep_temp = new HashMap<>();
 
             // String
+            promptTemplate.dataModel.put("project_full_code", getFullProjectCode(config));
             promptTemplate.dataModel.put("method_name", promptInfo.getMethodName());
             promptTemplate.dataModel.put("method_sig", promptInfo.getMethodSignature());
             promptTemplate.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
@@ -567,5 +570,21 @@ public class PromptGenerator implements Prompt {
             depGSBodies.put(depClassName, info.trim());
         }
         return depGSBodies;
+    }
+
+    public String getFullProjectCode(Config config) {
+        String fullProjectCode = "";
+        List<String> classPaths = new ArrayList<>();
+        ProjectParser.scanSourceDirectory(config.project, classPaths);
+        // read the file content of each path and append to fullProjectCode
+        for (String path : classPaths) {
+            String className = path.substring(path.lastIndexOf(File.separator) + 1, path.lastIndexOf("."));
+            try {
+                fullProjectCode += Files.readString(Paths.get(path), StandardCharsets.UTF_8) + "\n";
+            } catch (IOException e) {
+                config.getLog().warn("Failed to append class code for " + className);
+            }
+        }
+        return fullProjectCode;
     }
 }
