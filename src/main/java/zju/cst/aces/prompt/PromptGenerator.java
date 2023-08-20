@@ -29,7 +29,7 @@ public class PromptGenerator implements Prompt {
     }
 
     @Override
-    public String getUserPrompt(PromptInfo promptInfo) {
+    public String getUserPrompt(PromptInfo promptInfo) throws IOException {
         try {
             promptTemplate.readProperties();
             ExampleUsage exampleUsage = new ExampleUsage(config, promptInfo.className);
@@ -134,7 +134,7 @@ public class PromptGenerator implements Prompt {
             return userPrompt;
 
         } catch (Exception e) {
-            throw new RuntimeException("An error occurred while generating the user prompt: " + e);
+            throw new IOException("An error occurred while generating the user prompt: " + e);
         }
 
     }
