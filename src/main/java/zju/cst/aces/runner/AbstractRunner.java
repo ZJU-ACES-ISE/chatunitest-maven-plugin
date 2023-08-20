@@ -368,6 +368,8 @@ public class AbstractRunner {
             Map<String, String> map = new LinkedHashMap<>();
             map.put("methodName", sig.split("\\(")[0]);
             map.put("signature", sig);
+            map.put("className", classInfo.className);
+            map.put("packageDeclaration", classInfo.packageDeclaration);
             methodMapping.put("method" + index, map);
         });
         try (OutputStreamWriter writer = new OutputStreamWriter(
@@ -394,6 +396,10 @@ public class AbstractRunner {
             map.put("testClassName", fullTestName.substring(fullTestName.lastIndexOf(".") + 1));
             map.put("fullName", fullTestName);
             map.put("path", promptInfo.getTestPath().toString());
+            map.put("className", promptInfo.className);
+            map.put("packageDeclaration", promptInfo.classInfo.packageDeclaration);
+            map.put("methodName", promptInfo.methodName);
+            map.put("methodSig", promptInfo.methodSignature);
             attemptMapping.put("attempt" + i, map);
         }
         try (OutputStreamWriter writer = new OutputStreamWriter(
