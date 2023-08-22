@@ -41,6 +41,7 @@ public class Config {
     public boolean stopWhenSuccess;
     public boolean noExecution;
     public boolean enableMultithreading;
+    public boolean enableRuleRepair;
     public int maxThreads;
     public int classThreads;
     public int methodThreads;
@@ -48,6 +49,7 @@ public class Config {
     public int maxRounds;
     public int maxPromptTokens;
     public int minErrorTokens;
+    public int sleepTime;
     public String model;
     public Double temperature;
     public int topP;
@@ -83,6 +85,7 @@ public class Config {
         public boolean stopWhenSuccess = true;
         public boolean noExecution = false;
         public boolean enableMultithreading = true;
+        public boolean enableRuleRepair = true;
         public int maxThreads = Runtime.getRuntime().availableProcessors() * 5;
         public int classThreads = (int) Math.ceil((double)  this.maxThreads / 10);
         public int methodThreads = (int) Math.ceil((double) this.maxThreads / this.classThreads);
@@ -90,6 +93,7 @@ public class Config {
         public int maxRounds = 5;
         public int maxPromptTokens = 2600;
         public int minErrorTokens = 500;
+        public int sleepTime = 0;
         public String model = "gpt-3.5-turbo";
         public Double temperature = 0.5;
         public int topP = 1;
@@ -228,6 +232,11 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder enableRuleRepair(boolean enableRuleRepair) {
+            this.enableRuleRepair = enableRuleRepair;
+            return this;
+        }
+
         public ConfigBuilder classThreads(int classThreads) {
             this.classThreads = classThreads;
             return this;
@@ -260,6 +269,11 @@ public class Config {
 
         public ConfigBuilder minErrorTokens(int minErrorTokens) {
             this.minErrorTokens = minErrorTokens;
+            return this;
+        }
+
+        public ConfigBuilder sleepTime(int sleepTime) {
+            this.sleepTime = sleepTime;
             return this;
         }
 
@@ -376,6 +390,7 @@ public class Config {
             config.setStopWhenSuccess(this.stopWhenSuccess);
             config.setNoExecution(this.noExecution);
             config.setEnableMultithreading(this.enableMultithreading);
+            config.setEnableRuleRepair(this.enableRuleRepair);
             config.setMaxThreads(this.maxThreads);
             config.setClassThreads(this.classThreads);
             config.setMethodThreads(this.methodThreads);
@@ -383,6 +398,7 @@ public class Config {
             config.setMaxRounds(this.maxRounds);
             config.setMaxPromptTokens(this.maxPromptTokens);
             config.setMinErrorTokens(this.minErrorTokens);
+            config.setSleepTime(this.sleepTime);
             config.setModel(this.model);
             config.setTemperature(this.temperature);
             config.setTopP(this.topP);

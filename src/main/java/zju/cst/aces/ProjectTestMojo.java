@@ -69,16 +69,20 @@ public class ProjectTestMojo
     public boolean noExecution;
     @Parameter(alias = "thread", property = "thread", defaultValue = "true")
     public boolean enableMultithreading;
+    @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
+    public boolean enableRuleRepair;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
     @Parameter(property = "testNumber", defaultValue = "5")
     public int testNumber;
     @Parameter(property = "maxRounds", defaultValue = "5")
     public int maxRounds;
-    @Parameter(property = "minErrorTokens", defaultValue = "500")
-    public int minErrorTokens;
     @Parameter(property = "maxPromptTokens", defaultValue = "2600")
     public int maxPromptTokens;
+    @Parameter(property = "minErrorTokens", defaultValue = "500")
+    public int minErrorTokens;
+    @Parameter(property = "sleepTime", defaultValue = "0")
+    public int sleepTime;
     @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
     public String model;
     @Parameter(property = "temperature", defaultValue = "0.5")
@@ -188,6 +192,7 @@ public class ProjectTestMojo
                 .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
+                .enableRuleRepair(enableRuleRepair)
                 .tmpOutput(tmpOutput.toPath())
                 .testOutput(testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
@@ -195,8 +200,9 @@ public class ProjectTestMojo
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
-                .minErrorTokens(minErrorTokens)
                 .maxPromptTokens(maxPromptTokens)
+                .minErrorTokens(minErrorTokens)
+                .sleepTime(sleepTime)
                 .model(model)
                 .temperature(temperature)
                 .topP(topP)
