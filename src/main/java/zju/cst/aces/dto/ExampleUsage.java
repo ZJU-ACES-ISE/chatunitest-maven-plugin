@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import zju.cst.aces.config.Config;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,15 +24,21 @@ public class ExampleUsage {
     public Map<String, List<String>> loadUsages(Path path, String name) {
         // read examplePath and load methodUsages
         Map<String, List<String>> usages = null;
+        if (!path.toFile().exists()) {
+            return null;
+        }
         try {
             usages = (Map<String, List<String>>) GSON.fromJson(Files.readString(path, StandardCharsets.UTF_8), Map.class).get(name);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("In ExampleUsage.loadUsages: " + e);
         }
         return usages;
     }
 
     public String getShortestUsage(String methodSig) {
+        if (methodUsages == null) {
+            return null;
+        }
         // sort the list and return the shortest usage of the list
         if (methodUsages.containsKey(methodSig)) {
             List<String> usages = methodUsages.get(methodSig);

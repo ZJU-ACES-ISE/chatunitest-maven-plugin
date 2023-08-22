@@ -15,6 +15,7 @@ import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.prompt.PromptGenerator;
 import zju.cst.aces.util.CodeExtractor;
+import zju.cst.aces.util.TokenCounter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -407,6 +408,17 @@ public class AbstractRunner {
         } catch (IOException e) {
             throw new RuntimeException("In AbstractRunner.exportAttemptMapping: " + e);
         }
+    }
+
+    public boolean isExceedMaxTokens(List<Message> prompt) {
+        int count = 0;
+        for (Message p : prompt) {
+            count += TokenCounter.countToken(p.getContent());
+        }
+        if (count > config.maxPromptTokens) {
+            return true;
+        }
+        return false;
     }
 
     // TODO: 将单个测试方法包装到具有适当imports的测试类中

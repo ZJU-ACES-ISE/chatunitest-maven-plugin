@@ -167,7 +167,7 @@ public class ClassParser {
         List<String> getterSetter = new ArrayList<>();
         for (MethodDeclaration m : classNode.getMethods()) {
             if (isGetSet(m)) {
-                getterSetter.add(m.resolve().getSignature());
+                getterSetter.add(m.getSignature().asString());
             }
         }
         return getterSetter;
@@ -178,9 +178,9 @@ public class ClassParser {
      */
     private String getMethodSig(CallableDeclaration node) {
         if (node instanceof MethodDeclaration) {
-            return ((MethodDeclaration) node).resolve().getSignature();
+            return ((MethodDeclaration) node).getSignature().asString();
         } else {
-            return ((ConstructorDeclaration) node).resolve().getSignature();
+            return ((ConstructorDeclaration) node).getSignature().asString();
         }
     }
 
@@ -228,14 +228,14 @@ public class ClassParser {
         int i = 0;
         for (; i < methods.size(); i++) {
             try {
-                mSigs.put(methods.get(i).resolve().getSignature(), String.valueOf(i));
+                mSigs.put(methods.get(i).getSignature().asString(), String.valueOf(i));
             } catch (Exception e) {
                 throw new RuntimeException("In ClassParser getMethodSignatures: when resolve method: " + methods.get(i).getNameAsString() + ": " + e);
             }
         }
         List<ConstructorDeclaration> constructors = node.getConstructors();
         for (; i < methods.size() + constructors.size(); i++) {
-            mSigs.put(constructors.get(i - methods.size()).resolve().getSignature(), String.valueOf(i));
+            mSigs.put(constructors.get(i - methods.size()).getSignature().asString(), String.valueOf(i));
         }
         return mSigs;
     }
@@ -243,7 +243,7 @@ public class ClassParser {
     private List<String> getConstructorSignatures(ClassOrInterfaceDeclaration node) {
         List<String> cSigs = new ArrayList<>();
         node.getConstructors().forEach(c -> {
-            cSigs.add(c.resolve().getSignature());
+            cSigs.add(c.getSignature().asString());
         });
         return cSigs;
     }
@@ -390,7 +390,7 @@ public class ClassParser {
             try {
                 ResolvedMethodDeclaration md = m.resolve();
                 String dependentType = md.getClassName();
-                String mSig = md.getSignature();
+                String mSig = getParamTypeInSig(md); // change parameters' type to non-qualified name
                 Set<String> invocations = dependentMethods.get(dependentType);
                 if (invocations == null) {
                     invocations = new HashSet<>();
@@ -402,6 +402,23 @@ public class ClassParser {
             }
         }
         return dependentMethods;
+    }
+
+    private static String getParamTypeInSig(ResolvedMethodDeclaration md) {
+        String sig = md.getName() + "(";
+        for (int i = 0; i < md.getNumberOfParams(); i++) {
+            String paramType = md.getParam(i).getType().describe();
+            if (paramType.contains(".")) {
+                paramType = paramType.substring(paramType.lastIndexOf(".") + 1);
+            }
+            if (i == md.getNumberOfParams() - 1) {
+                sig += paramType;
+            } else {
+                sig += paramType + ", ";
+            }
+        }
+        sig += ")";
+        return sig;
     }
 
     public String getLastType(String type) {
@@ -461,7 +478,7 @@ public class ClassParser {
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }
-        Path info = classOutputDir.resolve(getFilePathBySig(node.resolve().getSignature()));
+        Path info = classOutputDir.resolve(getFilePathBySig(node.getSignature().asString()));
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
             writer.write(json);
@@ -473,7 +490,7 @@ public class ClassParser {
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }
-        Path info = classOutputDir.resolve(getFilePathBySig(node.resolve().getSignature()));
+        Path info = classOutputDir.resolve(getFilePathBySig(node.getSignature().asString()));
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
             writer.write(json);

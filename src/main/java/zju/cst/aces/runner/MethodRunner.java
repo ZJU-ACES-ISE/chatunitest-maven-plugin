@@ -96,6 +96,10 @@ public class MethodRunner extends ClassRunner {
 //            TestSkeleton skeleton = new TestSkeleton(promptInfo); // test skeleton to wrap a test method
 
             List<Message> prompt = generateMessages(promptInfo);
+            if (isExceedMaxTokens(prompt)) {
+                config.getLog().error("Exceed max prompt tokens: " + methodInfo.methodName + " Skipped.");
+                break;
+            }
             config.getLog().debug("[Prompt]:\n" + prompt.toString());
 
             AskGPT askGPT = new AskGPT(config);
