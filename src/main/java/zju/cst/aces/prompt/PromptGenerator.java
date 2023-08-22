@@ -38,7 +38,7 @@ public class PromptGenerator implements Prompt {
             Map<String, String> mdep_temp = new HashMap<>();
 
             // String
-            promptTemplate.dataModel.put("project_full_code", getFullProjectCode(promptInfo.getClassName(), config));
+//            promptTemplate.dataModel.put("project_full_code", getFullProjectCode(promptInfo.getClassName(), config));
             promptTemplate.dataModel.put("method_name", promptInfo.getMethodName());
             promptTemplate.dataModel.put("method_sig", promptInfo.getMethodSignature());
             promptTemplate.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);

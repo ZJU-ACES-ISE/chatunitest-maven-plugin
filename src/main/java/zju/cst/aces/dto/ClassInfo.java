@@ -1,5 +1,8 @@
 package zju.cst.aces.dto;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +13,7 @@ public class ClassInfo {
     public String modifier;
     public String extend;
     public String implement;
+    public String packageName;
     public String packageDeclaration;
     public String classSignature;
     public List<String> imports;
@@ -27,17 +31,17 @@ public class ClassInfo {
     public String compilationUnitCode;
     public String classDeclarationCode;
 
-    public ClassInfo(String className, int index, String modifier, String extend, String implement,
-                     String packageDeclaration, String classSignature, List<String> imports,
-                     List<String> fields, List<String> superClasses, Map<String, String> methodSigs,
+    public ClassInfo(CompilationUnit cu, ClassOrInterfaceDeclaration classNode, int index, String classSignature,
+                     List<String> imports, List<String> fields, List<String> superClasses, Map<String, String> methodSigs,
                      List<String> methodsBrief, boolean hasConstructor, List<String> constructorSigs,
                      List<String> constructorBrief, List<String> getterSetterSigs, List<String> getterSetterBrief, Map<String, Set<String>> constructorDeps) {
-        this.className = className;
+        this.className = classNode.getNameAsString();
         this.index = index;
-        this.modifier = modifier;
-        this.extend = extend;
-        this.implement = implement;
-        this.packageDeclaration = packageDeclaration;
+        this.modifier = classNode.getModifiers().toString();
+        this.extend = classNode.getExtendedTypes().toString();
+        this.implement = classNode.getImplementedTypes().toString();
+        this.packageName = cu.getPackageDeclaration().orElse(null) == null ? "" : cu.getPackageDeclaration().get().getNameAsString();
+        this.packageDeclaration = getPackageDeclaration(cu);
         this.classSignature = classSignature;
         this.imports = imports;
         this.fields = fields;
@@ -55,5 +59,13 @@ public class ClassInfo {
     public void setCode(String compilationUnitCode, String classDeclarationCode) {
         this.compilationUnitCode = compilationUnitCode;
         this.classDeclarationCode = classDeclarationCode;
+    }
+
+    private String getPackageDeclaration(CompilationUnit compilationUnit) {
+        if (compilationUnit.getPackageDeclaration().isPresent()) {
+            return compilationUnit.getPackageDeclaration().get().toString().trim();
+        } else {
+            return "";
+        }
     }
 }

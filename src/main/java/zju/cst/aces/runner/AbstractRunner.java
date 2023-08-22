@@ -108,7 +108,7 @@ public class AbstractRunner {
         return "";
     }
 
-    public String repairImports(String code, List<String> imports, boolean asterisk) {
+    public static String repairImports(String code, List<String> imports, boolean asterisk) {
         CompilationUnit cu = StaticJavaParser.parse(code);
         if (asterisk) {
             cu.addImport("org.mockito", false, true);
@@ -120,9 +120,8 @@ public class AbstractRunner {
         return cu.toString();
     }
 
-    public String repairPackage(String code, String packageInfo) {
-        CompilationUnit cu = StaticJavaParser.parse(code).setPackageDeclaration(packageInfo
-                .replace("package ", "").replace(";", ""));
+    public static String repairPackage(String code, String packageName) {
+        CompilationUnit cu = StaticJavaParser.parse(code).setPackageDeclaration(packageName);
         return cu.toString();
     }
 
@@ -150,7 +149,7 @@ public class AbstractRunner {
         return testCase;
     }
 
-    public String changeTestName(String code, String className, String newName) {
+    public static String changeTestName(String code, String newName) {
         CompilationUnit cu = StaticJavaParser.parse(code);
         cu.findFirst(ClassOrInterfaceDeclaration.class).ifPresent(c -> c.setName(newName));
         return cu.toString();

@@ -93,6 +93,8 @@ public class MethodRunner extends ClassRunner {
             promptInfo.addRecord(new RoundRecord(rounds));
             RoundRecord record = promptInfo.getRecords().get(rounds);
 
+//            TestSkeleton skeleton = new TestSkeleton(promptInfo); // test skeleton to wrap a test method
+
             List<Message> prompt = generateMessages(promptInfo);
             config.getLog().debug("[Prompt]:\n" + prompt.toString());
 
@@ -105,6 +107,8 @@ public class MethodRunner extends ClassRunner {
             String code = extractCode(content);
             code = wrapTestMethod(code);
 
+//            code = skeleton.build(code);
+
             record.setPrompt(prompt);
             record.setResponse(content);
             if (code.isEmpty()) {
@@ -114,8 +118,8 @@ public class MethodRunner extends ClassRunner {
             }
             record.setHasCode(true);
 
-            code = changeTestName(code, className, testName);
-            code = repairPackage(code, classInfo.packageDeclaration);
+            code = changeTestName(code, testName);
+            code = repairPackage(code, classInfo.packageName);
 //            code = addTimeout(code, testTimeOut);
             code = repairImports(code, classInfo.imports, true);
             promptInfo.setUnitTest(code); // Before repair imports

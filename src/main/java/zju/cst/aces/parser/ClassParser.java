@@ -66,7 +66,7 @@ public class ClassParser {
                 addClassMapping(classInfo);
                 methodCount += classDeclaration.getMethods().size();
             } catch (Exception e) {
-                config.getLog().warn("In ClassParser.extractClass Exception: " + e);
+                config.getLog().error("In ClassParser.extractClass Exception: when parse class " + classDeclaration.getNameAsString() + " :\n" + e);
             }
         }
     }
@@ -101,12 +101,9 @@ public class ClassParser {
      */
     private ClassInfo getInfoByClass(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         return new ClassInfo(
-                classNode.getNameAsString(),
+                cu,
+                classNode,
                 config.sharedInteger.getAndIncrement(),
-                classNode.getModifiers().toString(),
-                classNode.getExtendedTypes().toString(),
-                classNode.getImplementedTypes().toString(),
-                getPackageDeclaration(cu),
                 getClassSignature(cu, classNode),
                 getImports(getImportDeclarations(cu)),
                 getFields(cu, classNode.getFields()),
@@ -193,14 +190,6 @@ public class ClassParser {
             shortMethodSigs.add(m.getSignature().toString());
         }
         return shortMethodSigs;
-    }
-
-    private String getPackageDeclaration(CompilationUnit compilationUnit) {
-        if (compilationUnit.getPackageDeclaration().isPresent()) {
-            return compilationUnit.getPackageDeclaration().get().toString().trim();
-        } else {
-            return "";
-        }
     }
 
     private List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
