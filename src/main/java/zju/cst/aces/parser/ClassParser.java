@@ -131,7 +131,7 @@ public class ClassParser {
                 getMethodCode(cu, node),
                 node.isConstructorDeclaration(),
                 useField(node),
-                isGetSet(node),
+                isGetSet2(node),
                 isPublic(node),
                 getParameters(node),
                 getDependentMethods(cu, node));
@@ -156,7 +156,7 @@ public class ClassParser {
     private List<String> getGetterSetter(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         List<String> getterSetter = new ArrayList<>();
         for (MethodDeclaration m : classNode.getMethods()) {
-            if (isGetSet(m)) {
+            if (isGetSet2(m)) {
                 getterSetter.add(getBriefMethod(cu, m));
             }
         }
@@ -166,7 +166,7 @@ public class ClassParser {
     private List<String> getGetterSetterSig(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         List<String> getterSetter = new ArrayList<>();
         for (MethodDeclaration m : classNode.getMethods()) {
-            if (isGetSet(m)) {
+            if (isGetSet2(m)) {
                 getterSetter.add(m.getSignature().asString());
             }
         }
@@ -358,6 +358,19 @@ public class ClassParser {
             if (fa.getParentNode().orElse(null) instanceof AssignExpr && ((AssignExpr) fa.getParentNode().orElseThrow()).getTarget().equals(fa)) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean isGetSet2(CallableDeclaration node) {
+        if (node.isConstructorDeclaration()) {
+            return false;
+        }
+        if (node.getNameAsString().startsWith("get") && node.getParameters().size() == 0) {
+            return true;
+        }
+        if (node.getNameAsString().startsWith("set")) {
+            return true;
         }
         return false;
     }
