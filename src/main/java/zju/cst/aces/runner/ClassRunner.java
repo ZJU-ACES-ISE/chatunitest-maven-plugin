@@ -84,7 +84,8 @@ public class ClassRunner extends AbstractRunner {
     }
 
     private boolean filter(MethodInfo methodInfo) {
-        if (methodInfo == null || methodInfo.isConstructor || methodInfo.isGetSet || !methodInfo.isPublic) {
+        if (methodInfo == null
+                || methodInfo.isConstructor || methodInfo.isGetSet || methodInfo.isBoolean || !methodInfo.isPublic) {
             return false;
         }
         return true;
