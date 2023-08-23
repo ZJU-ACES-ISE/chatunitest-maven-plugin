@@ -1,6 +1,8 @@
 package zju.cst.aces.parser;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.ParserConfiguration.LanguageLevel;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
@@ -42,6 +44,7 @@ public class ProjectParser {
         this.outputPath = config.getParseOutput();
         JavaSymbolSolver symbolSolver = getSymbolSolver();
         parser.getParserConfiguration().setSymbolResolver(symbolSolver);
+        setLanguageLevel(parser.getParserConfiguration());
         if (config.parser == null) {
             config.setParser(parser);
         }
@@ -175,5 +178,42 @@ public class ProjectParser {
     public void exportClassMapping() {
         Path savePath = config.tmpOutput.resolve("classMapping.json");
         exportJson(savePath, config.classMapping);
+    }
+
+    private void setLanguageLevel(ParserConfiguration configuration) {
+        int version = Runtime.version().feature();
+//        int versionPrefix = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
+        switch (version) {
+            case 8: // java 8
+                configuration.setLanguageLevel(LanguageLevel.JAVA_8);
+                break;
+            case 9:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_9);
+                break;
+            case 10:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_10);
+                break;
+            case 11:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_11);
+                break;
+            case 12:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_12);
+                break;
+            case 13:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_13);
+                break;
+            case 14:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_14);
+                break;
+            case 15:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_15);
+                break;
+            case 16:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_16);
+                break;
+            default:
+                configuration.setLanguageLevel(LanguageLevel.JAVA_17);
+                break;
+        }
     }
 }
