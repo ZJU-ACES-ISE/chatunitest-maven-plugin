@@ -59,7 +59,7 @@ public class Config {
     public Path tmpOutput;
     public Path parseOutput;
     public Path errorOutput;
-    public Path classMapPath;
+    public Path classNameMapPath;
     public Path historyPath;
     public Path examplePath;
 
@@ -103,7 +103,7 @@ public class Config {
         public Path tmpOutput = Paths.get(System.getProperty("java.io.tmpdir"), "chatunitest-info");
         public Path parseOutput;
         public Path errorOutput;
-        public Path classMapPath;
+        public Path classNameMapPath;
         public Path historyPath;
         public Path examplePath;
         public String proxy = "null:-1";
@@ -132,7 +132,7 @@ public class Config {
             this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
-            this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.classNameMapPath = this.tmpOutput.resolve("classNameMapping.json");
             this.historyPath = this.tmpOutput.resolve("history" + this.date);
         }
 
@@ -165,7 +165,7 @@ public class Config {
             this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
-            this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.classNameMapPath = this.tmpOutput.resolve("classNameMapping.json");
             this.historyPath = this.tmpOutput.resolve("history" + this.date);
             return this;
         }
@@ -317,8 +317,8 @@ public class Config {
             return this;
         }
 
-        public ConfigBuilder classMapPath(Path classMapPath) {
-            this.classMapPath = classMapPath;
+        public ConfigBuilder classNameMapPath(Path classNameMapPath) {
+            this.classNameMapPath = classNameMapPath;
             return this;
         }
 
@@ -408,7 +408,7 @@ public class Config {
             config.setTmpOutput(this.tmpOutput);
             config.setParseOutput(this.parseOutput);
             config.setErrorOutput(this.errorOutput);
-            config.setClassMapPath(this.classMapPath);
+            config.setClassNameMapPath(this.classNameMapPath);
             config.setHistoryPath(this.historyPath);
             config.setExamplePath(this.examplePath);
             config.setProxy(this.proxy);

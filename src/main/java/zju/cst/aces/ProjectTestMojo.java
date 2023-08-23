@@ -242,7 +242,7 @@ public class ProjectTestMojo
         if (isFullName(name)) {
             return name;
         }
-        Path classMapPath = config.getClassMapPath();
+        Path classMapPath = config.getClassNameMapPath();
         Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {

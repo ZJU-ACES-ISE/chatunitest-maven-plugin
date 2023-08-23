@@ -72,7 +72,7 @@ public class ProjectParser {
             }
         }
         exportClassMapping();
-        exportJson(config.getClassMapPath(), classMap);
+        exportJson(config.getClassNameMapPath(), classMap);
         config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
     }
 
