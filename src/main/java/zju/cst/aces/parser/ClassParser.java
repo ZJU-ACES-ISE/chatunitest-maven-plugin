@@ -57,8 +57,6 @@ public class ClassParser {
         for (ClassOrInterfaceDeclaration classDeclaration : classes) {
             try {
                 classInfo = getInfoByClass(cu, classDeclaration);
-                classInfo.setCode(cu.toString(), classDeclaration.toString());
-                classInfo.shortMethodSigs = getShortMethodSigs(classDeclaration);
                 exportClassInfo(GSON.toJson(classInfo), classDeclaration);
                 extractMethods(cu, classDeclaration);
                 extractConstructors(cu, classDeclaration);
@@ -100,7 +98,7 @@ public class ClassParser {
      * Extract class information to json format
      */
     private ClassInfo getInfoByClass(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
-        return new ClassInfo(
+        ClassInfo ci = new ClassInfo(
                 cu,
                 classNode,
                 config.sharedInteger.getAndIncrement(),
@@ -116,25 +114,34 @@ public class ClassParser {
                 getGetterSetterSig(cu, classNode),
                 getGetterSetter(cu, classNode),
                 getConstructorDeps(cu, classNode));
+
+        ci.setPublic(classNode.isPublic());
+        ci.setAbstract(classNode.isAbstract());
+        ci.setInterface(classNode.isInterface());
+        ci.setCode(cu.toString(), classNode.toString());
+        return ci;
     }
 
     /**
      * Generate extracted information of focal method(constructor).
      */
     private MethodInfo getInfoByMethod(CompilationUnit cu, ClassOrInterfaceDeclaration classNode, CallableDeclaration node) {
-        return new MethodInfo(
+        MethodInfo mi = new MethodInfo(
                 classNode.getNameAsString(),
                 node.getNameAsString(),
                 getBriefMethod(cu, node),
                 getMethodSig(node),
-                node.getSignature().toString(),
                 getMethodCode(cu, node),
-                node.isConstructorDeclaration(),
-                useField(node),
-                isGetSet2(node),
-                isPublic(node),
                 getParameters(node),
                 getDependentMethods(cu, node));
+
+        mi.setUseField(useField(node));
+        mi.setConstructor(node.isConstructorDeclaration());
+        mi.setGetSet(isGetSet2(node));
+        mi.setPublic(isPublic(node));
+        mi.setBoolean(isBoolean(node));
+        mi.setAbstract(node.isAbstract());
+        return mi;
     }
 
     private Map<String, Set<String>> getConstructorDeps(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
@@ -178,18 +185,10 @@ public class ClassParser {
      */
     private String getMethodSig(CallableDeclaration node) {
         if (node instanceof MethodDeclaration) {
-            return ((MethodDeclaration) node).getSignature().asString();
+            return node.getSignature().asString();
         } else {
-            return ((ConstructorDeclaration) node).getSignature().asString();
+            return node.getSignature().asString();
         }
-    }
-
-    private List<String> getShortMethodSigs(ClassOrInterfaceDeclaration classNode) {
-        List<String> shortMethodSigs = new ArrayList<>();
-        for (MethodDeclaration m : classNode.getMethods()) {
-            shortMethodSigs.add(m.getSignature().toString());
-        }
-        return shortMethodSigs;
     }
 
     private List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
@@ -377,6 +376,18 @@ public class ClassParser {
 
     private boolean isPublic(CallableDeclaration node) {
         return node.isPublic();
+    }
+
+    private boolean isBoolean(CallableDeclaration node) {
+        if (node.isConstructorDeclaration()) {
+            return false;
+        }
+        if (node.getNameAsString().startsWith("is")
+                && node.getParameters().size() == 0
+                && node.asMethodDeclaration().getTypeAsString().equals("boolean")) {
+            return true;
+        }
+        return false;
     }
 
     /**

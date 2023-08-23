@@ -27,16 +27,15 @@ public class ClassRunner extends AbstractRunner {
         classInfo = GSON.fromJson(Files.readString(classInfoFile.toPath(), StandardCharsets.UTF_8), ClassInfo.class);
     }
 
+    @Override
     public void start() throws IOException {
         if (config.isEnableMultithreading() == true) {
             methodJob();
         } else {
             for (String mSig : classInfo.methodSigs.keySet()) {
                 MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
-                if (methodInfo == null) {
-                    continue;
-                }
-                if (methodInfo.isConstructor || methodInfo.isGetSet || !methodInfo.isPublic) {
+                if (!filter(methodInfo)) {
+                    config.getLog().info("Skip method: " + mSig + " in class: " + fullClassName);
                     continue;
                 }
                 new MethodRunner(fullClassName, config, methodInfo).start();
@@ -55,8 +54,8 @@ public class ClassRunner extends AbstractRunner {
                     if (methodInfo == null) {
                         return "No parsed info found for " + mSig + " in " + fullClassName;
                     }
-                    if (methodInfo.isConstructor || methodInfo.isGetSet || !methodInfo.isPublic) {
-                        return "Skip " + mSig + " in " + fullClassName;
+                    if (!filter(methodInfo)) {
+                        return "Skip method: " + mSig + " in class: " + fullClassName;
                     }
                     new MethodRunner(fullClassName, config, methodInfo).start();
                     return "Processed " + mSig;
@@ -82,5 +81,12 @@ public class ClassRunner extends AbstractRunner {
         }
 
         executor.shutdown();
+    }
+
+    private boolean filter(MethodInfo methodInfo) {
+        if (methodInfo == null || methodInfo.isConstructor || methodInfo.isGetSet || !methodInfo.isPublic) {
+            return false;
+        }
+        return true;
     }
 }

@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AbstractRunner {
+public abstract class AbstractRunner {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static final String separator = "_";
@@ -49,6 +49,8 @@ public class AbstractRunner {
         testOutputPath = config.getTestOutput();
         promptGenerator.setConfig(config);
     }
+
+    abstract void start() throws IOException;
 
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
         List<Message> messages = new ArrayList<>();

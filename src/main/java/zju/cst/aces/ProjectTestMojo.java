@@ -28,6 +28,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.config.Config;
+import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 
@@ -107,6 +108,7 @@ public class ProjectTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        checkTargetFolder(project);
         init();
         if (project.getPackaging().equals("pom")) {
             log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
@@ -134,7 +136,12 @@ public class ProjectTestMojo
                 try {
                     className = getFullClassName(config, className);
                     log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                    new ClassRunner(className, config).start();
+                    ClassRunner runner = new ClassRunner(className, config);
+                    if (!filter(runner.classInfo)) {
+                        config.getLog().info("Skip class: " + classPath);
+                        continue;
+                    }
+                    runner.start();
                 } catch (IOException e) {
                     log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                 }
@@ -155,7 +162,11 @@ public class ProjectTestMojo
                     try {
                         className = getFullClassName(config, className);
                         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                        new ClassRunner(className, config).start();
+                        ClassRunner runner = new ClassRunner(className, config);
+                        if (!filter(runner.classInfo)) {
+                            return "Skip class: " + classPath;
+                        }
+                        runner.start();
                     } catch (IOException e) {
                         log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                     }
@@ -185,7 +196,6 @@ public class ProjectTestMojo
     }
 
     public void init() {
-        checkTargetFolder(project);
         log = getLog();
         config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
                 .promptPath(promptPath)
@@ -273,7 +283,14 @@ public class ProjectTestMojo
         if (!new File(project.getBuild().getOutputDirectory()).exists()) {
             throw new RuntimeException("In ProjectTestMojo.checkTargetFolder: " +
                     "The project is not compiled to the target directory. " +
-                    "Please run 'mvn compile' first.");
+                    "Please run 'mvn install' first.");
         }
+    }
+
+    private boolean filter(ClassInfo classInfo) {
+        if (!classInfo.isPublic || classInfo.isAbstract || classInfo.isInterface) {
+            return false;
+        }
+        return true;
     }
 }

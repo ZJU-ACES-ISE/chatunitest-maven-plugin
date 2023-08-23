@@ -2,11 +2,13 @@ package zju.cst.aces.dto;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import lombok.Data;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Data
 public class ClassInfo {
     public String className;
     public int index;
@@ -16,13 +18,15 @@ public class ClassInfo {
     public String packageName;
     public String packageDeclaration;
     public String classSignature;
+    public boolean hasConstructor;
+    public boolean isPublic;
+    public boolean isInterface;
+    public boolean isAbstract;
     public List<String> imports;
     public List<String> fields;
     public List<String> superClasses;
     public Map<String, String> methodSigs;
     public List<String> methodsBrief;
-    public List<String> shortMethodSigs;
-    public boolean hasConstructor;
     public List<String> constructorSigs;
     public List<String> constructorBrief;
     public List<String> getterSetterSigs;

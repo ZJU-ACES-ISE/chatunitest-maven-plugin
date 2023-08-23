@@ -50,7 +50,7 @@ public class PromptGenerator implements Prompt {
             promptTemplate.dataModel.put("full_fm", promptInfo.getInfo());
             promptTemplate.dataModel.put("imports", AbstractRunner.joinLines(promptInfo.getClassInfo().imports));
             promptTemplate.dataModel.put("fields", AbstractRunner.joinLines(promptInfo.getClassInfo().fields));
-            promptTemplate.dataModel.put("example_usage", exampleUsage.getShortestUsage(promptInfo.getMethodInfo().shortSignature));
+            promptTemplate.dataModel.put("example_usage", exampleUsage.getShortestUsage(promptInfo.getMethodInfo().methodSignature));
             if (!promptInfo.getClassInfo().constructorSigs.isEmpty()) {
                 promptTemplate.dataModel.put("constructor_sigs", AbstractRunner.joinLines(promptInfo.getClassInfo().constructorBrief));
                 promptTemplate.dataModel.put("constructor_bodies", AbstractRunner.getBodies(config, promptInfo.getClassInfo(), promptInfo.getClassInfo().constructorSigs));
