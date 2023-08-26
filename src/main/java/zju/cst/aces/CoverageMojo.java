@@ -28,11 +28,11 @@ public class CoverageMojo extends AbstractMojo {
     public MavenProject project;
     public static Log log;
 
-    @Parameter(name = "targetDir")
+    @Parameter(property = "targetDir")
     public String targetDir;
-    @Parameter(name = "sourceDir")
+    @Parameter(property = "sourceDir")
     public String sourceDir;
-    @Parameter(name = "mavenHome")
+    @Parameter(property = "mavenHome")
     public String mavenHome;
 
     @Override
@@ -40,7 +40,6 @@ public class CoverageMojo extends AbstractMojo {
         log = getLog();
         // 复制外部目录到 src/test/java
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
-        List<File> files = listJavaFiles(new File(srcTestJavaPath));
 
         try {
             copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
@@ -61,11 +60,13 @@ public class CoverageMojo extends AbstractMojo {
 
 
         ArrayList<String> classNames = new ArrayList<>();
+        List<File> files = listJavaFiles(new File(srcTestJavaPath));
         for (File file : files) {
             String className = extractClassName(srcTestJavaPath, file);
             className = className.replace(".", "/");
             classNames.add(className);
         }
+        log.info(classNames.toString());
         String commandTest = String.join(",", classNames);
         request = new DefaultInvocationRequest();
         request.setPomFile(new File(project.getBasedir(), "pom.xml"));
