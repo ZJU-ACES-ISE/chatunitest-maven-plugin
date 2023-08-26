@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class AskGPT {
     private static final String URL = "https://api.openai.com/v1/chat/completions";
@@ -44,6 +43,11 @@ public class AskGPT {
 
                 Response response = config.getClient().newCall(request).execute();
                 if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                try {
+                    Thread.sleep(config.sleepTime);
+                } catch (InterruptedException ie) {
+                    throw new RuntimeException("In AskGPT.askChatGPT: " + ie);
+                }
                 return response;
 
             } catch (IOException e) {

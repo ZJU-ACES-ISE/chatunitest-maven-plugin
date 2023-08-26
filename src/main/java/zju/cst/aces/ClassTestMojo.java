@@ -40,6 +40,7 @@ public class ClassTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        checkTargetFolder(project);
         init();
         if (project.getPackaging().equals("pom")) {
             log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");

@@ -28,6 +28,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.config.Config;
+import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 
@@ -69,16 +70,20 @@ public class ProjectTestMojo
     public boolean noExecution;
     @Parameter(alias = "thread", property = "thread", defaultValue = "true")
     public boolean enableMultithreading;
+    @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
+    public boolean enableRuleRepair;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
     @Parameter(property = "testNumber", defaultValue = "5")
     public int testNumber;
     @Parameter(property = "maxRounds", defaultValue = "5")
     public int maxRounds;
-    @Parameter(property = "minErrorTokens", defaultValue = "500")
-    public int minErrorTokens;
     @Parameter(property = "maxPromptTokens", defaultValue = "2600")
     public int maxPromptTokens;
+    @Parameter(property = "minErrorTokens", defaultValue = "500")
+    public int minErrorTokens;
+    @Parameter(property = "sleepTime", defaultValue = "0")
+    public int sleepTime;
     @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
     public String model;
     @Parameter(property = "temperature", defaultValue = "0.5")
@@ -103,6 +108,7 @@ public class ProjectTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        checkTargetFolder(project);
         init();
         if (project.getPackaging().equals("pom")) {
             log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
@@ -130,7 +136,12 @@ public class ProjectTestMojo
                 try {
                     className = getFullClassName(config, className);
                     log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                    new ClassRunner(className, config).start();
+                    ClassRunner runner = new ClassRunner(className, config);
+                    if (!filter(runner.classInfo)) {
+                        config.getLog().info("Skip class: " + classPath);
+                        continue;
+                    }
+                    runner.start();
                 } catch (IOException e) {
                     log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                 }
@@ -151,7 +162,11 @@ public class ProjectTestMojo
                     try {
                         className = getFullClassName(config, className);
                         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                        new ClassRunner(className, config).start();
+                        ClassRunner runner = new ClassRunner(className, config);
+                        if (!filter(runner.classInfo)) {
+                            return "Skip class: " + classPath;
+                        }
+                        runner.start();
                     } catch (IOException e) {
                         log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                     }
@@ -181,13 +196,13 @@ public class ProjectTestMojo
     }
 
     public void init() {
-        checkTargetFolder(project);
         log = getLog();
         config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
                 .promptPath(promptPath)
                 .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
+                .enableRuleRepair(enableRuleRepair)
                 .tmpOutput(tmpOutput.toPath())
                 .testOutput(testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
@@ -195,8 +210,9 @@ public class ProjectTestMojo
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
-                .minErrorTokens(minErrorTokens)
                 .maxPromptTokens(maxPromptTokens)
+                .minErrorTokens(minErrorTokens)
+                .sleepTime(sleepTime)
                 .model(model)
                 .temperature(temperature)
                 .topP(topP)
@@ -236,7 +252,7 @@ public class ProjectTestMojo
         if (isFullName(name)) {
             return name;
         }
-        Path classMapPath = config.getClassMapPath();
+        Path classMapPath = config.getClassNameMapPath();
         Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {
@@ -267,7 +283,14 @@ public class ProjectTestMojo
         if (!new File(project.getBuild().getOutputDirectory()).exists()) {
             throw new RuntimeException("In ProjectTestMojo.checkTargetFolder: " +
                     "The project is not compiled to the target directory. " +
-                    "Please run 'mvn compile' first.");
+                    "Please run 'mvn install' first.");
         }
+    }
+
+    private boolean filter(ClassInfo classInfo) {
+        if (!classInfo.isPublic || classInfo.isAbstract || classInfo.isInterface) {
+            return false;
+        }
+        return true;
     }
 }

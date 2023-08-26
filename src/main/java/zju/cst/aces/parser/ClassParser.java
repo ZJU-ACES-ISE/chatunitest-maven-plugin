@@ -57,8 +57,6 @@ public class ClassParser {
         for (ClassOrInterfaceDeclaration classDeclaration : classes) {
             try {
                 classInfo = getInfoByClass(cu, classDeclaration);
-                classInfo.setCode(cu.toString(), classDeclaration.toString());
-                classInfo.shortMethodSigs = getShortMethodSigs(classDeclaration);
                 exportClassInfo(GSON.toJson(classInfo), classDeclaration);
                 extractMethods(cu, classDeclaration);
                 extractConstructors(cu, classDeclaration);
@@ -66,7 +64,7 @@ public class ClassParser {
                 addClassMapping(classInfo);
                 methodCount += classDeclaration.getMethods().size();
             } catch (Exception e) {
-                config.getLog().warn("In ClassParser.extractClass Exception: " + e);
+                config.getLog().error("In ClassParser.extractClass Exception: when parse class " + classDeclaration.getNameAsString() + " :\n" + e);
             }
         }
     }
@@ -100,13 +98,10 @@ public class ClassParser {
      * Extract class information to json format
      */
     private ClassInfo getInfoByClass(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
-        return new ClassInfo(
-                classNode.getNameAsString(),
+        ClassInfo ci = new ClassInfo(
+                cu,
+                classNode,
                 config.sharedInteger.getAndIncrement(),
-                classNode.getModifiers().toString(),
-                classNode.getExtendedTypes().toString(),
-                classNode.getImplementedTypes().toString(),
-                getPackageDeclaration(cu),
                 getClassSignature(cu, classNode),
                 getImports(getImportDeclarations(cu)),
                 getFields(cu, classNode.getFields()),
@@ -119,25 +114,34 @@ public class ClassParser {
                 getGetterSetterSig(cu, classNode),
                 getGetterSetter(cu, classNode),
                 getConstructorDeps(cu, classNode));
+
+        ci.setPublic(classNode.isPublic());
+        ci.setAbstract(classNode.isAbstract());
+        ci.setInterface(classNode.isInterface());
+        ci.setCode(cu.toString(), classNode.toString());
+        return ci;
     }
 
     /**
      * Generate extracted information of focal method(constructor).
      */
     private MethodInfo getInfoByMethod(CompilationUnit cu, ClassOrInterfaceDeclaration classNode, CallableDeclaration node) {
-        return new MethodInfo(
+        MethodInfo mi = new MethodInfo(
                 classNode.getNameAsString(),
                 node.getNameAsString(),
                 getBriefMethod(cu, node),
                 getMethodSig(node),
-                node.getSignature().toString(),
                 getMethodCode(cu, node),
-                node.isConstructorDeclaration(),
-                useField(node),
-                isGetSet(node),
-                isPublic(node),
                 getParameters(node),
                 getDependentMethods(cu, node));
+
+        mi.setUseField(useField(node));
+        mi.setConstructor(node.isConstructorDeclaration());
+        mi.setGetSet(isGetSet2(node));
+        mi.setPublic(isPublic(node));
+        mi.setBoolean(isBoolean(node));
+        mi.setAbstract(node.isAbstract());
+        return mi;
     }
 
     private Map<String, Set<String>> getConstructorDeps(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
@@ -159,7 +163,7 @@ public class ClassParser {
     private List<String> getGetterSetter(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         List<String> getterSetter = new ArrayList<>();
         for (MethodDeclaration m : classNode.getMethods()) {
-            if (isGetSet(m)) {
+            if (isGetSet2(m)) {
                 getterSetter.add(getBriefMethod(cu, m));
             }
         }
@@ -169,8 +173,8 @@ public class ClassParser {
     private List<String> getGetterSetterSig(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
         List<String> getterSetter = new ArrayList<>();
         for (MethodDeclaration m : classNode.getMethods()) {
-            if (isGetSet(m)) {
-                getterSetter.add(m.resolve().getSignature());
+            if (isGetSet2(m)) {
+                getterSetter.add(m.getSignature().asString());
             }
         }
         return getterSetter;
@@ -181,25 +185,9 @@ public class ClassParser {
      */
     private String getMethodSig(CallableDeclaration node) {
         if (node instanceof MethodDeclaration) {
-            return ((MethodDeclaration) node).resolve().getSignature();
+            return node.getSignature().asString();
         } else {
-            return ((ConstructorDeclaration) node).resolve().getSignature();
-        }
-    }
-
-    private List<String> getShortMethodSigs(ClassOrInterfaceDeclaration classNode) {
-        List<String> shortMethodSigs = new ArrayList<>();
-        for (MethodDeclaration m : classNode.getMethods()) {
-            shortMethodSigs.add(m.getSignature().toString());
-        }
-        return shortMethodSigs;
-    }
-
-    private String getPackageDeclaration(CompilationUnit compilationUnit) {
-        if (compilationUnit.getPackageDeclaration().isPresent()) {
-            return compilationUnit.getPackageDeclaration().get().toString().trim();
-        } else {
-            return "";
+            return node.getSignature().asString();
         }
     }
 
@@ -239,14 +227,14 @@ public class ClassParser {
         int i = 0;
         for (; i < methods.size(); i++) {
             try {
-                mSigs.put(methods.get(i).resolve().getSignature(), String.valueOf(i));
+                mSigs.put(methods.get(i).getSignature().asString(), String.valueOf(i));
             } catch (Exception e) {
                 throw new RuntimeException("In ClassParser getMethodSignatures: when resolve method: " + methods.get(i).getNameAsString() + ": " + e);
             }
         }
         List<ConstructorDeclaration> constructors = node.getConstructors();
         for (; i < methods.size() + constructors.size(); i++) {
-            mSigs.put(constructors.get(i - methods.size()).resolve().getSignature(), String.valueOf(i));
+            mSigs.put(constructors.get(i - methods.size()).getSignature().asString(), String.valueOf(i));
         }
         return mSigs;
     }
@@ -254,7 +242,7 @@ public class ClassParser {
     private List<String> getConstructorSignatures(ClassOrInterfaceDeclaration node) {
         List<String> cSigs = new ArrayList<>();
         node.getConstructors().forEach(c -> {
-            cSigs.add(c.resolve().getSignature());
+            cSigs.add(c.getSignature().asString());
         });
         return cSigs;
     }
@@ -373,8 +361,33 @@ public class ClassParser {
         return false;
     }
 
+    private boolean isGetSet2(CallableDeclaration node) {
+        if (node.isConstructorDeclaration()) {
+            return false;
+        }
+        if (node.getNameAsString().startsWith("get") && node.getParameters().size() == 0) {
+            return true;
+        }
+        if (node.getNameAsString().startsWith("set")) {
+            return true;
+        }
+        return false;
+    }
+
     private boolean isPublic(CallableDeclaration node) {
         return node.isPublic();
+    }
+
+    private boolean isBoolean(CallableDeclaration node) {
+        if (node.isConstructorDeclaration()) {
+            return false;
+        }
+        if (node.getNameAsString().startsWith("is")
+                && node.getParameters().size() == 0
+                && node.asMethodDeclaration().getTypeAsString().equals("boolean")) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -401,7 +414,7 @@ public class ClassParser {
             try {
                 ResolvedMethodDeclaration md = m.resolve();
                 String dependentType = md.getClassName();
-                String mSig = md.getSignature();
+                String mSig = getParamTypeInSig(md); // change parameters' type to non-qualified name
                 Set<String> invocations = dependentMethods.get(dependentType);
                 if (invocations == null) {
                     invocations = new HashSet<>();
@@ -409,10 +422,28 @@ public class ClassParser {
                 invocations.add(mSig);
                 dependentMethods.put(getLastType(dependentType), invocations);
             } catch (Exception e) {
+                config.getLog().warn("Cannot resolve method call: " + m.getNameAsString() + " in: " + node.getNameAsString());
                 // TODO: handle the methods generated by annotations
             }
         }
         return dependentMethods;
+    }
+
+    private static String getParamTypeInSig(ResolvedMethodDeclaration md) {
+        String sig = md.getName() + "(";
+        for (int i = 0; i < md.getNumberOfParams(); i++) {
+            String paramType = md.getParam(i).getType().erasure().describe();
+            if (paramType.contains(".")) {
+                paramType = paramType.substring(paramType.lastIndexOf(".") + 1);
+            }
+            if (i == md.getNumberOfParams() - 1) {
+                sig += paramType;
+            } else {
+                sig += paramType + ", ";
+            }
+        }
+        sig += ")";
+        return sig;
     }
 
     public String getLastType(String type) {
@@ -472,7 +503,7 @@ public class ClassParser {
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }
-        Path info = classOutputDir.resolve(getFilePathBySig(node.resolve().getSignature()));
+        Path info = classOutputDir.resolve(getFilePathBySig(node.getSignature().asString()));
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
             writer.write(json);
@@ -484,7 +515,7 @@ public class ClassParser {
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
         }
-        Path info = classOutputDir.resolve(getFilePathBySig(node.resolve().getSignature()));
+        Path info = classOutputDir.resolve(getFilePathBySig(node.getSignature().asString()));
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
             writer.write(json);

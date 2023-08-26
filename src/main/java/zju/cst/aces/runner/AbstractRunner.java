@@ -15,6 +15,7 @@ import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.parser.ClassParser;
 import zju.cst.aces.prompt.PromptGenerator;
 import zju.cst.aces.util.CodeExtractor;
+import zju.cst.aces.util.TokenCounter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,7 +27,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AbstractRunner {
+public abstract class AbstractRunner {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public static final String separator = "_";
@@ -48,6 +49,8 @@ public class AbstractRunner {
         testOutputPath = config.getTestOutput();
         promptGenerator.setConfig(config);
     }
+
+    abstract void start() throws IOException;
 
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
         List<Message> messages = new ArrayList<>();
@@ -108,7 +111,7 @@ public class AbstractRunner {
         return "";
     }
 
-    public String repairImports(String code, List<String> imports, boolean asterisk) {
+    public static String repairImports(String code, List<String> imports, boolean asterisk) {
         CompilationUnit cu = StaticJavaParser.parse(code);
         if (asterisk) {
             cu.addImport("org.mockito", false, true);
@@ -120,9 +123,8 @@ public class AbstractRunner {
         return cu.toString();
     }
 
-    public String repairPackage(String code, String packageInfo) {
-        CompilationUnit cu = StaticJavaParser.parse(code).setPackageDeclaration(packageInfo
-                .replace("package ", "").replace(";", ""));
+    public static String repairPackage(String code, String packageName) {
+        CompilationUnit cu = StaticJavaParser.parse(code).setPackageDeclaration(packageName);
         return cu.toString();
     }
 
@@ -150,7 +152,7 @@ public class AbstractRunner {
         return testCase;
     }
 
-    public String changeTestName(String code, String className, String newName) {
+    public static String changeTestName(String code, String newName) {
         CompilationUnit cu = StaticJavaParser.parse(code);
         cu.findFirst(ClassOrInterfaceDeclaration.class).ifPresent(c -> c.setName(newName));
         return cu.toString();
@@ -368,6 +370,8 @@ public class AbstractRunner {
             Map<String, String> map = new LinkedHashMap<>();
             map.put("methodName", sig.split("\\(")[0]);
             map.put("signature", sig);
+            map.put("className", classInfo.className);
+            map.put("packageDeclaration", classInfo.packageDeclaration);
             methodMapping.put("method" + index, map);
         });
         try (OutputStreamWriter writer = new OutputStreamWriter(
@@ -394,6 +398,10 @@ public class AbstractRunner {
             map.put("testClassName", fullTestName.substring(fullTestName.lastIndexOf(".") + 1));
             map.put("fullName", fullTestName);
             map.put("path", promptInfo.getTestPath().toString());
+            map.put("className", promptInfo.className);
+            map.put("packageDeclaration", promptInfo.classInfo.packageDeclaration);
+            map.put("methodName", promptInfo.methodName);
+            map.put("methodSig", promptInfo.methodSignature);
             attemptMapping.put("attempt" + i, map);
         }
         try (OutputStreamWriter writer = new OutputStreamWriter(
@@ -402,6 +410,17 @@ public class AbstractRunner {
         } catch (IOException e) {
             throw new RuntimeException("In AbstractRunner.exportAttemptMapping: " + e);
         }
+    }
+
+    public boolean isExceedMaxTokens(List<Message> prompt) {
+        int count = 0;
+        for (Message p : prompt) {
+            count += TokenCounter.countToken(p.getContent());
+        }
+        if (count > config.maxPromptTokens) {
+            return true;
+        }
+        return false;
     }
 
     // TODO: 将单个测试方法包装到具有适当imports的测试类中
