@@ -84,6 +84,9 @@ public class ProjectParser {
         String packageDeclaration = path.toString().substring(outputPath.toString().length() + 1).replace(File.separator, ".");
         // list the directories in the path
         File[] files = path.toFile().listFiles();
+        if (files == null) {
+            return;
+        }
         for (File file : files) {
             if (file.isDirectory()) {
                 String className = file.getName();
