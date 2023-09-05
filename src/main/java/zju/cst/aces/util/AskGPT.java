@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.Map;
 
 public class AskGPT {
-    private static final String URL = "https://api.openai.com/v1/chat/completions";
+    private static String URL;
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     public Config config;
 
     public AskGPT(Config config) {
         this.config = config;
+        this.URL = config.getUrl();
     }
 
     public Response askChatGPT(List<Message> messages) {

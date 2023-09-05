@@ -62,6 +62,10 @@ public class ProjectTestMojo
     public File promptPath;
     @Parameter(property = "examplePath", defaultValue = "${project.basedir}/exampleUsage.json")
     public File examplePath;
+    @Parameter(property = "url", defaultValue = "https://api.openai.com/v1/chat/completions")
+    public String url;
+    @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
+    public String model;
     @Parameter(property = "apiKeys", required = true)
     public String[] apiKeys;
     @Parameter(property = "stopWhenSuccess", defaultValue = "true")
@@ -84,8 +88,6 @@ public class ProjectTestMojo
     public int minErrorTokens;
     @Parameter(property = "sleepTime", defaultValue = "0")
     public int sleepTime;
-    @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
-    public String model;
     @Parameter(property = "temperature", defaultValue = "0.5")
     public Double temperature;
     @Parameter(property = "topP", defaultValue = "1")
@@ -214,6 +216,7 @@ public class ProjectTestMojo
                 .minErrorTokens(minErrorTokens)
                 .sleepTime(sleepTime)
                 .model(model)
+                .url(url)
                 .temperature(temperature)
                 .topP(topP)
                 .frequencyPenalty(frequencyPenalty)

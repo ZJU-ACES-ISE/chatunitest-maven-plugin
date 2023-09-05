@@ -35,6 +35,7 @@ public class Config {
     public JavaParserFacade parserFacade;
     public List<String> classPaths;
     public Path promptPath;
+    public String url;
     public String[] apiKeys;
     public Log log;
     public String OS;
@@ -79,6 +80,7 @@ public class Config {
         public JavaParserFacade parserFacade;
         public List<String> classPaths;
         public Path promptPath;
+        public String url;
         public String[] apiKeys;
         public Log log;
         public String OS = System.getProperty("os.name").toLowerCase();
@@ -247,6 +249,14 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder url(String url) {
+            if (!this.model.contains("gpt-4") && !this.model.contains("gpt-3.5") && !url.equals("https://api.openai.com/v1/chat/completions")) {
+                throw new RuntimeException("Invalid url for model: " + this.model + ". Please configure the url in plugin configuration.");
+            }
+            this.url = url;
+            return this;
+        }
+
         public ConfigBuilder apiKeys(String[] apiKeys) {
             this.apiKeys = apiKeys;
             return this;
@@ -385,6 +395,7 @@ public class Config {
             config.setParserFacade(this.parserFacade);
             config.setClassPaths(this.classPaths);
             config.setPromptPath(this.promptPath);
+            config.setUrl(this.url);
             config.setApiKeys(this.apiKeys);
             config.setOS(this.OS);
             config.setStopWhenSuccess(this.stopWhenSuccess);
