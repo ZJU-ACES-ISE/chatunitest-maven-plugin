@@ -102,7 +102,7 @@ public class ProjectParser {
         }
     }
 
-    public void exportJson(Path path, Object obj) {
+    public static void exportJson(Path path, Object obj) {
         if (!Files.exists(path.getParent())) {
             try {
                 Files.createDirectories(path.getParent());
@@ -134,7 +134,7 @@ public class ProjectParser {
         }
     }
 
-    private JavaSymbolSolver getSymbolSolver() {
+    public JavaSymbolSolver getSymbolSolver() {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
         try {
@@ -165,7 +165,6 @@ public class ProjectParser {
                 combinedTypeSolver.add(new JavaParserTypeSolver(src));
             }
         }
-
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         config.setParserFacade(JavaParserFacade.get(combinedTypeSolver));
         return symbolSolver;

@@ -57,7 +57,7 @@ public class ClassParser {
         for (ClassOrInterfaceDeclaration classDeclaration : classes) {
             try {
                 classInfo = getInfoByClass(cu, classDeclaration);
-                exportClassInfo(GSON.toJson(classInfo), classDeclaration);
+                exportClassInfo(classInfo, classDeclaration);
                 extractMethods(cu, classDeclaration);
                 extractConstructors(cu, classDeclaration);
 
@@ -82,7 +82,7 @@ public class ClassParser {
         List<MethodDeclaration> methods = classDeclaration.getMethods();
         for (MethodDeclaration m : methods) {
             MethodInfo info = getInfoByMethod(cu, classDeclaration, m);
-            exportMethodInfo(GSON.toJson(info), classDeclaration, m);
+            exportMethodInfo(info, classDeclaration, m);
         }
     }
 
@@ -90,7 +90,7 @@ public class ClassParser {
         List<ConstructorDeclaration> constructors = classDeclaration.getConstructors();
         for (ConstructorDeclaration c : constructors) {
             MethodInfo info = getInfoByMethod(cu, classDeclaration, c);
-            exportConstructorInfo(GSON.toJson(info), classDeclaration, c);
+            exportConstructorInfo(info, classDeclaration, c);
         }
     }
 
@@ -153,7 +153,7 @@ public class ClassParser {
                 if (constructorDeps.containsKey(key)) {
                     continue;
                 } else {
-                    constructorDeps.put(key, new HashSet<>());
+                    constructorDeps.put(key, tmp.get(key));
                 }
             }
         }
@@ -283,7 +283,7 @@ public class ClassParser {
             if (methodNode.getBody().isPresent()) {
                 sig = getSourceCodeByPosition(getTokenString(cu),
                         methodNode.getBegin().orElseThrow(), methodNode.getBody().get().getBegin().orElseThrow());
-                sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
+                sig = sig.substring(0, sig.lastIndexOf("{") - 1) + "{}";
             } else {
                 sig = getSourceCodeByPosition(getTokenString(cu),
                         methodNode.getBegin().orElseThrow(), methodNode.getEnd().orElseThrow());
@@ -292,7 +292,7 @@ public class ClassParser {
             ConstructorDeclaration constructorNode = (ConstructorDeclaration) node.removeComment();
             sig = getSourceCodeByPosition(getTokenString(cu),
                     constructorNode.getBegin().orElseThrow(), constructorNode.getBody().getBegin().orElseThrow());
-            sig = sig.substring(0, sig.lastIndexOf("{") - 1) + ";";
+            sig = sig.substring(0, sig.lastIndexOf("{") - 1) + "{}";
         }
         return sig;
     }
@@ -300,7 +300,7 @@ public class ClassParser {
     /**
      * Get class signature
      */
-    private String getClassSignature(CompilationUnit cu, ClassOrInterfaceDeclaration node) {
+    public static String getClassSignature(CompilationUnit cu, ClassOrInterfaceDeclaration node) {
         return getSourceCodeByPosition(getTokenString(cu), node.getBegin().orElseThrow(), node.getName().getEnd().orElseThrow());
     }
 
@@ -407,23 +407,35 @@ public class ClassParser {
         List<Parameter> pars = node.getParameters();
 
         for (Parameter p : pars) {
-            String dependentType = String.valueOf(p.getType());
-            dependentMethods.put(getLastType(dependentType), new HashSet<String>());
+            try {
+                if (p.getType().isPrimitiveType()) {
+                    continue;
+                }
+                if (p.getType().isArrayType()) {
+                    String dependentType = p.resolve().getType().asArrayType().getComponentType().describe();
+                    dependentMethods.put(dependentType, new HashSet<String>());
+                    continue;
+                } else {
+                    String dependentType = p.resolve().describeType();
+                    dependentMethods.put(dependentType, new HashSet<String>());
+                }
+            } catch (Exception e) {
+
+            }
         }
         for (MethodCallExpr m : methodCalls) {
             try {
                 ResolvedMethodDeclaration md = m.resolve();
-                String dependentType = md.getClassName();
+                String dependentType = md.declaringType().getQualifiedName();
                 String mSig = getParamTypeInSig(md); // change parameters' type to non-qualified name
                 Set<String> invocations = dependentMethods.get(dependentType);
                 if (invocations == null) {
                     invocations = new HashSet<>();
                 }
                 invocations.add(mSig);
-                dependentMethods.put(getLastType(dependentType), invocations);
+                dependentMethods.put(dependentType, invocations);
             } catch (Exception e) {
-                config.getLog().warn("Cannot resolve method call: " + m.getNameAsString() + " in: " + node.getNameAsString());
-                // TODO: handle the methods generated by annotations
+//                config.getLog().warn("Cannot resolve method call: " + m.getNameAsString() + " in: " + node.getNameAsString());
             }
         }
         return dependentMethods;
@@ -450,7 +462,7 @@ public class ClassParser {
         return type.substring(type.lastIndexOf(".") + 1);
     }
 
-    private String getSourceCodeByPosition(String code, Position begin, Position end) {
+    private static String getSourceCodeByPosition(String code, Position begin, Position end) {
         String[] lines = code.split("\\n");
         StringBuilder sb = new StringBuilder();
 
@@ -478,7 +490,7 @@ public class ClassParser {
         return sb.toString();
     }
 
-    private String getTokenString(@NotNull Node node) {
+    private static String getTokenString(@NotNull Node node) {
         if (node.getTokenRange().isPresent()) {
             return node.getTokenRange().get().toString();
         } else {
@@ -486,7 +498,7 @@ public class ClassParser {
         }
     }
 
-    private void exportClassInfo(String json, ClassOrInterfaceDeclaration classNode) throws IOException {
+    private void exportClassInfo(ClassInfo classInfo, ClassOrInterfaceDeclaration classNode) throws IOException {
         Path classOutputDir = classOutputPath.resolve(classNode.getName().getIdentifier());
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
@@ -494,11 +506,11 @@ public class ClassParser {
         Path classInfoPath = classOutputDir.resolve("class.json");
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(classInfoPath.toFile()), StandardCharsets.UTF_8)){
-            writer.write(json);
+            writer.write(GSON.toJson(classInfo));
         }
     }
 
-    private void exportMethodInfo(String json, ClassOrInterfaceDeclaration classNode, MethodDeclaration node) throws IOException {
+    private void exportMethodInfo(MethodInfo methodInfo, ClassOrInterfaceDeclaration classNode, MethodDeclaration node) throws IOException {
         Path classOutputDir = classOutputPath.resolve(classNode.getName().getIdentifier());
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
@@ -506,11 +518,11 @@ public class ClassParser {
         Path info = classOutputDir.resolve(getFilePathBySig(node.getSignature().asString()));
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
-            writer.write(json);
+            writer.write(GSON.toJson(methodInfo));
         }
     }
 
-    private void exportConstructorInfo(String json, ClassOrInterfaceDeclaration classNode, ConstructorDeclaration node) throws IOException {
+    private void exportConstructorInfo(MethodInfo methodInfo, ClassOrInterfaceDeclaration classNode, ConstructorDeclaration node) throws IOException {
         Path classOutputDir = classOutputPath.resolve(classNode.getName().getIdentifier());
         if (!Files.exists(classOutputDir)) {
             Files.createDirectories(classOutputDir);
@@ -518,7 +530,7 @@ public class ClassParser {
         Path info = classOutputDir.resolve(getFilePathBySig(node.getSignature().asString()));
         //set charset utf-8
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(info.toFile()),StandardCharsets.UTF_8)){
-            writer.write(json);
+            writer.write(GSON.toJson(methodInfo));
         }
     }
 

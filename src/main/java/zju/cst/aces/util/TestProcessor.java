@@ -3,7 +3,6 @@ package zju.cst.aces.util;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import zju.cst.aces.dto.PromptInfo;
@@ -90,12 +89,11 @@ public class TestProcessor {
                     method.remove();
                 }
             }
-            if (cu.findAll(MethodDeclaration.class).stream().filter(this::isTestCase).collect(Collectors.toList()).isEmpty()) {
-                // TODO: should not throw this
-                throw new Exception("In TestProcessor.removeCorrectTest: No test case left");
-//                return null;
-            }
             result = cu.toString();
+            if (cu.findAll(MethodDeclaration.class).stream().filter(this::isTestCase).collect(Collectors.toList()).isEmpty()) {
+//                throw new Exception("In TestProcessor.removeCorrectTest: No test case left");
+                System.out.println("In TestProcessor.removeCorrectTest: No test case left");
+            }
         } catch (Exception e) {
             System.out.println("In TestProcessor.removeCorrectTest: " + e);
         }
@@ -108,24 +106,13 @@ public class TestProcessor {
         try {
             ParseResult<CompilationUnit> parseResult = parser.parse(result);
             CompilationUnit cu = parseResult.getResult().orElseThrow();
-            for (String classname : promptInfo.getCorrectTests().keySet()) {
-                if(cu.getClassByName(classname).isPresent()) {
-                    ClassOrInterfaceDeclaration c = cu.getClassByName(classname).get();
-                    for (MethodDeclaration methodDeclaration : promptInfo.getCorrectTests().get(classname)) {
-                        c.addMember(methodDeclaration);
-                        // TODO: remove this print
-                        System.out.println("^^^^^^^^^^^^^^^^^\nIn TestProcessor.addCorrectTest: "
-                                + methodDeclaration + "\n^^^^^^^^^^^^^^^^^");
-                    }
-                }
-            }
-//            promptInfo.getCorrectTests().keySet().forEach(className -> {
-//                cu.getClassByName(className).ifPresent(classOrInterfaceDeclaration -> {
-//                    promptInfo.getCorrectTests().get(className).forEach(methodDeclaration -> {
-//                        classOrInterfaceDeclaration.addMember(methodDeclaration);
-//                    });
-//                });
-//            });
+            promptInfo.getCorrectTests().keySet().forEach(className -> {
+                cu.getClassByName(className).ifPresent(classOrInterfaceDeclaration -> {
+                    promptInfo.getCorrectTests().get(className).forEach(methodDeclaration -> {
+                        classOrInterfaceDeclaration.addMember(methodDeclaration);
+                    });
+                });
+            });
             result = cu.toString();
         } catch (Exception e) {
             System.out.println("In TestProcessor.addCorrectTest: " + e);
