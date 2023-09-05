@@ -91,6 +91,9 @@ public class MethodRunner extends ClassRunner {
             promptInfo.addRecord(new RoundRecord(rounds));
             RoundRecord record = promptInfo.getRecords().get(rounds);
 
+            Path savePath = testOutputPath.resolve(fullTestName.replace(".", File.separator) + ".java");
+            promptInfo.setTestPath(savePath);
+
 //            TestSkeleton skeleton = new TestSkeleton(promptInfo); // test skeleton to wrap a test method
 
             List<Message> prompt = generateMessages(promptInfo);
@@ -102,8 +105,6 @@ public class MethodRunner extends ClassRunner {
 
             AskGPT askGPT = new AskGPT(config);
             Response response = askGPT.askChatGPT(prompt);
-            Path savePath = testOutputPath.resolve(fullTestName.replace(".", File.separator) + ".java");
-            promptInfo.setTestPath(savePath);
 
             String content = parseResponse(response);
             String code = extractCode(content);

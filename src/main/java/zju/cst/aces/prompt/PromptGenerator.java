@@ -86,8 +86,8 @@ public class PromptGenerator implements Prompt {
             promptTemplate.dataModel.put("dep_gs_sigs", getDepGSSigs(promptInfo.getClassInfo(), promptInfo.getMethodInfo()));
             promptTemplate.dataModel.put("dep_gs_bodies", getDepGSBodies(promptInfo.getClassInfo(), promptInfo.getMethodInfo()));
 
-            promptTemplate.dataModel.put("c_deps", null);
-            promptTemplate.dataModel.put("m_deps", null);
+            promptTemplate.dataModel.put("c_deps", cdep_temp);
+            promptTemplate.dataModel.put("m_deps", mdep_temp);
 
 
             // round 0
