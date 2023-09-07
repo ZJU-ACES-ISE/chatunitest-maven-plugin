@@ -9,9 +9,13 @@
 
 ## Updates:
 💥 Added multithreading feature for faster test generation.
+
 💥 Plugin now exports runtime and error logs.
+
 💥 Custom prompt support added.
+
 💥 Algorithm optimized to minimize token usage.
+
 💥 Expanded configuration options. Refer to **Steps to Run** for details.
 
 ## Background
