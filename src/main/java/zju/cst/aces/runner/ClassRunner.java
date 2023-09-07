@@ -3,6 +3,7 @@ package zju.cst.aces.runner;
 import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.dto.MethodInfo;
 import zju.cst.aces.config.Config;
+import zju.cst.aces.util.TestClassMerger;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,9 @@ public class ClassRunner extends AbstractRunner {
                 }
                 new MethodRunner(fullClassName, config, methodInfo).start();
             }
+        }
+        if (config.isEnableMerge()) {
+            new TestClassMerger(config, fullClassName).mergeWithSuite();
         }
     }
 

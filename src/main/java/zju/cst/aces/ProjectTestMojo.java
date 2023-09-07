@@ -76,6 +76,8 @@ public class ProjectTestMojo
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
+    @Parameter(alias = "merge", property = "merge", defaultValue = "true")
+    public boolean enableMerge;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
     @Parameter(property = "testNumber", defaultValue = "5")
@@ -209,6 +211,7 @@ public class ProjectTestMojo
                 .testOutput(testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
                 .noExecution(noExecution)
+                .enableMerge(enableMerge)
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
@@ -233,6 +236,7 @@ public class ProjectTestMojo
         }
         log.info(" Stop when success >>>> " + config.isStopWhenSuccess());
         log.info(" No execution >>>> " + config.isNoExecution());
+        log.info(" Enable Merge >>>> " + config.isEnableMerge());
         log.info(" --- ");
         log.info(" TestOutput Path >>> " + config.getTestOutput());
         log.info(" TmpOutput Path >>> " + config.getTmpOutput());

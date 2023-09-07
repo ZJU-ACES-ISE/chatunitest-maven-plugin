@@ -64,7 +64,6 @@ public class MethodRunner extends ClassRunner {
                 }
             }
         }
-        generateTestSuite();
     }
 
     public boolean startRounds(final int num) throws IOException {
@@ -108,7 +107,6 @@ public class MethodRunner extends ClassRunner {
 
             String content = parseResponse(response);
             String code = extractCode(content);
-            code = wrapTestMethod(code);
 
 //            code = skeleton.build(code);
 

@@ -89,7 +89,7 @@ public abstract class AbstractRunner {
         return content;
     }
 
-    public void exportTest(String code, Path savePath) {
+    public static void exportTest(String code, Path savePath) {
         if (!savePath.toAbsolutePath().getParent().toFile().exists()) {
             savePath.toAbsolutePath().getParent().toFile().mkdirs();
         }
@@ -421,15 +421,5 @@ public abstract class AbstractRunner {
             return true;
         }
         return false;
-    }
-
-    // TODO: 将单个测试方法包装到具有适当imports的测试类中
-    public String wrapTestMethod(String testMethod) {
-        return testMethod;
-    }
-
-    // TODO: 将每轮的生成结果合并为最终测试套件
-    public void generateTestSuite() {
-
     }
 }
