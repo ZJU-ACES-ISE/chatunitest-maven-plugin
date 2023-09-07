@@ -62,8 +62,8 @@
 - `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
 - `noExecution`: (**可选**) 是否跳过执行测试验证的步骤，默认值：`false`
 所有这些参数也可以在命令行中使用-D选项指定。
-- `merge` : (**Optional**) 将每个类对应的所有测试合并为测试套件，默认值: `true`.
-- `promptPath` : (**Optional**) 自定义prompt的路径. 参考默认promp目录: `src/main/resources/prompt`.
+- `merge` : (**可选**) 将每个类对应的所有测试合并为测试套件，默认值: `true`.
+- `promptPath` : (**可选**) 自定义prompt的路径. 参考默认promp目录: `src/main/resources/prompt`.
 
 
 一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
