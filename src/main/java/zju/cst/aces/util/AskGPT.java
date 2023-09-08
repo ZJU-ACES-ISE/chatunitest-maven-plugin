@@ -33,7 +33,7 @@ public class AskGPT {
             try {
                 Map<String, Object> payload = new HashMap<>();
 
-                if(Objects.equals(config.getModel(), "code-llama")){
+                if (Objects.equals(config.getModel(), "code-llama") || Objects.equals(config.getModel(), "code-llama-13B")) {
                     payload.put("max_tokens", 8092);
                 }
 
