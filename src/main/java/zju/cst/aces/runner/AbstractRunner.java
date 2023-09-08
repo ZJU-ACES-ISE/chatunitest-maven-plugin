@@ -144,7 +144,7 @@ public abstract class AbstractRunner {
             }
             List<String> timeoutImport = new ArrayList<>();
             timeoutImport.add("import org.junit.jupiter.api.Timeout;");
-            testCase = repairImports(testCase, timeoutImport, true);
+            testCase = repairImports(testCase, timeoutImport, config.enableRuleRepair);
             return testCase.replace("@Test\n", String.format("@Test%n    @Timeout(%d)%n", timeout));
         } else {
             config.getLog().warn("Generated with unknown JUnit version, try without adding timeout.");

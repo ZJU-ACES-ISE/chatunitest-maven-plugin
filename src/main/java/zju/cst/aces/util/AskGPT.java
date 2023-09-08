@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class AskGPT {
     private static String URL;
@@ -31,6 +32,11 @@ public class AskGPT {
         while (maxTry > 0) {
             try {
                 Map<String, Object> payload = new HashMap<>();
+
+                if(Objects.equals(config.getModel(), "code-llama")){
+                    payload.put("max_tokens", 8092);
+                }
+
                 payload.put("messages", messages);
                 payload.put("model", config.getModel());
                 payload.put("temperature", config.getTemperature());

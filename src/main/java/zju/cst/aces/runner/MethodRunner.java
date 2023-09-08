@@ -124,7 +124,7 @@ public class MethodRunner extends ClassRunner {
             code = changeTestName(code, testName);
             code = repairPackage(code, classInfo.packageName);
 //            code = addTimeout(code, testTimeOut);
-            code = repairImports(code, classInfo.imports, true);
+            code = repairImports(code, classInfo.imports, config.enableRuleRepair);
             promptInfo.setUnitTest(code); // Before repair imports
 
             record.setCode(code);
