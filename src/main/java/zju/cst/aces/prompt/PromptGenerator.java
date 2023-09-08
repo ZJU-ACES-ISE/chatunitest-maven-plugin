@@ -36,6 +36,9 @@ public class PromptGenerator implements Prompt {
             String userPrompt = null;
             Map<String, String> cdep_temp = new HashMap<>();
             Map<String, String> mdep_temp = new HashMap<>();
+            promptTemplate.dataModel.put("c_deps", cdep_temp);
+            promptTemplate.dataModel.put("m_deps", mdep_temp);
+
 
             // String
             promptTemplate.dataModel.put("project_full_code", getFullProjectCode(promptInfo.getClassName(), config));

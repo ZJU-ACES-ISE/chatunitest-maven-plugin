@@ -26,7 +26,7 @@ import zju.cst.aces.util.TestCompiler;
  */
 
 @Mojo(name = "copy")
-public class copyTestMojo
+public class CopyTestMojo
         extends ProjectTestMojo {
 
     /**
@@ -39,6 +39,7 @@ public class copyTestMojo
             log.info("\n==========================\n[ChatTester] Copying tests ...");
             TestCompiler compiler = new TestCompiler(config);
             compiler.copyAndBackupTestFolder();
+            compiler.copyAndBackupCompiledTest();
         } catch (Exception e) {
             log.error(e);
             throw new MojoExecutionException("Failed to copy test folder, please try again.");

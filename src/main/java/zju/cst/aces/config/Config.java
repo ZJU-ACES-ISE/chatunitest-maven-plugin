@@ -43,6 +43,7 @@ public class Config {
     public boolean noExecution;
     public boolean enableMultithreading;
     public boolean enableRuleRepair;
+    public boolean enableMerge;
     public int maxThreads;
     public int classThreads;
     public int methodThreads;
@@ -88,6 +89,7 @@ public class Config {
         public boolean noExecution = false;
         public boolean enableMultithreading = true;
         public boolean enableRuleRepair = true;
+        public boolean enableMerge = true;
         public int maxThreads = Runtime.getRuntime().availableProcessors() * 5;
         public int classThreads = (int) Math.ceil((double)  this.maxThreads / 10);
         public int methodThreads = (int) Math.ceil((double) this.maxThreads / this.classThreads);
@@ -226,6 +228,11 @@ public class Config {
 
         public ConfigBuilder noExecution(boolean noExecution) {
             this.noExecution = noExecution;
+            return this;
+        }
+
+        public ConfigBuilder enableMerge(boolean enableMerge) {
+            this.enableMerge = enableMerge;
             return this;
         }
 
@@ -402,6 +409,7 @@ public class Config {
             config.setNoExecution(this.noExecution);
             config.setEnableMultithreading(this.enableMultithreading);
             config.setEnableRuleRepair(this.enableRuleRepair);
+            config.setEnableMerge(this.enableMerge);
             config.setMaxThreads(this.maxThreads);
             config.setClassThreads(this.classThreads);
             config.setMethodThreads(this.methodThreads);
