@@ -162,7 +162,7 @@ public class MethodRunner extends ClassRunner {
         }
 
         // Execution
-        TestExecutionSummary summary = compiler.executeTest(fullTestName, executionErrorPath);
+        TestExecutionSummary summary = compiler.executeTest(fullTestName);
         if (summary.getTestsFailedCount() > 0) {
             String testProcessed = testProcessor.removeErrorTest(promptInfo, summary);
 
@@ -171,7 +171,7 @@ public class MethodRunner extends ClassRunner {
                 config.getLog().debug("[Original Test]:\n" + code);
                 TestCompiler newCompiler = new TestCompiler(config, testProcessed);
                 if (newCompiler.compileTest(testName, compilationErrorPath, null)) {
-                    TestExecutionSummary newSummary = newCompiler.executeTest(fullTestName, executionErrorPath);
+                    TestExecutionSummary newSummary = newCompiler.executeTest(fullTestName);
                     if (newSummary.getTestsFailedCount() == 0) {
                         exportTest(testProcessed, savePath);
                         config.getLog().debug("[Processed Test]:\n" + testProcessed);

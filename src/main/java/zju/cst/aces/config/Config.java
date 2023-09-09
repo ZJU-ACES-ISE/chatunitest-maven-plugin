@@ -59,6 +59,7 @@ public class Config {
     public int presencePenalty;
     public Path testOutput;
     public Path tmpOutput;
+    public Path compileOutputPath;
     public Path parseOutput;
     public Path errorOutput;
     public Path classNameMapPath;
@@ -106,6 +107,7 @@ public class Config {
         public Path testOutput;
         public Path tmpOutput = Paths.get(System.getProperty("java.io.tmpdir"), "chatunitest-info");
         public Path parseOutput;
+        public Path compileOutputPath;
         public Path errorOutput;
         public Path classNameMapPath;
         public Path historyPath;
@@ -134,6 +136,7 @@ public class Config {
                 parent = parent.getParent();
             }
             this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classNameMapPath = this.tmpOutput.resolve("classNameMapping.json");
@@ -167,6 +170,7 @@ public class Config {
                 parent = parent.getParent();
             }
             this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
             this.classNameMapPath = this.tmpOutput.resolve("classNameMapping.json");
@@ -324,6 +328,11 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder compileOutputPath(Path compileOutputPath) {
+            this.compileOutputPath = compileOutputPath;
+            return this;
+        }
+
         public ConfigBuilder parseOutput(Path parseOutput) {
             this.parseOutput = parseOutput;
             return this;
@@ -425,6 +434,7 @@ public class Config {
             config.setPresencePenalty(this.presencePenalty);
             config.setTestOutput(this.testOutput);
             config.setTmpOutput(this.tmpOutput);
+            config.setCompileOutputPath(this.compileOutputPath);
             config.setParseOutput(this.parseOutput);
             config.setErrorOutput(this.errorOutput);
             config.setClassNameMapPath(this.classNameMapPath);

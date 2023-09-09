@@ -48,18 +48,18 @@ public class TestCompiler {
     public TestCompiler(Config config) {
         this.config = config;
         this.code = "";
-        this.buildFolder = config.getTmpOutput().resolve("build").toFile();
+        this.buildFolder = config.getCompileOutputPath().toFile();
         this.buildBackupFolder = config.project.getBasedir().toPath().resolve("target").resolve("test-classes-backup").toFile();
     }
     public TestCompiler(Config config, String code) {
         this.config = config;
         this.code = code;
-        this.buildFolder = config.getTmpOutput().resolve("build").toFile();
+        this.buildFolder = config.getCompileOutputPath().toFile();
         this.buildBackupFolder = config.project.getBasedir().toPath().resolve("target").resolve("test-classes-backup").toFile();
     }
 
-    public TestExecutionSummary executeTest(String fullTestName, Path outputPath) {
-        File file = outputPath.toAbsolutePath().getParent().toFile();
+    public TestExecutionSummary executeTest(String fullTestName) {
+        File file = config.getCompileOutputPath().toFile();
         this.fullTestName = fullTestName;
         try {
             List<String> classpathElements = new ArrayList<>();
