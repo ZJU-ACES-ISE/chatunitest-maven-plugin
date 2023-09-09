@@ -10,10 +10,7 @@ import zju.cst.aces.config.Config;
 import zju.cst.aces.dto.Message;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class AskGPT {
     private static final String URL = "https://api.openai.com/v1/chat/completions";
@@ -31,6 +28,11 @@ public class AskGPT {
         while (maxTry > 0) {
             try {
                 Map<String, Object> payload = new HashMap<>();
+
+                if (Objects.equals(config.getModel(), "code-llama") || Objects.equals(config.getModel(), "code-llama-13B")){
+                    payload.put("max_tokens", "16000");
+                }
+
                 payload.put("messages", messages);
                 payload.put("model", config.getModel());
                 payload.put("temperature", config.getTemperature());
