@@ -68,19 +68,40 @@ public class MethodTestMojo
             ClassRunner classRunner = new ClassRunner(fullClassName, config);
             ClassInfo classInfo = classRunner.classInfo;
             MethodInfo methodInfo = null;
-            for (String mSig : classInfo.methodSigs.keySet()) {
-                if (mSig.split("\\(")[0].equals(methodName)) {
-                    methodInfo = classRunner.getMethodInfo(config, classInfo, mSig);
-                    break;
+            if (methodName.matches("\\d+")) { // use method id instead of method name
+                String methodId = methodName;
+                for (String mSig : classInfo.methodSigs.keySet()) {
+                    if (classInfo.methodSigs.get(mSig).equals(methodId)) {
+                        methodInfo = classRunner.getMethodInfo(config, classInfo, mSig);
+                        break;
+                    }
+                }
+                if (methodInfo == null) {
+                    throw new IOException("Method " + methodName + " in class " + fullClassName + " not found");
+                }
+                try {
+                    new MethodRunner(fullClassName, config, methodInfo).start();
+                } catch (Exception e) {
+                    log.error("Error when generating tests for " + methodName + " in " + className + " " + project.getArtifactId());
+                }
+            } else {
+                for (String mSig : classInfo.methodSigs.keySet()) {
+                    if (mSig.split("\\(")[0].equals(methodName)) {
+                        methodInfo = classRunner.getMethodInfo(config, classInfo, mSig);
+                        if (methodInfo == null) {
+                            throw new IOException("Method " + methodName + " in class " + fullClassName + " not found");
+                        }
+                        try {
+                            new MethodRunner(fullClassName, config, methodInfo).start(); // generate for all methods with the same name;
+                        } catch (Exception e) {
+                            log.error("Error when generating tests for " + methodName + " in " + className + " " + project.getArtifactId());
+                        }
+                    }
                 }
             }
-            if (methodInfo == null) {
-                throw new RuntimeException("Method " + methodName + " in class " + fullClassName + " not found");
-            }
-            new MethodRunner(fullClassName, config, methodInfo).start();
 
         } catch (IOException e) {
-            log.warn("Method not found: " + methodName + " in " + className + " " + project.getArtifactId());
+            throw new MojoExecutionException("Method not found: " + methodName + " in " + className + " " + project.getArtifactId());
         }
 
         log.info("\n==========================\n[ChatTester] Generation finished");
