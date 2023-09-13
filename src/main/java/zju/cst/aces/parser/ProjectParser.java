@@ -65,10 +65,13 @@ public class ProjectParser {
                 String packagePath = classPath.substring(srcFolderPath.toString().length() + 1);
                 Path output = outputPath.resolve(packagePath).getParent();
                 ClassParser classParser = new ClassParser(config, output);
-                classParser.extractClass(classPath);
+                int classNum = classParser.extractClass(classPath);
 
+                if (classNum == 0) {
+                    continue;
+                }
                 addClassMap(outputPath, packagePath);
-                classCount++;
+                classCount += classNum;
                 methodCount += classParser.methodCount;
             } catch (Exception e) {
                 throw new RuntimeException("In ProjectParser.parse: " + e);
@@ -80,6 +83,9 @@ public class ProjectParser {
     }
 
     public void addClassMap(Path outputPath, String packagePath) {
+        if (Paths.get(packagePath).getParent() == null) {
+            return;
+        }
         Path path = outputPath.resolve(packagePath).getParent();
         String packageDeclaration = path.toString().substring(outputPath.toString().length() + 1).replace(File.separator, ".");
         // list the directories in the path

@@ -49,7 +49,7 @@ public class ClassParser {
         setOutputPath(path.toString());
     }
 
-    public void extractClass(String classPath) throws FileNotFoundException {
+    public int extractClass(String classPath) throws FileNotFoundException {
         File file = new File(classPath);
         ParseResult<CompilationUnit> parseResult = parser.parse(file);
         CompilationUnit cu = parseResult.getResult().orElseThrow();
@@ -67,6 +67,7 @@ public class ClassParser {
                 config.getLog().error("In ClassParser.extractClass Exception: when parse class " + classDeclaration.getNameAsString() + " :\n" + e);
             }
         }
+        return classes.size();
     }
 
     private static boolean isJavaSourceDir(Path path) {
