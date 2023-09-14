@@ -31,8 +31,8 @@ import java.util.*;
 /**
  * 为每个测试类单独生成覆盖率数据（每个都是单独运行）
  */
-@Mojo(name = "generateMethodCoverage")
-public class MethodCoverageMojo extends AbstractMojo {
+@Mojo(name = "generateMethodCoverage_merge")
+public class MethodMergeCoverageMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
 
@@ -67,10 +67,35 @@ public class MethodCoverageMojo extends AbstractMojo {
 
         HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
 
-        for (File file : files) {
-            String testclassName = extractClassName(srcTestJavaPath, file);
+        HashMap<String, List<String>> executeClassMap = new HashMap<>();
+        for(File file:files){
+            String testclassName=extractClassName(srcTestJavaPath,file);
+            String[] s1=testclassName.split("_", 4);
+            String prefix_className = s1[0]+"_"+s1[1]+"_"+s1[2];
+            if(executeClassMap.get(prefix_className)!=null){
+                executeClassMap.get(prefix_className).add(testclassName);
+            }
+            else {
+                ArrayList<String> classNameList = new ArrayList<>();
+                classNameList.add(testclassName);
+                executeClassMap.put(prefix_className,classNameList);
+            }
+        }
+
+        for (String key : executeClassMap.keySet()) {
+            List<String> executeClasses = executeClassMap.get(key);
+            for (int i = 0; i < executeClasses.size(); i++) {
+                String s = executeClasses.get(i);
+                s=s.replaceAll("\\.","/");
+                executeClasses.set(i,s);
+            }
+            String join_execute_classes = String.join(",", executeClasses);
+
+
+        //遍历executeClassMap，一个list为一次运行，抽取覆盖率
+            String testclassName = key+"_"+"X";//X表示第几轮生成的
 //            log.info(testclassName);
-            testclassName = testclassName.replace(".", "/");
+            testclassName = testclassName.replaceAll("\\.", "/");
             try {
                 String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                 String className = s[0];
@@ -92,10 +117,9 @@ public class MethodCoverageMojo extends AbstractMojo {
                 } catch (MavenInvocationException e) {
                     throw new RuntimeException(e);
                 }
-//                String commandTest = String.join(",", testclassName);//就是上面log的className
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
-                request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
+                request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
                 invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -174,7 +198,7 @@ public class MethodCoverageMojo extends AbstractMojo {
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        File file = new File(directory, "methodCoverage.json");
+        File file = new File(directory, "methodCoverage_MERGE.json");
         try (FileWriter writer = new FileWriter(file)) {
             Gson gson = new Gson();
             gson.toJson(coverageMap, writer);
@@ -198,7 +222,7 @@ public class MethodCoverageMojo extends AbstractMojo {
         public String getMethodSignature(String className, String projectPath, int methodIndex) throws IOException {
             JavaParser javaParser = new JavaParser();
             ParseResult<CompilationUnit> parseResult = javaParser.parse(Paths.get(projectPath, "src/main/java",
-                    className.replace(".", "/") + ".java"));
+                    className.replaceAll("\\.", "/") + ".java"));
             if (parseResult.isSuccessful()) {
                 CompilationUnit cu = parseResult.getResult().get();
                 MethodSignatureVisitor methodVisitor = new MethodSignatureVisitor(methodIndex);
@@ -253,7 +277,7 @@ public class MethodCoverageMojo extends AbstractMojo {
         public String[] extractClassNameAndIndex(String className) {
             String[] parts = className.split("_");
             if (parts.length >= 4) {
-                String classPart = parts[0].replace("/", ".");
+                String classPart = parts[0].replaceAll("/", ".");
                 String indexPart = parts[2];
                 String methodNamePart=parts[1];
                 return new String[]{classPart, indexPart,methodNamePart};//result[0]是className，[1]是index,[2]是methodName
