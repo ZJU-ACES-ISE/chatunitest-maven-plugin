@@ -180,8 +180,9 @@ mvn chatunitest:generateCoverage
     </configuration>
 </plugin>
 ```
-Running this method will execute the tests in the folder `sourceDir`, the coverage result of the project will remove to folder `targetDir`. 
-```
+Running this method will execute the tests in the folder `sourceDir`, the coverage 
+result of the project will remove to folder `targetDir`. 
+```shell
 mvn chatunitest:generateMethodCoverage
 ```
 ```xml
@@ -190,16 +191,23 @@ mvn chatunitest:generateMethodCoverage
     <artifactId>chatunitest-maven-plugin</artifactId>
     <version>1.3.0</version>
     <configuration>
+        <targetDir>D:\\coverage</targetDir>
         <mavenHome>C:\\software\\apache-maven-3.9.2</mavenHome>
         <sourceDir>chatunitest</sourceDir>
-        <!--yourPackage.className#targetMethodName(param_type1,param_type2)-->
-        <goalMethod>zju.cst.aces.Person#getBornTime(int,int)</goalMethod>
-        <!--yourPackage.className_test#methodName1,yourPackage.className_test#methodName2...-->
-        <executeTests>zju.cst.aces.Person_getBornTime_2_1_Test#testGetBornTime,zju.cst.aces.Person_getBornTime_2_1_Test#testSetBornTime</executeTests>
     </configuration>
 </plugin>
 ```
-Running this method will execute the tests in configuration `executeTests` in folder `sourceDir`, the coverage result of the method `goalMethod` will show in the console.
+Running this method will execute all the test classes in `sourceDir` separately 
+and calculate separate coverage for each test class, the result are saved in the `methodCoverage.json` file under `targetDir`.
+
+```shell
+mvn chatunitest:generateMethodCoverage_merge
+```
+Running this method will group the test classes according to the target test class(
+the test classes for the same method will be summarized into a group). For test classes in the same grouping, the 
+program generates test coverage by subdividing the groups from `1-1` to `1-n`
+and the test coverage calculation will be performed by group, the result are saved in the 
+`methodCoverage_MERGE.json` file under `targetDir`.
 
 ## Requirements
 
