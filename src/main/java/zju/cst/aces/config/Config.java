@@ -52,6 +52,7 @@ public class Config {
     public int maxPromptTokens;
     public int minErrorTokens;
     public int sleepTime;
+    public int dependencyDepth;
     public String model;
     public Double temperature;
     public int topP;
@@ -99,6 +100,7 @@ public class Config {
         public int maxPromptTokens = 2600;
         public int minErrorTokens = 500;
         public int sleepTime = 0;
+        public int dependencyDepth = 1;
         public String model = "gpt-3.5-turbo";
         public Double temperature = 0.5;
         public int topP = 1;
@@ -298,6 +300,11 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder dependencyDepth(int dependencyDepth) {
+            this.dependencyDepth = dependencyDepth;
+            return this;
+        }
+
         public ConfigBuilder model(String model) {
             this.model = model;
             return this;
@@ -427,6 +434,7 @@ public class Config {
             config.setMaxPromptTokens(this.maxPromptTokens);
             config.setMinErrorTokens(this.minErrorTokens);
             config.setSleepTime(this.sleepTime);
+            config.setDependencyDepth(this.dependencyDepth);
             config.setModel(this.model);
             config.setTemperature(this.temperature);
             config.setTopP(this.topP);

@@ -90,6 +90,8 @@ public class ProjectTestMojo
     public int minErrorTokens;
     @Parameter(property = "sleepTime", defaultValue = "0")
     public int sleepTime;
+    @Parameter(property = "dependencyDepth", defaultValue = "1")
+    public int dependencyDepth;
     @Parameter(property = "temperature", defaultValue = "0.5")
     public Double temperature;
     @Parameter(property = "topP", defaultValue = "1")
@@ -218,6 +220,7 @@ public class ProjectTestMojo
                 .maxPromptTokens(maxPromptTokens)
                 .minErrorTokens(minErrorTokens)
                 .sleepTime(sleepTime)
+                .dependencyDepth(dependencyDepth)
                 .model(model)
                 .url(url)
                 .temperature(temperature)
@@ -247,6 +250,8 @@ public class ProjectTestMojo
         log.info(" MaxRounds >>> " + config.getMaxRounds());
         log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
         log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
+        log.info(" SleepTime >>> " + config.getSleepTime());
+        log.info(" DependencyDepth >>> " + config.getDependencyDepth());
         log.info("\n===================================================================\n");
         try {
             Thread.sleep(1000);

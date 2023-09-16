@@ -203,6 +203,16 @@ public abstract class AbstractRunner {
         promptInfo.setMethodInfo(methodInfo);
         List<String> otherBriefMethods = new ArrayList<>();
         List<String> otherMethodBodies = new ArrayList<>();
+
+        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
+            String depClassName = entry.getKey();
+            Set<String> depMethods = entry.getValue();
+            if (methodInfo.dependentMethods.containsKey(depClassName)) {
+                continue;
+            }
+            promptInfo.addConstructorDeps(getDepInfo(depClassName, depMethods));
+        }
+
         for (Map.Entry<String, Set<String>> entry : methodInfo.dependentMethods.entrySet()) {
             String depClassName = entry.getKey();
             if (depClassName.equals(className)) {
@@ -217,16 +227,10 @@ public abstract class AbstractRunner {
                 }
                 continue;
             }
+
             Set<String> depMethods = entry.getValue();
-            promptInfo.addMethodDeps(getDepInfo(promptInfo, depClassName, depMethods));
-        }
-        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
-            String depClassName = entry.getKey();
-            Set<String> depMethods = entry.getValue();
-            if (methodInfo.dependentMethods.containsKey(depClassName)) {
-                continue;
-            }
-            promptInfo.addConstructorDeps(getDepInfo(promptInfo, depClassName, depMethods));
+            promptInfo.addMethodDeps(getDepInfo(depClassName, depMethods));
+            addMethodDepsByDepth(depClassName, depMethods, promptInfo, config.getDependencyDepth());
         }
 
         String fields = joinLines(classInfo.fields);
@@ -258,6 +262,46 @@ public abstract class AbstractRunner {
         return promptInfo;
     }
 
+    public void addMethodDepsByDepth(String className, Set<String> methodSigs, PromptInfo promptInfo, int depth) throws IOException {
+        if (depth <= 1) {
+            return;
+        }
+        for (String dm : methodSigs) {
+            ClassInfo depClassInfo = getClassInfo(config, className);
+            if (depClassInfo == null) {
+                continue;
+            }
+            addConstructorDepsByDepth(depClassInfo, promptInfo);
+
+            MethodInfo depMethodInfo = getMethodInfo(config, depClassInfo, dm);
+            if (depMethodInfo == null) {
+                continue;
+            }
+            for (String depClassName : depMethodInfo.dependentMethods.keySet()) {
+                Set<String> depMethods = depMethodInfo.dependentMethods.get(depClassName);
+                promptInfo.addMethodDeps(getDepInfo(depClassName, depMethods));
+                addMethodDepsByDepth(depClassName, depMethods, promptInfo, depth - 1);
+            }
+        }
+    }
+
+    public void addConstructorDepsByDepth(ClassInfo classInfo, PromptInfo promptInfo) throws IOException {
+        for (Map.Entry<String, Set<String>> entry : classInfo.constructorDeps.entrySet()) {
+            String depClassName = entry.getKey();
+            Set<String> depMethods = entry.getValue();
+            promptInfo.addConstructorDeps(getDepInfo(depClassName, depMethods));
+        }
+    }
+
+    public static ClassInfo getClassInfo(Config config, String className) throws IOException {
+        String fullClassName = ProjectTestMojo.getFullClassName(config, className);
+        Path classInfoPath = config.getParseOutput().resolve(fullClassName.replace(".", File.separator)).resolve("class.json");
+        if (!classInfoPath.toFile().exists()) {
+            return null;
+        }
+        return GSON.fromJson(Files.readString(classInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
+    }
+
     public static MethodInfo getMethodInfo(Config config, ClassInfo info, String mSig) throws IOException {
         String packagePath = info.packageDeclaration
                 .replace("package ", "")
@@ -273,35 +317,41 @@ public abstract class AbstractRunner {
         return GSON.fromJson(Files.readString(depMethodInfoPath, StandardCharsets.UTF_8), MethodInfo.class);
     }
 
-    public Map<String, String> getDepInfo(PromptInfo promptInfo, String depClassName, Set<String> depMethods) throws IOException {
-        String fullDepClassName = ProjectTestMojo.getFullClassName(config, depClassName);
-        Path depClassInfoPath = parseOutputPath.resolve(fullDepClassName.replace(".", File.separator)).resolve("class.json");
-        if (!depClassInfoPath.toFile().exists()) {
+    public Map<String, String> getDepInfo(String depClassName, Set<String> depMethods) throws IOException {
+        ClassInfo depClassInfo = getClassInfo(config, depClassName);
+        if (depClassInfo == null) {
             return null;
         }
-        ClassInfo depClassInfo = GSON.fromJson(Files.readString(depClassInfoPath, StandardCharsets.UTF_8), ClassInfo.class);
 
         String classSig = depClassInfo.classSignature;
         String fields = joinLines(depClassInfo.fields);
-        String constructors = joinLines(depClassInfo.constructorBrief);
         Map<String, String> methodDeps = new HashMap<>();
 
         String basicInfo = classSig + " {\n" + fields + "\n";
         if (depClassInfo.hasConstructor) {
+            String constructors = "";
+            for (String sig : depClassInfo.constructorSigs) {
+                MethodInfo depConstructorInfo = getMethodInfo(config, depClassInfo, sig);
+                if (depConstructorInfo == null) {
+                    continue;
+                }
+                constructors += depConstructorInfo.getSourceCode() + "\n";
+            }
+
             basicInfo += constructors + "\n";
         }
 
-        String briefDepMethods = "";
+        String sourceDepMethods = "";
         for (String sig : depMethods) {
             //TODO: identify used fields in dependent class
             MethodInfo depMethodInfo = getMethodInfo(config, depClassInfo, sig);
             if (depMethodInfo == null) {
                 continue;
             }
-            briefDepMethods += depMethodInfo.brief + "\n";
+            sourceDepMethods += depMethodInfo.getSourceCode() + "\n";
         }
         String getterSetter = joinLines(depClassInfo.getterSetterBrief) + "\n";
-        methodDeps.put(depClassName, basicInfo + getterSetter + briefDepMethods + "}");
+        methodDeps.put(depClassName, basicInfo + getterSetter + sourceDepMethods + "}");
         return methodDeps;
     }
 

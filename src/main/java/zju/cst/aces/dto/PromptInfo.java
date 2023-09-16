@@ -5,10 +5,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import lombok.Data;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 public class PromptInfo {
@@ -19,8 +16,9 @@ public class PromptInfo {
     public String info; // move other methods and constructors to otherMethods.
     public String otherMethodBrief;
     public String otherMethodBodies;
-    public List<Map<String, String>> constructorDeps = new ArrayList<>(); // dependent classes in constructor.
-    public List<Map<String, String>> methodDeps = new ArrayList<>(); // dependent classes in method parameters and body.
+    //TODO: do not need use Set
+    public Set<Map<String, String>> constructorDeps = new HashSet<>(); // dependent classes in constructor.
+    public Set<Map<String, String>> methodDeps = new HashSet<>(); // dependent classes in method parameters and body.
     public TestMessage errorMsg;
     public String unitTest = "";
     public String fullTestName;
