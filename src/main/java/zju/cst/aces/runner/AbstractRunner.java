@@ -327,7 +327,8 @@ public abstract class AbstractRunner {
         String fields = joinLines(depClassInfo.fields);
         Map<String, String> methodDeps = new HashMap<>();
 
-        String basicInfo = classSig + " {\n" + fields + "\n";
+        String basicInfo = depClassInfo.packageDeclaration + "\n" + joinLines(depClassInfo.imports) + "\n"
+                + classSig + " {\n" + fields + "\n";
         if (depClassInfo.hasConstructor) {
             String constructors = "";
             for (String sig : depClassInfo.constructorSigs) {
