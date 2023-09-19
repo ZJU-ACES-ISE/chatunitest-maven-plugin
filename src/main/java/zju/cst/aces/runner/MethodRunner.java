@@ -59,7 +59,7 @@ public class MethodRunner extends ClassRunner {
             executor.shutdown();
         } else {
             for (int num = 0; num < config.getTestNumber(); num++) {
-                if (startRounds(num)) {
+                if (startRounds(num) && config.isStopWhenSuccess()) {
                     break;
                 }
             }
