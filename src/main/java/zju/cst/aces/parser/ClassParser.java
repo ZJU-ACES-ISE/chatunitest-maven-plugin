@@ -146,7 +146,7 @@ public class ClassParser {
     }
 
     private Map<String, Set<String>> getConstructorDeps(CompilationUnit cu, ClassOrInterfaceDeclaration classNode) {
-        Map<String, Set<String>> constructorDeps = new HashMap<>();
+        Map<String, Set<String>> constructorDeps = new LinkedHashMap<>();
         for (ConstructorDeclaration c : classNode.getConstructors()) {
             Map<String, Set<String>> tmp = getDependentMethods(cu, c);
             for (String key : tmp.keySet()) {
@@ -223,7 +223,7 @@ public class ClassParser {
      * Get the map of all method signatures and id in class
      */
     private Map<String, String> getMethodSignatures(ClassOrInterfaceDeclaration node) {
-        Map<String, String> mSigs = new HashMap<>();
+        Map<String, String> mSigs = new LinkedHashMap<>();
         List<MethodDeclaration> methods = node.getMethods();
         int i = 0;
         for (; i < methods.size(); i++) {
@@ -403,7 +403,7 @@ public class ClassParser {
     }
 
     private Map<String, Set<String>> getDependentMethods(CompilationUnit cu, CallableDeclaration node) {
-        Map<String, Set<String>> dependentMethods = new HashMap<>();
+        Map<String, Set<String>> dependentMethods = new LinkedHashMap<>();
         List<MethodCallExpr> methodCalls = node.findAll(MethodCallExpr.class);
         List<Parameter> pars = node.getParameters();
 
