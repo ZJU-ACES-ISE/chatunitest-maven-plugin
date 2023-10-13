@@ -43,7 +43,12 @@ public class MethodTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
-        checkTargetFolder(project);
+        try {
+            checkTargetFolder(project);
+        } catch (RuntimeException e) {
+            log.error(e.getMessage());
+            return;
+        }
         init();
         if (project.getPackaging().equals("pom")) {
             log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
