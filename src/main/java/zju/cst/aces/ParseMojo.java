@@ -37,7 +37,11 @@ public class ParseMojo
         try {
             checkTargetFolder(project);
         } catch (RuntimeException e) {
-            log.error(e.getMessage());
+            if (e.getMessage() != null) {
+                log.error(e.getMessage());
+            } else {
+                log.error("Caught an exception of type: " + e.getClass().getSimpleName(), e);
+            }
             return;
         }
         init();
