@@ -34,14 +34,11 @@ public class ParseMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        log = getLog();
         try {
             checkTargetFolder(project);
         } catch (RuntimeException e) {
-            if (e.getMessage() != null) {
-                log.error(e.getMessage());
-            } else {
-                log.error("Caught an exception of type: " + e.getClass().getSimpleName(), e);
-            }
+            log.error(e.getMessage());
             return;
         }
         init();
