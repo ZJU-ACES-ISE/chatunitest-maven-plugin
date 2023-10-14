@@ -117,24 +117,20 @@ public class ProjectTestMojo
         try {
             checkTargetFolder(project);
         } catch (RuntimeException e) {
-            log.error(e.getMessage());
+            log.error(e.toString());
             return;
         }
         init();
         if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
             return;
         }
         printConfiguration();
-        log.info("\n==========================\n[ChatTester] Generating tests for project " + project.getBasedir().getName() + " ...");
-        log.warn("[ChatTester] It may consume a significant number of tokens!");
+        log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
+        log.warn("[ChatUniTest] It may consume a significant number of tokens!");
 
         ProjectParser parser = new ProjectParser(config);
-        if (! config.getParseOutput().toFile().exists()) {
-            log.info("\n==========================\n[ChatTester] Parsing class info ...");
-            parser.parse();
-            log.info("\n==========================\n[ChatTester] Parse finished");
-        }
+        parser.parse();
 
         List<String> classPaths = new ArrayList<>();
         parser.scanSourceDirectory(project, classPaths);
@@ -146,7 +142,7 @@ public class ProjectTestMojo
                 String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
                 try {
                     className = getFullClassName(config, className);
-                    log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
+                    log.info("\n==========================\n[ChatUniTest] Generating tests for class < " + className + " > ...");
                     ClassRunner runner = new ClassRunner(className, config);
                     if (!filter(runner.classInfo)) {
                         config.getLog().info("Skip class: " + classPath);
@@ -154,12 +150,12 @@ public class ProjectTestMojo
                     }
                     runner.start();
                 } catch (IOException e) {
-                    log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
+                    log.error("[ChatUniTest] Generate tests for class " + className + " failed: " + e);
                 }
             }
         }
 
-        log.info("\n==========================\n[ChatTester] Generation finished");
+        log.info("\n==========================\n[ChatUniTest] Generation finished");
     }
 
     public void classJob(List<String> classPaths) {
@@ -172,14 +168,14 @@ public class ProjectTestMojo
                     String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
                     try {
                         className = getFullClassName(config, className);
-                        log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
+                        log.info("\n==========================\n[ChatUniTest] Generating tests for class < " + className + " > ...");
                         ClassRunner runner = new ClassRunner(className, config);
                         if (!filter(runner.classInfo)) {
                             return "Skip class: " + classPath;
                         }
                         runner.start();
                     } catch (IOException e) {
-                        log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
+                        log.error("[ChatUniTest] Generate tests for class " + className + " failed: " + e);
                     }
                     return "Processed " + classPath;
                 }
@@ -273,7 +269,7 @@ public class ProjectTestMojo
         Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {
-                throw new RuntimeException("[ChatTester] Multiple classes Named " + name + ": " + classMap.get(name)
+                throw new RuntimeException("[ChatUniTest] Multiple classes Named " + name + ": " + classMap.get(name)
                 + " Please use full qualified name!");
             }
             return classMap.get(name).get(0);
@@ -305,6 +301,9 @@ public class ProjectTestMojo
     }
 
     private boolean filter(ClassInfo classInfo) {
+        if (classInfo.isFinal) {
+            return true;
+        }
         if (!classInfo.isPublic || classInfo.isAbstract || classInfo.isInterface) {
             return false;
         }

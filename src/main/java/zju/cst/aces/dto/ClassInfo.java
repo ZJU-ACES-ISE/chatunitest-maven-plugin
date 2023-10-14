@@ -20,6 +20,7 @@ public class ClassInfo {
     public String classSignature;
     public boolean hasConstructor;
     public boolean isPublic;
+    public boolean isFinal;
     public boolean isInterface;
     public boolean isAbstract;
     public List<String> imports;

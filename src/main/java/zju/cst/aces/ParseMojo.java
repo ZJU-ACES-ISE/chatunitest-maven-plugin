@@ -38,19 +38,15 @@ public class ParseMojo
         try {
             checkTargetFolder(project);
         } catch (RuntimeException e) {
-            log.error(e.getMessage());
+            log.error(e.toString());
             return;
         }
         init();
         if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
             return;
         }
-        if (! config.getParseOutput().toFile().exists()) {
-            log.info("\n==========================\n[ChatTester] Parsing class info ...");
-            ProjectParser parser = new ProjectParser(config);
-            parser.parse();
-            log.info("\n==========================\n[ChatTester] Parse finished");
-        }
+        ProjectParser parser = new ProjectParser(config);
+        parser.parse();
     }
 }

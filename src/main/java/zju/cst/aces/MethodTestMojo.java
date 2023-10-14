@@ -46,7 +46,7 @@ public class MethodTestMojo
         try {
             checkTargetFolder(project);
         } catch (RuntimeException e) {
-            log.error(e.getMessage());
+            log.error(e.toString());
             return;
         }
         init();
@@ -58,12 +58,8 @@ public class MethodTestMojo
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
 
-        if (! config.getParseOutput().toFile().exists()) {
-            log.info("\n==========================\n[ChatTester] Parsing class info ...");
-            ProjectParser parser = new ProjectParser(config);
-            parser.parse();
-            log.info("\n==========================\n[ChatTester] Parse finished");
-        }
+        ProjectParser parser = new ProjectParser(config);
+        parser.parse();
 
         log.info("\n==========================\n[ChatTester] Generating tests for class: < " + className
                 + "> method: < " + methodName + " > ...");

@@ -54,6 +54,11 @@ public class ProjectParser {
      * Parse the project.
      */
     public void parse() {
+        if (config.getParseOutput().toFile().exists()) {
+            config.getLog().info("\n==========================\n[ChatUniTest] Parse output already exists, skip parsing");
+            return;
+        }
+        config.getLog().info("\n==========================\n[ChatUniTest] Parsing class info ...");
         List<String> classPaths = new ArrayList<>();
         scanSourceDirectory(config.getProject(), classPaths);
         if (classPaths.isEmpty()) {
@@ -80,6 +85,7 @@ public class ProjectParser {
         exportClassMapping();
         exportJson(config.getClassNameMapPath(), classMap);
         config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
+        config.getLog().info("\n==========================\n[ChatTester] Parse finished");
     }
 
     public void addClassMap(Path outputPath, String packagePath) {
