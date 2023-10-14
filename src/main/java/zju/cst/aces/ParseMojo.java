@@ -46,6 +46,7 @@ public class ParseMojo
             log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
             return;
         }
+        printConfiguration();
         ProjectParser parser = new ProjectParser(config);
         parser.parse();
     }
