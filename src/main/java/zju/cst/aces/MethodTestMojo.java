@@ -58,8 +58,8 @@ public class MethodTestMojo
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
 
-        ProjectParser parser = new ProjectParser(config);
-        parser.parse();
+//        ProjectParser parser = new ProjectParser(config);
+//        parser.parse();
 
         log.info("\n==========================\n[ChatTester] Generating tests for class: < " + className
                 + "> method: < " + methodName + " > ...");
