@@ -54,11 +54,11 @@ public class ProjectParser {
      * Parse the project.
      */
     public void parse() {
-//        File dir = config.getParseOutput().toFile();
-//        if (dir.exists() && dir.isDirectory() && Objects.requireNonNull(dir.list()).length > 0) {
-//            config.getLog().info("\n==========================\n[ChatUniTest] Parse output already exists, skip parsing");
-//            return;
-//        }
+        File dir = config.getParseOutput().toFile();
+        if (dir.exists() && dir.isDirectory() && Objects.requireNonNull(dir.list()).length > 0) {
+            config.getLog().info("\n==========================\n[ChatUniTest] Parse output already exists, skip parsing");
+            return;
+        }
         config.getLog().info("\n==========================\n[ChatUniTest] Parsing class info ...");
         List<String> classPaths = new ArrayList<>();
         scanSourceDirectory(config.getProject(), classPaths);
