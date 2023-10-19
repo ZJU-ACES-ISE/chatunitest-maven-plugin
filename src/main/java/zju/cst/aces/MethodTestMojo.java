@@ -21,7 +21,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.dto.MethodInfo;
-import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
 
@@ -78,7 +77,8 @@ public class MethodTestMojo
                     }
                 }
                 if (methodInfo == null) {
-                    throw new IOException("Method " + methodName + " in class " + fullClassName + " not found");
+                    log.warn("Method " + methodName + " in class " + fullClassName + " not found");
+                    return;
                 }
                 try {
                     new MethodRunner(fullClassName, config, methodInfo).start();
@@ -90,7 +90,8 @@ public class MethodTestMojo
                     if (mSig.split("\\(")[0].equals(methodName)) {
                         methodInfo = classRunner.getMethodInfo(config, classInfo, mSig);
                         if (methodInfo == null) {
-                            throw new IOException("Method " + methodName + " in class " + fullClassName + " not found");
+                            log.warn("Method " + methodName + " in class " + fullClassName + " not found");
+                            return;
                         }
                         try {
                             new MethodRunner(fullClassName, config, methodInfo).start(); // generate for all methods with the same name;
@@ -102,7 +103,8 @@ public class MethodTestMojo
             }
 
         } catch (IOException e) {
-            throw new MojoExecutionException("Method not found: " + methodName + " in " + className + " " + project.getArtifactId());
+            log.warn("Method not found: " + methodName + " in " + className + " " + project.getArtifactId());
+            return;
         }
 
         log.info("\n==========================\n[ChatTester] Generation finished");
