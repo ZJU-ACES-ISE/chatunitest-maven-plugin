@@ -55,7 +55,7 @@ public class ProjectParser {
      */
     public void parse() {
         File dir = config.getParseOutput().toFile();
-        if (dir.exists() && dir.isDirectory() && Objects.requireNonNull(dir.list()).length > 0) {
+        if (dir.exists() && dir.isDirectory()) {
             config.getLog().info("\n==========================\n[ChatUniTest] Parse output already exists, skip parsing");
             return;
         }
