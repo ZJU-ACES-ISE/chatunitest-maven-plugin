@@ -57,14 +57,18 @@ public class MethodCoverageMojo extends AbstractMojo {
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
-            MavenProject p = project.clone();
-            String parentPath = "";
-            while(p != null && p.getBasedir() != null) {
-                parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
-                p = p.getParent();
+            if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
+                copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            } else {
+                MavenProject p = project.clone();
+                String parentPath = "";
+                while(p != null && p.getBasedir() != null) {
+                    parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                    p = p.getParent();
+                }
+                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+                copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
-            Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
-            copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
