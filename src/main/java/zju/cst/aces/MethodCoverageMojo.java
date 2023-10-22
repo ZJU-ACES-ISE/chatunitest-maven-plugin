@@ -166,6 +166,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                     log.info("未找到覆盖率表格");
                 }
             } catch (IOException e) {
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }
