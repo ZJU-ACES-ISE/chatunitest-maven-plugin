@@ -331,7 +331,17 @@ public class Config {
         }
 
         public ConfigBuilder testOutput(Path testOutput) {
-            this.testOutput = testOutput;
+            if (testOutput == null) {
+                this.testOutput = project.getBasedir().toPath().resolve("chatunitest-tests");
+            } else {
+                this.testOutput = testOutput;
+                MavenProject parent = project.getParent();
+                while(parent != null && parent.getBasedir() != null) {
+                    this.testOutput = this.testOutput.resolve(parent.getArtifactId());
+                    parent = parent.getParent();
+                }
+                this.testOutput = this.testOutput.resolve(project.getArtifactId());
+            }
             return this;
         }
 

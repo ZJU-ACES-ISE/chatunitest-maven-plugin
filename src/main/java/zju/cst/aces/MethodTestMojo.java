@@ -21,6 +21,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.dto.MethodInfo;
+import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 import zju.cst.aces.runner.MethodRunner;
 
@@ -57,8 +58,8 @@ public class MethodTestMojo
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
 
-//        ProjectParser parser = new ProjectParser(config);
-//        parser.parse();
+        ProjectParser parser = new ProjectParser(config);
+        parser.parse();
 
         log.info("\n==========================\n[ChatTester] Generating tests for class: < " + className
                 + "> method: < " + methodName + " > ...");

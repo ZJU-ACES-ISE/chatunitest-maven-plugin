@@ -54,7 +54,7 @@ public class ProjectTestMojo
     public MavenSession session;
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
-    @Parameter(defaultValue = "${project.basedir}/chatunitest-tests", property = "testOutput")
+    @Parameter(property = "testOutput")
     public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public File tmpOutput;
@@ -211,7 +211,7 @@ public class ProjectTestMojo
                 .enableMultithreading(enableMultithreading)
                 .enableRuleRepair(enableRuleRepair)
                 .tmpOutput(tmpOutput.toPath())
-                .testOutput(testOutput.toPath())
+                .testOutput(testOutput == null? null : testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
                 .noExecution(noExecution)
                 .enableMerge(enableMerge)
