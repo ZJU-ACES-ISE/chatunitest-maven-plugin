@@ -25,6 +25,7 @@ import zju.cst.aces.util.XmlParser;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -56,7 +57,14 @@ public class MethodCoverageMojo extends AbstractMojo {
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
-            copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            MavenProject p = project.clone();
+            String parentPath = "";
+            while(p != null && p.getBasedir() != null) {
+                parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                p = p.getParent();
+            }
+            Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+            copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

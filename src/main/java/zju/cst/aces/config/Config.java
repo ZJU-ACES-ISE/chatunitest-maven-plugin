@@ -132,12 +132,14 @@ public class Config {
             this.classPaths = TestCompiler.listClassPaths(session, project, dependencyGraphBuilder);
             this.log = log;
 
-            MavenProject parent = project.getParent();
-            while(parent != null && parent.getBasedir() != null) {
-                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
-                parent = parent.getParent();
+            MavenProject p = project.clone();
+            String parentPath = "";
+            while(p != null && p.getBasedir() != null) {
+                parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                p = p.getParent();
             }
-            this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            this.tmpOutput = this.tmpOutput.resolve(parentPath);
+
             this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
@@ -166,12 +168,14 @@ public class Config {
 
         public ConfigBuilder tmpOutput(Path tmpOutput) {
             this.tmpOutput = tmpOutput;
-            MavenProject parent = project.getParent();
-            while(parent != null && parent.getBasedir() != null) {
-                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
-                parent = parent.getParent();
+            MavenProject p = project.clone();
+            String parentPath = "";
+            while(p != null && p.getBasedir() != null) {
+                parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                p = p.getParent();
             }
-            this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            this.tmpOutput = this.tmpOutput.resolve(parentPath);
+
             this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
@@ -335,12 +339,13 @@ public class Config {
                 this.testOutput = project.getBasedir().toPath().resolve("chatunitest-tests");
             } else {
                 this.testOutput = testOutput;
-                MavenProject parent = project.getParent();
-                while(parent != null && parent.getBasedir() != null) {
-                    this.testOutput = this.testOutput.resolve(parent.getArtifactId());
-                    parent = parent.getParent();
+                MavenProject p = project.clone();
+                String parentPath = "";
+                while(p != null && p.getBasedir() != null) {
+                    parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                    p = p.getParent();
                 }
-                this.testOutput = this.testOutput.resolve(project.getArtifactId());
+                this.testOutput = this.testOutput.resolve(parentPath);
             }
             return this;
         }
