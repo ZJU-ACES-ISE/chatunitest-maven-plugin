@@ -12,10 +12,8 @@ import org.apache.maven.shared.invoker.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,11 +36,26 @@ public class CoverageMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
+            return;
+        }
         // 复制外部目录到 src/test/java
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
-            copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
+                copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            } else {
+                MavenProject p = project.clone();
+                String parentPath = "";
+                while(p != null && p.getBasedir() != null) {
+                    parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                    p = p.getParent();
+                }
+                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+                copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

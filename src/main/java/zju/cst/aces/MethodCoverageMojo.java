@@ -51,6 +51,10 @@ public class MethodCoverageMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
+            return;
+        }
         File pomFile = new File(project.getBasedir(), "pom.xml");
 
         // 复制外部目录到 src/test/java
@@ -178,7 +182,6 @@ public class MethodCoverageMojo extends AbstractMojo {
                     log.info("未找到覆盖率表格");
                 }
             } catch (IOException e) {
-                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }
