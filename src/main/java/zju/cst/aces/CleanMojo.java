@@ -38,13 +38,13 @@ public class CleanMojo
         init();
         log.info("\n==========================\n[ChatTester] Cleaning project " +  project.getBasedir().getName() + " ...");
         log.info("\n==========================\n[ChatTester] Cleaning output directory "
-                + tmpOutput + " and " + testOutput + " ...");
+                + config.getTmpOutput() + " and " + config.getTestOutput() + " ...");
         try {
-            log.info("\n==========================\n[ChatTester] Restoring test folder ...");
-            FileUtils.deleteDirectory(tmpOutput);
-            FileUtils.deleteDirectory(testOutput);
+            log.info("\n==========================\n[ChatTester] Restoring backup folder ...");
+            FileUtils.deleteDirectory(config.getTmpOutput().toFile());
+            FileUtils.deleteDirectory(config.getTestOutput().toFile());
             TestCompiler compiler = new TestCompiler(config);
-            compiler.restoreTestFolder();
+            compiler.restoreBackupFolder();
         } catch (Exception e) {
             log.error(e);
         }

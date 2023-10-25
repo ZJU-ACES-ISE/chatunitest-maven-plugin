@@ -31,26 +31,36 @@ import java.net.URLClassLoader;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 public class TestCompiler {
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
-    public static File backupFolder = new File("src" + File.separator + "backup");
+    public static File testBackupFolder = new File("src" + File.separator + "backup");
     public static Config config;
+    public static File buildFolder;
+    public static File buildBackupFolder;
+    public String testName;
+    public String fullTestName;
     public String code;
 
     public TestCompiler(Config config) {
         this.config = config;
         this.code = "";
+        this.buildFolder = config.getCompileOutputPath().toFile();
+        this.buildBackupFolder = config.project.getBasedir().toPath().resolve("target").resolve("test-classes-backup").toFile();
     }
     public TestCompiler(Config config, String code) {
         this.config = config;
         this.code = code;
+        this.buildFolder = config.getCompileOutputPath().toFile();
+        this.buildBackupFolder = config.project.getBasedir().toPath().resolve("target").resolve("test-classes-backup").toFile();
     }
 
-    public boolean executeTest(String fullTestName, Path outputPath, PromptInfo promptInfo) {
-        File file = outputPath.toAbsolutePath().getParent().toFile();
+    public TestExecutionSummary executeTest(String fullTestName) {
+        File file = config.getCompileOutputPath().toFile();
+        this.fullTestName = fullTestName;
         try {
             List<String> classpathElements = new ArrayList<>();
             classpathElements.addAll(config.getClassPaths());
@@ -84,26 +94,7 @@ public class TestCompiler {
             launcher.execute(request);
 
             TestExecutionSummary summary = listener.getSummary();
-            if (summary.getTestsFailedCount() > 0) {
-                TestMessage testMessage = new TestMessage();
-                List<String> errors = new ArrayList<>();
-                summary.getFailures().forEach(failure -> {
-                    for (StackTraceElement st : failure.getException().getStackTrace()) {
-                        if (st.getClassName().equals(fullTestName)) {
-                            errors.add(failure.getTestIdentifier().getDisplayName() + ": "
-                                    + " line: "  + st.getLineNumber() + " "
-                                    + failure.getException().toString());
-                        }
-                    }
-                });
-                testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
-                testMessage.setErrorMessage(errors);
-                promptInfo.setErrorMsg(testMessage);
-
-                exportError(errors.toString(), outputPath);
-            }
-//            summary.printTo(new PrintWriter(System.out));
-            return summary.getTestsFailedCount() == 0;
+            return summary;
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.executeTest: " + e);
         }
@@ -116,6 +107,7 @@ public class TestCompiler {
         if (this.code == "") {
             throw new RuntimeException("In TestCompiler.compileTest: code is empty");
         }
+        this.testName = className;
         boolean result;
         try {
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
@@ -133,24 +125,25 @@ public class TestCompiler {
 
             Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
             Iterable<String> options = Arrays.asList("-classpath", String.join(config.getOS().contains("win") ? ";" : ":", config.getClassPaths()),
-                    "-d", outputPath.toAbsolutePath().getParent().toString());
+                    "-d", buildFolder.toPath().toString());
 
             DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
             JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
 
             result = task.call();
-            if (!result) {
+            if (!result && promptInfo != null) {
                 TestMessage testMessage = new TestMessage();
                 List<String> errors = new ArrayList<>();
                 diagnostics.getDiagnostics().forEach(diagnostic -> {
-                    errors.add("Error on line " + diagnostic.getLineNumber() +
-                            " : " + diagnostic.getMessage(null));
+                    errors.add("Error in " + testName +
+                            ": line " + diagnostic.getLineNumber() + " : "
+                            + diagnostic.getMessage(null));
                 });
                 testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
                 testMessage.setErrorMessage(errors);
                 promptInfo.setErrorMsg(testMessage);
 
-                exportError(errors.toString(), outputPath);
+                exportError(errors, outputPath);
             }
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileTest: " + e);
@@ -158,11 +151,12 @@ public class TestCompiler {
         return result;
     }
 
-    public void exportError(String error, Path outputPath) {
+    public void exportError(List<String> errors, Path outputPath) {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()));
             writer.write(code);
-            writer.write(error);
+            writer.write("\n--------------------------------------------\n");
+            writer.write(errors.stream().collect(Collectors.joining("\n")));
             writer.close();
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.exportError: " + e);
@@ -171,6 +165,7 @@ public class TestCompiler {
 
     public static List<String> listClassPaths(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
         List<String> classPaths = new ArrayList<>();
+        classPaths.add(session.getLocalRepository().find(project.getArtifact()).getFile().getAbsolutePath());
         try {
             classPaths.addAll(project.getCompileClasspathElements());
             ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest() );
@@ -191,13 +186,13 @@ public class TestCompiler {
 
 
     /**
-     * Move the src/test/java folder to a backup folder
+     * Copy generated tests to src/test/java and move the original src/test/java folder to a backup folder
      */
     public void copyAndBackupTestFolder() {
-        restoreTestFolder();
+        restoreBackupFolder();
         if (srcTestFolder.exists()) {
             try {
-                FileUtils.copyDirectoryStructure(srcTestFolder, backupFolder);
+                FileUtils.copyDirectoryStructure(srcTestFolder, testBackupFolder);
                 FileUtils.deleteDirectory(srcTestFolder);
                 FileUtils.copyDirectoryStructure(config.getTestOutput().toFile(), srcTestFolder);
             } catch (IOException e) {
@@ -207,16 +202,44 @@ public class TestCompiler {
     }
 
     /**
+     * Copy compiled generated tests to target/test-classes and move the original folder to a backup folder
+     */
+    public void copyAndBackupCompiledTest() {
+        File target = config.project.getBasedir().toPath().resolve("target/test-classes").toFile();
+        try {
+            if (!buildBackupFolder.exists() && target.exists()) {
+                FileUtils.copyDirectoryStructure(target, buildBackupFolder);
+                FileUtils.deleteDirectory(target);
+            }
+            FileUtils.copyDirectoryStructure(buildFolder, target);
+        } catch (IOException e) {
+            throw new RuntimeException("In TestCompiler.copyAndBackupCompiledTest: " + e);
+        }
+    }
+
+    /**
      * Restore the backup folder to src/test/java
      */
-    public void restoreTestFolder() {
-        if (backupFolder.exists()) {
+    public void restoreBackupFolder() {
+        if (testBackupFolder.exists()) {
             try {
                 if (srcTestFolder.exists()) {
                     FileUtils.deleteDirectory(srcTestFolder);
                 }
-                FileUtils.copyDirectoryStructure(backupFolder, srcTestFolder);
-                FileUtils.deleteDirectory(backupFolder);
+                FileUtils.copyDirectoryStructure(testBackupFolder, srcTestFolder);
+                FileUtils.deleteDirectory(testBackupFolder);
+            } catch (IOException e) {
+                throw new RuntimeException("In TestCompiler.restoreTestFolder: " + e);
+            }
+        }
+        if (buildBackupFolder.exists()) {
+            File target = config.project.getBasedir().toPath().resolve("target/test-classes").toFile();
+            try {
+                if (target.exists()) {
+                    FileUtils.deleteDirectory(target);
+                }
+                FileUtils.copyDirectoryStructure(buildBackupFolder, target);
+                FileUtils.deleteDirectory(buildBackupFolder);
             } catch (IOException e) {
                 throw new RuntimeException("In TestCompiler.restoreTestFolder: " + e);
             }

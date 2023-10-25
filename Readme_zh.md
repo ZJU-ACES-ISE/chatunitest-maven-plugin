@@ -5,7 +5,15 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
 
 ## 更新
-💥 允许使用多线程更快地生成单元测试！
+💥 新增多线程功能，实现更快的测试生成。
+
+💥 插件现在可以导出运行时和错误日志。
+
+💥 新增自定义提示支持。 
+
+💥 优化算法以减少令牌使用。
+
+💥 扩展配置选项。请参考**运行步骤**了解详情。
 
 ## 动机
 相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件 开发，最新版1.1.0已发布到Maven中心仓库，欢迎试用和反馈。IDEA插件正在开发中，欢迎持续关注。
@@ -19,7 +27,7 @@
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
@@ -58,6 +66,9 @@
 - `stopWhenSuccess`: (**可选**) 是否在生成一个成功的测试后停止，默认值：`true`
 - `noExecution`: (**可选**) 是否跳过执行测试验证的步骤，默认值：`false`
 所有这些参数也可以在命令行中使用-D选项指定。
+- `merge` : (**可选**) 将每个类对应的所有测试合并为测试套件，默认值: `true`.
+- `promptPath` : (**可选**) 自定义prompt的路径. 参考默认promp目录: `src/main/resources/prompt`.
+
 
 一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
 
@@ -68,7 +79,7 @@
 <dependency>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <type>pom</type>
 </dependency>
 ```
@@ -138,6 +149,8 @@ mvn chatunitest:copy
 ```
 
 运行该命令将复制所有生成的测试代码到您的测试文件夹，同时备份您的测试目录。
+
+如果启用了`merge`配置，则可以运行每个类的测试套件。
 
 ```shell
 mvn chatunitest:restore

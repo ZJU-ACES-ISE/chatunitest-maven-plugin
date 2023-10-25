@@ -41,7 +41,7 @@ public class Message {
         USER("user"),
         ASSISTANT("assistant"),
         ;
-        private String value;
+        private final String value;
     }
 
 }

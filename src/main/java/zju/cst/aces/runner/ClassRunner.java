@@ -3,6 +3,7 @@ package zju.cst.aces.runner;
 import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.dto.MethodInfo;
 import zju.cst.aces.config.Config;
+import zju.cst.aces.util.TestClassMerger;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,41 +16,50 @@ import java.util.concurrent.*;
 public class ClassRunner extends AbstractRunner {
     public ClassInfo classInfo;
     public File infoDir;
+    public int index;
 
     public ClassRunner(String fullClassName, Config config) throws IOException {
         super(fullClassName, config);
         infoDir = new File(parseOutputPath + File.separator + fullClassName.replace(".", File.separator));
         if (!infoDir.isDirectory()) {
-            config.getLog().error("Error: " + fullClassName + " no parsed info found");
+            config.getLog().warn("Error: " + fullClassName + " no parsed info found");
         }
         File classInfoFile = new File(infoDir + File.separator + "class.json");
         classInfo = GSON.fromJson(Files.readString(classInfoFile.toPath(), StandardCharsets.UTF_8), ClassInfo.class);
     }
 
+    @Override
     public void start() throws IOException {
         if (config.isEnableMultithreading() == true) {
             methodJob();
         } else {
-            for (String mSig : classInfo.methodSignatures.keySet()) {
-                MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
-                if (methodInfo == null) {
+            for (String mSig : classInfo.methodSigs.keySet()) {
+                MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
+                if (!filter(methodInfo)) {
+                    config.getLog().info("Skip method: " + mSig + " in class: " + fullClassName);
                     continue;
                 }
                 new MethodRunner(fullClassName, config, methodInfo).start();
             }
+        }
+        if (config.isEnableMerge()) {
+            new TestClassMerger(config, fullClassName).mergeWithSuite();
         }
     }
 
     public void methodJob() {
         ExecutorService executor = Executors.newFixedThreadPool(config.getMethodThreads());
         List<Future<String>> futures = new ArrayList<>();
-        for (String mSig : classInfo.methodSignatures.keySet()) {
+        for (String mSig : classInfo.methodSigs.keySet()) {
             Callable<String> callable = new Callable<String>() {
                 @Override
                 public String call() throws Exception {
-                    MethodInfo methodInfo = getMethodInfo(classInfo, mSig);
+                    MethodInfo methodInfo = getMethodInfo(config, classInfo, mSig);
                     if (methodInfo == null) {
                         return "No parsed info found for " + mSig + " in " + fullClassName;
+                    }
+                    if (!filter(methodInfo)) {
+                        return "Skip method: " + mSig + " in class: " + fullClassName;
                     }
                     new MethodRunner(fullClassName, config, methodInfo).start();
                     return "Processed " + mSig;
@@ -75,5 +85,13 @@ public class ClassRunner extends AbstractRunner {
         }
 
         executor.shutdown();
+    }
+
+    private boolean filter(MethodInfo methodInfo) {
+        if (methodInfo == null
+                || methodInfo.isConstructor || methodInfo.isGetSet || methodInfo.isBoolean || !methodInfo.isPublic) {
+            return false;
+        }
+        return true;
     }
 }

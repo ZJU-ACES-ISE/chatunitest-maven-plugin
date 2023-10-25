@@ -25,8 +25,8 @@ import zju.cst.aces.util.TestCompiler;
  * ChatUniTest maven plugin
  */
 
-@Mojo(name = "restore")
-public class RestoreBackupMojo
+@Mojo(name = "copy")
+public class CopyTestMojo
         extends ProjectTestMojo {
 
     /**
@@ -36,12 +36,13 @@ public class RestoreBackupMojo
     public void execute() throws MojoExecutionException {
         init();
         try {
-            log.info("\n==========================\n[ChatTester] Restoring test folder ...");
+            log.info("\n==========================\n[ChatTester] Copying tests ...");
             TestCompiler compiler = new TestCompiler(config);
-            compiler.restoreBackupFolder();
+            compiler.copyAndBackupTestFolder();
+            compiler.copyAndBackupCompiledTest();
         } catch (Exception e) {
             log.error(e);
-            throw new MojoExecutionException("Failed to restore test folder, please try again.");
+            throw new MojoExecutionException("Failed to copy test folder, please try again.");
         }
         log.info("\n==========================\n[ChatTester] Finished");
     }

@@ -1,5 +1,7 @@
 package zju.cst.aces.config;
 
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import lombok.Getter;
 import lombok.Setter;
 import okhttp3.OkHttpClient;
@@ -9,27 +11,39 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.util.TestCompiler;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 @Setter
 public class Config {
+    public String date;
     public MavenSession session;
     public MavenProject project;
     public DependencyGraphBuilder dependencyGraphBuilder;
+    public JavaParser parser;
+    public JavaParserFacade parserFacade;
     public List<String> classPaths;
+    public Path promptPath;
+    public String url;
     public String[] apiKeys;
     public Log log;
     public String OS;
     public boolean stopWhenSuccess;
     public boolean noExecution;
     public boolean enableMultithreading;
+    public boolean enableRuleRepair;
+    public boolean enableMerge;
     public int maxThreads;
     public int classThreads;
     public int methodThreads;
@@ -37,6 +51,7 @@ public class Config {
     public int maxRounds;
     public int maxPromptTokens;
     public int minErrorTokens;
+    public int sleepTime;
     public String model;
     public Double temperature;
     public int topP;
@@ -44,26 +59,38 @@ public class Config {
     public int presencePenalty;
     public Path testOutput;
     public Path tmpOutput;
+    public Path compileOutputPath;
     public Path parseOutput;
     public Path errorOutput;
-    public Path classMapPath;
+    public Path classNameMapPath;
+    public Path historyPath;
+    public Path examplePath;
 
     public String proxy;
     public String hostname;
     public String port;
     public OkHttpClient client;
+    public static AtomicInteger sharedInteger = new AtomicInteger(0);
+    public static Map<String, Map<String, String>> classMapping;
 
     public static class ConfigBuilder {
+        public String date;
         public MavenSession session;
         public MavenProject project;
         public DependencyGraphBuilder dependencyGraphBuilder;
+        public JavaParser parser;
+        public JavaParserFacade parserFacade;
         public List<String> classPaths;
+        public Path promptPath;
+        public String url;
         public String[] apiKeys;
         public Log log;
         public String OS = System.getProperty("os.name").toLowerCase();
         public boolean stopWhenSuccess = true;
         public boolean noExecution = false;
         public boolean enableMultithreading = true;
+        public boolean enableRuleRepair = true;
+        public boolean enableMerge = true;
         public int maxThreads = Runtime.getRuntime().availableProcessors() * 5;
         public int classThreads = (int) Math.ceil((double)  this.maxThreads / 10);
         public int methodThreads = (int) Math.ceil((double) this.maxThreads / this.classThreads);
@@ -71,17 +98,20 @@ public class Config {
         public int maxRounds = 5;
         public int maxPromptTokens = 2600;
         public int minErrorTokens = 500;
+        public int sleepTime = 0;
         public String model = "gpt-3.5-turbo";
         public Double temperature = 0.5;
         public int topP = 1;
         public int frequencyPenalty = 0;
         public int presencePenalty = 0;
-        public Path testOutput = Paths.get("chatunitest-tests");
+        public Path testOutput;
         public Path tmpOutput = Paths.get(System.getProperty("java.io.tmpdir"), "chatunitest-info");
         public Path parseOutput;
+        public Path compileOutputPath;
         public Path errorOutput;
-        public Path classMapPath;
-
+        public Path classNameMapPath;
+        public Path historyPath;
+        public Path examplePath;
         public String proxy = "null:-1";
         public String hostname = "null";
         public String port = "-1";
@@ -91,16 +121,26 @@ public class Config {
                 .readTimeout(5, TimeUnit.MINUTES)
                 .build();
 
+
         public ConfigBuilder(MavenSession session, MavenProject project, DependencyGraphBuilder dependencyGraphBuilder, Log log) {
+            this.date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")).toString();
             this.session = session;
             this.project = project;
             this.dependencyGraphBuilder = dependencyGraphBuilder;
             this.classPaths = TestCompiler.listClassPaths(session, project, dependencyGraphBuilder);
             this.log = log;
+
+            MavenProject parent = project.getParent();
+            while(parent != null && parent.getBasedir() != null) {
+                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
+                parent = parent.getParent();
+            }
             this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
-            this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.classNameMapPath = this.tmpOutput.resolve("classNameMapping.json");
+            this.historyPath = this.tmpOutput.resolve("history" + this.date);
         }
 
         public ConfigBuilder maxThreads(int maxThreads) {
@@ -123,10 +163,18 @@ public class Config {
         }
 
         public ConfigBuilder tmpOutput(Path tmpOutput) {
-            this.tmpOutput = tmpOutput.resolve(project.getArtifactId());
+            this.tmpOutput = tmpOutput;
+            MavenProject parent = project.getParent();
+            while(parent != null && parent.getBasedir() != null) {
+                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
+                parent = parent.getParent();
+            }
+            this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
-            this.classMapPath = this.tmpOutput.resolve("class-map.json");
+            this.classNameMapPath = this.tmpOutput.resolve("classNameMapping.json");
+            this.historyPath = this.tmpOutput.resolve("history" + this.date);
             return this;
         }
 
@@ -142,6 +190,23 @@ public class Config {
 
         public ConfigBuilder dependencyGraphBuilder(DependencyGraphBuilder dependencyGraphBuilder) {
             this.dependencyGraphBuilder = dependencyGraphBuilder;
+            return this;
+        }
+
+        public ConfigBuilder promptPath(File promptPath) {
+            if (promptPath != null) {
+                this.promptPath = promptPath.toPath();
+            }
+            return this;
+        }
+
+        public ConfigBuilder parser(JavaParser parser) {
+            this.parser = parser;
+            return this;
+        }
+
+        public ConfigBuilder parserFacade(JavaParserFacade parserFacade) {
+            this.parserFacade = parserFacade;
             return this;
         }
 
@@ -170,8 +235,18 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder enableMerge(boolean enableMerge) {
+            this.enableMerge = enableMerge;
+            return this;
+        }
+
         public ConfigBuilder enableMultithreading(boolean enableMultithreading) {
             this.enableMultithreading = enableMultithreading;
+            return this;
+        }
+
+        public ConfigBuilder enableRuleRepair(boolean enableRuleRepair) {
+            this.enableRuleRepair = enableRuleRepair;
             return this;
         }
 
@@ -182,6 +257,14 @@ public class Config {
 
         public ConfigBuilder methodThreads(int methodThreads) {
             this.methodThreads = methodThreads;
+            return this;
+        }
+
+        public ConfigBuilder url(String url) {
+            if (!this.model.contains("gpt-4") && !this.model.contains("gpt-3.5") && url.equals("https://api.openai.com/v1/chat/completions")) {
+                throw new RuntimeException("Invalid url for model: " + this.model + ". Please configure the url in plugin configuration.");
+            }
+            this.url = url;
             return this;
         }
 
@@ -207,6 +290,11 @@ public class Config {
 
         public ConfigBuilder minErrorTokens(int minErrorTokens) {
             this.minErrorTokens = minErrorTokens;
+            return this;
+        }
+
+        public ConfigBuilder sleepTime(int sleepTime) {
+            this.sleepTime = sleepTime;
             return this;
         }
 
@@ -240,6 +328,11 @@ public class Config {
             return this;
         }
 
+        public ConfigBuilder compileOutputPath(Path compileOutputPath) {
+            this.compileOutputPath = compileOutputPath;
+            return this;
+        }
+
         public ConfigBuilder parseOutput(Path parseOutput) {
             this.parseOutput = parseOutput;
             return this;
@@ -250,8 +343,13 @@ public class Config {
             return this;
         }
 
-        public ConfigBuilder classMapPath(Path classMapPath) {
-            this.classMapPath = classMapPath;
+        public ConfigBuilder classNameMapPath(Path classNameMapPath) {
+            this.classNameMapPath = classNameMapPath;
+            return this;
+        }
+
+        public ConfigBuilder examplePath(Path examplePath) {
+            this.examplePath = examplePath;
             return this;
         }
 
@@ -305,15 +403,22 @@ public class Config {
 
         public Config build() {
             Config config = new Config();
+            config.setDate(this.date);
             config.setSession(this.session);
             config.setProject(this.project);
             config.setDependencyGraphBuilder(this.dependencyGraphBuilder);
+            config.setParser(this.parser);
+            config.setParserFacade(this.parserFacade);
             config.setClassPaths(this.classPaths);
+            config.setPromptPath(this.promptPath);
+            config.setUrl(this.url);
             config.setApiKeys(this.apiKeys);
             config.setOS(this.OS);
             config.setStopWhenSuccess(this.stopWhenSuccess);
-            config.setEnableMultithreading(this.enableMultithreading);
             config.setNoExecution(this.noExecution);
+            config.setEnableMultithreading(this.enableMultithreading);
+            config.setEnableRuleRepair(this.enableRuleRepair);
+            config.setEnableMerge(this.enableMerge);
             config.setMaxThreads(this.maxThreads);
             config.setClassThreads(this.classThreads);
             config.setMethodThreads(this.methodThreads);
@@ -321,6 +426,7 @@ public class Config {
             config.setMaxRounds(this.maxRounds);
             config.setMaxPromptTokens(this.maxPromptTokens);
             config.setMinErrorTokens(this.minErrorTokens);
+            config.setSleepTime(this.sleepTime);
             config.setModel(this.model);
             config.setTemperature(this.temperature);
             config.setTopP(this.topP);
@@ -328,9 +434,12 @@ public class Config {
             config.setPresencePenalty(this.presencePenalty);
             config.setTestOutput(this.testOutput);
             config.setTmpOutput(this.tmpOutput);
+            config.setCompileOutputPath(this.compileOutputPath);
             config.setParseOutput(this.parseOutput);
             config.setErrorOutput(this.errorOutput);
-            config.setClassMapPath(this.classMapPath);
+            config.setClassNameMapPath(this.classNameMapPath);
+            config.setHistoryPath(this.historyPath);
+            config.setExamplePath(this.examplePath);
             config.setProxy(this.proxy);
             config.setHostname(this.hostname);
             config.setPort(this.port);

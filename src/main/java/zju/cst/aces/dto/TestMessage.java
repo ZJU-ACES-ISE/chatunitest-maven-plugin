@@ -15,8 +15,8 @@ import java.util.List;
  */
 @Data
 public class TestMessage {
-    private List<String> errorMessage;
     private ErrorType errorType;
+    private List<String> errorMessage;
 
     public enum ErrorType {
         COMPILE_ERROR,

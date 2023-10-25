@@ -18,31 +18,33 @@ package zju.cst.aces;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import zju.cst.aces.util.TestCompiler;
+import zju.cst.aces.parser.ProjectParser;
 
 /**
  * @author chenyi
  * ChatUniTest maven plugin
  */
 
-@Mojo(name = "copy")
-public class copyTestMojo
+@Mojo(name = "parse")
+public class ParseMojo
         extends ProjectTestMojo {
 
     /**
-     * Restore backup directory
+     * Parse target project
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        checkTargetFolder(project);
         init();
-        try {
-            log.info("\n==========================\n[ChatTester] Copying tests ...");
-            TestCompiler compiler = new TestCompiler(config);
-            compiler.copyAndBackupTestFolder();
-        } catch (Exception e) {
-            log.error(e);
-            throw new MojoExecutionException("Failed to copy test folder, please try again.");
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            return;
         }
-        log.info("\n==========================\n[ChatTester] Finished");
+        if (! config.getParseOutput().toFile().exists()) {
+            log.info("\n==========================\n[ChatTester] Parsing class info ...");
+            ProjectParser parser = new ProjectParser(config);
+            parser.parse();
+            log.info("\n==========================\n[ChatTester] Parse finished");
+        }
     }
 }

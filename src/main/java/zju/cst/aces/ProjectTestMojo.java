@@ -28,6 +28,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import zju.cst.aces.config.Config;
+import zju.cst.aces.dto.ClassInfo;
 import zju.cst.aces.parser.ProjectParser;
 import zju.cst.aces.runner.ClassRunner;
 
@@ -36,7 +37,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,39 +54,51 @@ public class ProjectTestMojo
     public MavenSession session;
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
-    @Parameter(defaultValue = "chatunitest-tests", property = "testOutput")
+    @Parameter(defaultValue = "${project.basedir}/chatunitest-tests", property = "testOutput")
     public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public File tmpOutput;
-    @Parameter(name = "apiKeys", required = true)
+    @Parameter(property = "promptPath")
+    public File promptPath;
+    @Parameter(property = "examplePath", defaultValue = "${project.basedir}/exampleUsage.json")
+    public File examplePath;
+    @Parameter(property = "url", defaultValue = "https://api.openai.com/v1/chat/completions")
+    public String url;
+    @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
+    public String model;
+    @Parameter(property = "apiKeys", required = true)
     public String[] apiKeys;
-    @Parameter(name = "stopWhenSuccess", property = "stopWhenSuccess", defaultValue = "true")
+    @Parameter(property = "stopWhenSuccess", defaultValue = "true")
     public boolean stopWhenSuccess;
-    @Parameter(name = "noExecution", property = "noExecution", defaultValue = "false")
+    @Parameter(property = "noExecution", defaultValue = "false")
     public boolean noExecution;
     @Parameter(alias = "thread", property = "thread", defaultValue = "true")
     public boolean enableMultithreading;
+    @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
+    public boolean enableRuleRepair;
+    @Parameter(alias = "merge", property = "merge", defaultValue = "true")
+    public boolean enableMerge;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
-    @Parameter(name = "testNumber", defaultValue = "5")
+    @Parameter(property = "testNumber", defaultValue = "5")
     public int testNumber;
-    @Parameter(name = "maxRounds", defaultValue = "5")
+    @Parameter(property = "maxRounds", defaultValue = "5")
     public int maxRounds;
-    @Parameter(name = "minErrorTokens", defaultValue = "500")
-    public int minErrorTokens;
-    @Parameter(name = "maxPromptTokens", defaultValue = "2600")
+    @Parameter(property = "maxPromptTokens", defaultValue = "2600")
     public int maxPromptTokens;
-    @Parameter(name = "model", defaultValue = "gpt-3.5-turbo")
-    public String model;
-    @Parameter(name = "temperature", defaultValue = "0.5")
+    @Parameter(property = "minErrorTokens", defaultValue = "500")
+    public int minErrorTokens;
+    @Parameter(property = "sleepTime", defaultValue = "0")
+    public int sleepTime;
+    @Parameter(property = "temperature", defaultValue = "0.5")
     public Double temperature;
-    @Parameter(name = "topP", defaultValue = "1")
+    @Parameter(property = "topP", defaultValue = "1")
     public  int topP;
-    @Parameter(name = "frequencyPenalty", defaultValue = "0")
+    @Parameter(property = "frequencyPenalty", defaultValue = "0")
     public int frequencyPenalty;
-    @Parameter(name = "presencePenalty", defaultValue = "0")
+    @Parameter(property = "presencePenalty", defaultValue = "0")
     public int presencePenalty;
-    @Parameter(name = "proxy",defaultValue = "null:-1")
+    @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
@@ -100,15 +112,16 @@ public class ProjectTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        checkTargetFolder(project);
         init();
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            return;
+        }
+        printConfiguration();
         log.info("\n==========================\n[ChatTester] Generating tests for project " + project.getBasedir().getName() + " ...");
         log.warn("[ChatTester] It may consume a significant number of tokens!");
 
-        Path srcMainJavaPath = Paths.get(project.getBasedir().getAbsolutePath(), "src", "main", "java");
-        if (!srcMainJavaPath.toFile().exists()) {
-            log.error("\n==========================\n[ChatTester] No compile source found in " + project);
-            return;
-        }
         ProjectParser parser = new ProjectParser(config);
         if (! config.getParseOutput().toFile().exists()) {
             log.info("\n==========================\n[ChatTester] Parsing class info ...");
@@ -117,7 +130,7 @@ public class ProjectTestMojo
         }
 
         List<String> classPaths = new ArrayList<>();
-        parser.scanSourceDirectory(srcMainJavaPath.toFile(), classPaths);
+        parser.scanSourceDirectory(project, classPaths);
 
         if (config.isEnableMultithreading() == true) {
             classJob(classPaths);
@@ -125,9 +138,14 @@ public class ProjectTestMojo
             for (String classPath : classPaths) {
                 String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
                 try {
-                    className = getFullClassName(className);
+                    className = getFullClassName(config, className);
                     log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                    new ClassRunner(className, config).start();
+                    ClassRunner runner = new ClassRunner(className, config);
+                    if (!filter(runner.classInfo)) {
+                        config.getLog().info("Skip class: " + classPath);
+                        continue;
+                    }
+                    runner.start();
                 } catch (IOException e) {
                     log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                 }
@@ -146,9 +164,13 @@ public class ProjectTestMojo
                 public String call() throws Exception {
                     String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
                     try {
-                        className = getFullClassName(className);
+                        className = getFullClassName(config, className);
                         log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                        new ClassRunner(className, config).start();
+                        ClassRunner runner = new ClassRunner(className, config);
+                        if (!filter(runner.classInfo)) {
+                            return "Skip class: " + classPath;
+                        }
+                        runner.start();
                     } catch (IOException e) {
                         log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
                     }
@@ -178,27 +200,35 @@ public class ProjectTestMojo
     }
 
     public void init() {
-        checkTargetFolder(project);
         log = getLog();
         config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
+                .promptPath(promptPath)
+                .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
+                .enableRuleRepair(enableRuleRepair)
                 .tmpOutput(tmpOutput.toPath())
                 .testOutput(testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
                 .noExecution(noExecution)
+                .enableMerge(enableMerge)
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
-                .minErrorTokens(minErrorTokens)
                 .maxPromptTokens(maxPromptTokens)
+                .minErrorTokens(minErrorTokens)
+                .sleepTime(sleepTime)
                 .model(model)
+                .url(url)
                 .temperature(temperature)
                 .topP(topP)
                 .frequencyPenalty(frequencyPenalty)
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .build();
+    }
+
+    public void printConfiguration() {
         log.info("\n========================== Configuration ==========================\n");
         log.info(" Multithreading >>>> " + config.isEnableMultithreading());
         if (config.isEnableMultithreading()) {
@@ -206,22 +236,30 @@ public class ProjectTestMojo
         }
         log.info(" Stop when success >>>> " + config.isStopWhenSuccess());
         log.info(" No execution >>>> " + config.isNoExecution());
+        log.info(" Enable Merge >>>> " + config.isEnableMerge());
         log.info(" --- ");
         log.info(" TestOutput Path >>> " + config.getTestOutput());
         log.info(" TmpOutput Path >>> " + config.getTmpOutput());
+        log.info(" Prompt path >>> " + config.getPromptPath());
+        log.info(" Example path >>> " + config.getExamplePath());
         log.info(" MaxThreads >>> " + config.getMaxThreads());
         log.info(" TestNumber >>> " + config.getTestNumber());
         log.info(" MaxRounds >>> " + config.getMaxRounds());
         log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
         log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
         log.info("\n===================================================================\n");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    public String getFullClassName(String name) throws IOException {
+    public static String getFullClassName(Config config, String name) throws IOException {
         if (isFullName(name)) {
             return name;
         }
-        Path classMapPath = config.getClassMapPath();
+        Path classMapPath = config.getClassNameMapPath();
         Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {
@@ -233,7 +271,7 @@ public class ProjectTestMojo
         return name;
     }
 
-    public boolean isFullName(String name) {
+    public static boolean isFullName(String name) {
         if (name.contains(".")) {
             return true;
         }
@@ -246,10 +284,20 @@ public class ProjectTestMojo
      * @param project
      */
     public static void checkTargetFolder(MavenProject project) {
-        if (!new File(project.getBuild().getOutputDirectory()).exists()) {
-            throw new RuntimeException("In TestCompiler.checkTargetFolder: " +
-                    "The project is not compiled to the target directory. " +
-                    "Please run 'mvn compile' first.");
+        if (project.getPackaging().equals("pom")) {
+            return;
         }
+        if (!new File(project.getBuild().getOutputDirectory()).exists()) {
+            throw new RuntimeException("In ProjectTestMojo.checkTargetFolder: " +
+                    "The project is not compiled to the target directory. " +
+                    "Please run 'mvn install' first.");
+        }
+    }
+
+    private boolean filter(ClassInfo classInfo) {
+        if (!classInfo.isPublic || classInfo.isAbstract || classInfo.isInterface) {
+            return false;
+        }
+        return true;
     }
 }
