@@ -71,6 +71,8 @@ public class MethodCoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
                 Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+                System.out.println(resolvedSourceDir.toFile());
+                System.out.println(srcTestJavaPath);
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
