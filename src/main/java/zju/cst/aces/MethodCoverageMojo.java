@@ -98,10 +98,24 @@ public class MethodCoverageMojo extends AbstractMojo {
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
                 log.info("xml_methodName = " + xml_methodName);
+
+                Properties properties = new Properties();
+                properties.setProperty("gpg.skip", "true");
+                properties.setProperty("enforcer.skip", "true");
+                properties.setProperty("license.skip", "true");
+                properties.setProperty("sortpom.skip", "true");
+                properties.setProperty("maven.javadoc.skip", "true");
+                properties.setProperty("checkstyle.skip", "true");
+                properties.setProperty("animal.sniffer.skip", "true");
+                properties.setProperty("cobertura.skip", "true");
+                properties.setProperty("rat.skip", "true");
+                properties.setProperty("dependencyVersionsCheck.skip", "true");
+
                 // 运行 Maven 测试
                 InvocationRequest request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("clean", "test-compile"));
+                request.setProperties(properties);
                 Invoker invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -114,17 +128,6 @@ public class MethodCoverageMojo extends AbstractMojo {
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
-                Properties properties = new Properties();
-                properties.setProperty("gpg.skip", "true");
-                properties.setProperty("enforcer.skip", "true");
-                properties.setProperty("license.skip", "true");
-                properties.setProperty("sortpom.skip", "true");
-                properties.setProperty("maven.javadoc.skip", "true");
-                properties.setProperty("checkstyle.skip", "true");
-                properties.setProperty("animal.sniffer.skip", "true");
-                properties.setProperty("cobertura.skip", "true");
-                properties.setProperty("rat.skip", "true");
-                properties.setProperty("dependencyVersionsCheck.skip", "true");
                 request.setProperties(properties);
                 invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
