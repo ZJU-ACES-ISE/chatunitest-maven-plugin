@@ -162,7 +162,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                     tempName=prefix+"/"+postfix;
                 }
                 File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
-                System.out.println(htmlFile);
+                System.out.println("Branson:" + htmlFile);
                 //jacoco.xml路径
                 String xmlFilePath = project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                 String htmlContent = "";
