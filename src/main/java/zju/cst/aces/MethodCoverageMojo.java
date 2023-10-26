@@ -25,6 +25,7 @@ import zju.cst.aces.util.XmlParser;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -71,13 +72,16 @@ public class MethodCoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
                 Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
-                System.out.println(resolvedSourceDir.toFile());
-                System.out.println(srcTestJavaPath);
+
+                if(!Files.exists(resolvedSourceDir)){
+                    log.warn(resolvedSourceDir.toString()+" does not exist.");
+                    return;
+                }
+
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
-            log.warn(e);
-//            throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         SignatureGetter signatureGetter = new SignatureGetter();
