@@ -61,6 +61,8 @@ public class MethodCoverageMojo extends AbstractMojo {
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
+            System.out.println(sourceDir);
+            System.out.println(project.getBasedir());
             if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
                 copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
             } else {
