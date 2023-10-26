@@ -110,6 +110,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                     throw new RuntimeException(e);
                 }
 //                String commandTest = String.join(",", testclassName);//就是上面log的className
+                log.info("Running mvn test ...");
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
@@ -133,6 +134,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                     throw new RuntimeException(e);
                 }
 
+                log.info("Running mvn jacoco:report");
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("jacoco:report"));
