@@ -74,7 +74,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
-            log.error(e);
+            log.warn(e);
 //            throw new RuntimeException(e);
         }
 
