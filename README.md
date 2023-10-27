@@ -183,7 +183,7 @@ mvn chatunitest:generateCoverage
 Running this method will execute the tests in the folder `sourceDir`, the coverage 
 result of the project will remove to folder `targetDir`. 
 ```shell
-mvn chatunitest:generateMethodCoverage
+mvn chatunitest:generateMethodCoverage_separate
 ```
 ```xml
 <plugin>
@@ -198,7 +198,7 @@ mvn chatunitest:generateMethodCoverage
 </plugin>
 ```
 Running this method will execute all the test classes in `sourceDir` separately 
-and calculate separate coverage for each test class, the result are saved in the `methodCoverage.json` file under `targetDir`.
+and calculate separate coverage for each test class, the result are saved in the `methodCoverage_SEPARATE.json` file under `targetDir`.
 
 ```shell
 mvn chatunitest:generateMethodCoverage_merge
