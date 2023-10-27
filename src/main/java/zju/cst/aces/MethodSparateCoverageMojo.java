@@ -25,14 +25,15 @@ import zju.cst.aces.util.XmlParser;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 /**
  * 为每个测试类单独生成覆盖率数据merge版本（1-n的顺序依次执行）
  */
-@Mojo(name = "generateMethodCoverage_merge")
-public class MethodMergeCoverageMojo extends AbstractMojo {
+@Mojo(name = "generateMethodCoverage_separate")
+public class MethodSparateCoverageMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
 
@@ -68,184 +69,43 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
 
         HashMap<String, List<String>> executeClassMap = new HashMap<>();
-        for(File file:files){
-            String testclassName=extractClassName(srcTestJavaPath,file);
-            String[] s1=testclassName.split("_", 4);
-            String prefix_className = s1[0]+"_"+s1[1]+"_"+s1[2];
-            if(executeClassMap.get(prefix_className)!=null){
+        for (File file : files) {
+            String testclassName = extractClassName(srcTestJavaPath, file);
+            String[] s1 = testclassName.split("_", 4);
+            String prefix_className = s1[0] + "_" + s1[1] + "_" + s1[2];
+            if (executeClassMap.get(prefix_className) != null) {
                 executeClassMap.get(prefix_className).add(testclassName);
-            }
-            else {
+            } else {
                 ArrayList<String> classNameList = new ArrayList<>();
                 classNameList.add(testclassName);
-                executeClassMap.put(prefix_className,classNameList);
+                executeClassMap.put(prefix_className, classNameList);
             }
         }
-
+        //判断targetDir是否存在
         File directory = new File(targetDir);
         if (!directory.exists()) {
             directory.mkdirs();
         }
         for (String key : executeClassMap.keySet()) {
             List<String> executeClasses = executeClassMap.get(key);
-            if(executeClasses.size()>1){
-                for (int i = 0; i < executeClasses.size(); i++) {
-                    String s = executeClasses.get(i);
-                    s=s.replaceAll("\\.","/");
-                    executeClasses.set(i,s);
-                }
-                for (int i = 0; i < executeClasses.size(); i++) {
-                    String join_execute_classes = String.join(",", sortByLastDigit(executeClasses).subList(0,i+1));
-                    //遍历executeClassMap，一个list为一次运行，抽取覆盖率
-                    String testclassName = key+"_"+"X";//X表示第几轮生成的
-//            log.info(testclassName);
-                    testclassName = testclassName.replaceAll("\\.", "/");
-                    try {
-                        String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
-                        String className = s[0];
-//                log.info(className);
-                        int index = Integer.parseInt(s[1]);
-                        String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
-//                log.info(methodSignature);
-                        //解析jacoco.xml需要用到的methodName
-                        String xml_methodName=s[2];
-                        log.info("xml_methodName = " + xml_methodName);
-                        // 运行 Maven 测试
-                        InvocationRequest request = new DefaultInvocationRequest();
-                        request.setPomFile(pomFile);
-                        request.setGoals(Arrays.asList("clean", "test-compile"));
-                        Invoker invoker = new DefaultInvoker();
-                        invoker.setMavenHome(new File(mavenHome));
-                        try {
-                            invoker.execute(request);
-                        } catch (MavenInvocationException e) {
-                            throw new RuntimeException(e);
-                        }
-                        request = new DefaultInvocationRequest();
-                        request.setPomFile(pomFile);
-                        request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
-                        invoker = new DefaultInvoker();
-                        invoker.setMavenHome(new File(mavenHome));
-                        try {
-                            invoker.execute(request);
-                        } catch (MavenInvocationException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        request = new DefaultInvocationRequest();
-                        request.setPomFile(pomFile);
-                        request.setGoals(Arrays.asList("jacoco:report"));
-                        invoker = new DefaultInvoker();
-                        invoker.setMavenHome(new File(mavenHome));
-                        try {
-                            invoker.execute(request);
-                        } catch (MavenInvocationException e) {
-                            throw new RuntimeException(e);
-                        }
-                        String tempName=className;
-                        int lastIndex = tempName.lastIndexOf(".");
-                        if(lastIndex!=-1){
-                            String prefix=className.substring(0,lastIndex);
-                            String postfix=className.substring(lastIndex+1);
-                            tempName=prefix+"/"+postfix;
-                        }
-                        File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
-                        //jacoco.xml路径
-                        String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
-                        String htmlContent = "";
-                        try {
-                            htmlContent = FileUtils.readFileToString(htmlFile, "UTF-8");
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        Document doc = Jsoup.parse(htmlContent);
-                        Element coverageTable = doc.getElementById("coveragetable");
-                        if (coverageTable != null) {
-                            Elements rows = coverageTable.select("tbody > tr");
-                            for (Element row : rows) {
-                                Element methodNameElement = row.selectFirst("td[id^='a']");
-                                String methodName = methodNameElement.text();
-                                if (methodName.replace(" ", "").equals(methodSignature.replace
-                                        (" ", ""))) {//target_methodSignature就是上面抽取的getMethodSignature的返回结果
-                                    Element instructionCoverageElement = row.selectFirst("td.ctr2:nth-child(3)");
-                                    Element branchCoverageElement = row.selectFirst("td.ctr2:nth-child(5)");
-                                    String instructionCoverage = instructionCoverageElement.text();
-                                    String branchCoverage = branchCoverageElement.text();
-                                    log.info(className+":"+methodSignature+"\n"+"instruction coverage: " + instructionCoverage + ", branch coverage: " + branchCoverage);
-                                    String xml_className=testclassName.split("_",2)[0];
-                                    log.info("testclassName = " + testclassName);
-                                    String xml_methodSignature=methodSignature;
-                                    log.info("xml_methodSignature = " + xml_methodSignature);
-                                    XmlParser xmlParser = new XmlParser();
-                                    List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
-//                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
-                                    CoverageData coverateData = new CoverageData(testclassName.replaceAll("/",".")+"_1To"+(i+1),methodSignature,instructionCoverage,xml_extract_result);
-                                    List<CoverageData> dataList=coverageMap.get(className);
-                                    if(dataList==null){
-                                        dataList=new ArrayList<>();
-                                        coverageMap.put(className,dataList);
-                                    }
-                                    dataList.add(coverateData);
-//                    System.out.println("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
-                                    break;
-                                }
-                            }
-                        } else {
-                            log.info("未找到覆盖率表格");
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    //存储每轮数据
-                    String[] s = testclassName.split("_");
-                    File dir = Paths.get(directory.getAbsolutePath(), s[0]+"/"+s[1]+"/"+"Merge_"+(i+1)).toFile();
-                    if(!dir.exists()){
-                        dir.mkdirs();
-                    }
-                    File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_SEPARATE.json").toFile();
-                    if(!file.exists()){
-                        try {
-                            file.createNewFile();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_SEPARATE.json").toFile();
-                    try (FileWriter writer = new FileWriter(file)) {
-                        Gson gson = new Gson();
-                        gson.toJson(coverageMap, writer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        copyDirectory(new File(project.getBasedir(),"/target/site/jacoco"),Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1)).toFile());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    coverageMap.clear();
-                }
+            for (int i = 0; i < executeClasses.size(); i++) {
+                String s = executeClasses.get(i);
+                s = s.replaceAll("\\.", "/");
+                executeClasses.set(i, s);
             }
-            else {
-                for (int i = 0; i < executeClasses.size(); i++) {
-                    String s = executeClasses.get(i);
-                    s=s.replaceAll("\\.","/");
-                    executeClasses.set(i,s);
-                }
-                String join_execute_classes = String.join(",", executeClasses);
+            for (int i = 0; i < executeClasses.size(); i++) {
                 //遍历executeClassMap，一个list为一次运行，抽取覆盖率
-                String testclassName = key+"_"+"X";//X表示第几轮生成的
-//            log.info(testclassName);
+                String testclassName = executeClasses.get(i);//X表示第几轮生成的
                 testclassName = testclassName.replaceAll("\\.", "/");
                 try {
                     String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                     String className = s[0];
 //                log.info(className);
                     int index = Integer.parseInt(s[1]);
-                    String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
+                    String methodSignature = signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()), index);
 //                log.info(methodSignature);
                     //解析jacoco.xml需要用到的methodName
-                    String xml_methodName=s[2];
+                    String xml_methodName = s[2];
                     log.info("xml_methodName = " + xml_methodName);
                     // 运行 Maven 测试
                     InvocationRequest request = new DefaultInvocationRequest();
@@ -260,7 +120,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     }
                     request = new DefaultInvocationRequest();
                     request.setPomFile(pomFile);
-                    request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
+                    request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
                     invoker = new DefaultInvoker();
                     invoker.setMavenHome(new File(mavenHome));
                     try {
@@ -279,16 +139,16 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     } catch (MavenInvocationException e) {
                         throw new RuntimeException(e);
                     }
-                    String tempName=className;
+                    String tempName = className;
                     int lastIndex = tempName.lastIndexOf(".");
-                    if(lastIndex!=-1){
-                        String prefix=className.substring(0,lastIndex);
-                        String postfix=className.substring(lastIndex+1);
-                        tempName=prefix+"/"+postfix;
+                    if (lastIndex != -1) {
+                        String prefix = className.substring(0, lastIndex);
+                        String postfix = className.substring(lastIndex + 1);
+                        tempName = prefix + "/" + postfix;
                     }
                     File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
                     //jacoco.xml路径
-                    String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
+                    String xmlFilePath = project.getBasedir().toString() + "/target/site/jacoco/jacoco.xml";
                     String htmlContent = "";
                     try {
                         htmlContent = FileUtils.readFileToString(htmlFile, "UTF-8");
@@ -308,19 +168,19 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                                 Element branchCoverageElement = row.selectFirst("td.ctr2:nth-child(5)");
                                 String instructionCoverage = instructionCoverageElement.text();
                                 String branchCoverage = branchCoverageElement.text();
-                                log.info(className+":"+methodSignature+"\n"+"instruction coverage: " + instructionCoverage + ", branch coverage: " + branchCoverage);
-                                String xml_className=testclassName.split("_",2)[0];
+                                log.info(className + ":" + methodSignature + "\n" + "instruction coverage: " + instructionCoverage + ", branch coverage: " + branchCoverage);
+                                String xml_className = testclassName.split("_", 2)[0];
                                 log.info("testclassName = " + testclassName);
-                                String xml_methodSignature=methodSignature;
+                                String xml_methodSignature = methodSignature;
                                 log.info("xml_methodSignature = " + xml_methodSignature);
                                 XmlParser xmlParser = new XmlParser();
-                                List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
+                                List<XmlParser.CoverageInfo> xml_extract_result = xmlParser.getCoverageInfo(xmlFilePath, xml_className, xml_methodName, xml_methodSignature);
 //                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
-                                CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,xml_extract_result);
-                                List<CoverageData> dataList=coverageMap.get(className);
-                                if(dataList==null){
-                                    dataList=new ArrayList<>();
-                                    coverageMap.put(className,dataList);
+                                CoverageData coverateData = new CoverageData(testclassName.replaceAll("/", "."), methodSignature, instructionCoverage, xml_extract_result);
+                                List<CoverageData> dataList = coverageMap.get(className);
+                                if (dataList == null) {
+                                    dataList = new ArrayList<>();
+                                    coverageMap.put(className, dataList);
                                 }
                                 dataList.clear();
                                 dataList.add(coverateData);
@@ -334,13 +194,15 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+
                 //存储每轮数据
                 String[] s = testclassName.split("_");
-                File dir = Paths.get(directory.getAbsolutePath(), s[0]+"/"+s[1]+"/"+"Merge_"+1).toFile();
+                String testName=testclassName.split("/")[3];
+                File dir = Paths.get(directory.getAbsolutePath(), s[0]+"/"+s[1]+"/"+testName).toFile();
                 if(!dir.exists()){
                     dir.mkdirs();
                 }
-                File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_SEPARATE.json").toFile();
+                File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+testName, "methodCoverage_SEPARATE.json").toFile();
                 if(!file.exists()){
                     try {
                         file.createNewFile();
@@ -348,7 +210,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         throw new RuntimeException(e);
                     }
                 }
-                file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_SEPARATE.json").toFile();
+                file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+testName, "methodCoverage_SEPARATE.json").toFile();
                 try (FileWriter writer = new FileWriter(file)) {
                     Gson gson = new Gson();
                     gson.toJson(coverageMap, writer);
@@ -356,26 +218,13 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     e.printStackTrace();
                 }
                 try {
-                    copyDirectory(new File(project.getBasedir(),"/target/site/jacoco"),Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1).toFile());
+                    copyDirectory(new File(project.getBasedir(),"/target/site/jacoco"),Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+testName).toFile());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                coverageMap.clear();
             }
-        }
 
-        /*File directory = new File(targetDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
         }
-        File file = new File(directory, "methodCoverage_MERGE.json");
-        try (FileWriter writer = new FileWriter(file)) {
-            Gson gson = new Gson();
-            gson.toJson(coverageMap, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
         // 删除临时复制的目录
         try {
             FileUtils.deleteDirectory(new File(srcTestJavaPath));
@@ -449,12 +298,13 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
             if (parts.length >= 4) {
                 String classPart = parts[0].replaceAll("/", ".");
                 String indexPart = parts[2];
-                String methodNamePart=parts[1];
-                return new String[]{classPart, indexPart,methodNamePart};//result[0]是className，[1]是index,[2]是methodName
+                String methodNamePart = parts[1];
+                return new String[]{classPart, indexPart, methodNamePart};//result[0]是className，[1]是index,[2]是methodName
             }
             return new String[]{};
         }
     }
+
     public static List<String> sortByLastDigit(List<String> list) {
         List<String> sortedList = new ArrayList<>(list);
 
@@ -473,8 +323,9 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
     }
 
     public static int getLastDigit(String s) {
-        return Integer.parseInt(s.split("_",5)[3]);
+        return Integer.parseInt(s.split("_", 5)[3]);
     }
+
     public static List<File> listJavaFiles(File directory) {
         List<File> javaFiles = new ArrayList<>();
         if (directory.isDirectory()) {
@@ -496,7 +347,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         return className.substring(0, className.length() - ".java".length());
     }
 
-    public class CoverageData{
+    public class CoverageData {
         private String testClassName;
         private String methodSignature;
         private String instructionCoverage;
@@ -506,8 +357,8 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         }
 
 
-        public CoverageData(String testClassName,String methodSignature, String instructionCoverage, List<XmlParser.CoverageInfo> coverageInfo) {
-            this.testClassName=testClassName;
+        public CoverageData(String testClassName, String methodSignature, String instructionCoverage, List<XmlParser.CoverageInfo> coverageInfo) {
+            this.testClassName = testClassName;
             this.methodSignature = methodSignature;
             this.instructionCoverage = instructionCoverage;
             this.coverageInfo = coverageInfo;
