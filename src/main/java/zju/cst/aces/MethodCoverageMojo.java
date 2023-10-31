@@ -93,15 +93,28 @@ public class MethodCoverageMojo extends AbstractMojo {
         for (File file : files) {
             log.info("testClassName:" + file.toString());
             String testclassName = extractClassName(srcTestJavaPath, file);
-//            log.info(testclassName);
+
+            // attemptNum is used to save different result.
+            String attemptNum = "0";
+            String testFileName = file.getName();
+            if(testFileName.contains("_")){
+                String[] elements = testFileName.split("_");
+                if(elements.length >= 3){
+                    String candidate = elements[elements.length - 3];
+                    boolean isNumber = candidate.matches("-?\\d+(\\.\\d+)?");
+                    if(isNumber){
+                        attemptNum = candidate;
+                    }
+                }
+            }
+
+
             testclassName = testclassName.replace(".", "/");
             try {
                 String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                 String className = s[0];
-//                log.info(className);
                 int index = Integer.parseInt(s[1]);
                 String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
-//                log.info(methodSignature);
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
                 log.info("xml_methodName = " + xml_methodName);
@@ -210,6 +223,15 @@ public class MethodCoverageMojo extends AbstractMojo {
                 } else {
                     log.info("未找到覆盖率表格");
                 }
+
+
+                try {
+                    File designate_path = Paths.get(targetDir,"separate", attemptNum).toFile();
+                    createDirectory(designate_path);
+                    copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -233,16 +255,17 @@ public class MethodCoverageMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        try {
-            copyDirectory(new File(project.getBasedir().toString()+"/target/site"), new File(targetDir));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static void copyDirectory(File sourceDirectory, File targetDirectory) throws IOException {
         FileUtils.copyDirectory(sourceDirectory, targetDirectory);
+    }
+
+    public static boolean createDirectory(File directoryPath){
+        if(!directoryPath.exists()){
+            return directoryPath.mkdirs();
+        }
+        return false;
     }
 
     public class SignatureGetter {
