@@ -232,6 +232,12 @@ public class MethodCoverageMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        try {
+            copyDirectory(new File(project.getBasedir().toString()+"/target/site"), new File(targetDir));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void copyDirectory(File sourceDirectory, File targetDirectory) throws IOException {
