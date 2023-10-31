@@ -11,9 +11,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import zju.cst.aces.config.Config;
 
@@ -150,30 +148,19 @@ public class ProjectParser {
     public JavaSymbolSolver getSymbolSolver() {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
-        try {
-            combinedTypeSolver.add(new JarTypeSolver(config.session.getLocalRepository().find(config.project.getArtifact()).getFile()));
-            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(config.getSession().getProjectBuildingRequest() );
-            buildingRequest.setProject(config.getProject());
-            DependencyNode root = config.getDependencyGraphBuilder().buildDependencyGraph(buildingRequest, null);
-            Set<DependencyNode> depSet = new HashSet<>();
-            walkDep(root, depSet);
-
-            for (DependencyNode dep : depSet) {
-                try {
-                    if (dep.getArtifact().getFile() == null || dep.getArtifact().getType().equals("pom")) {
-                        continue;
-                    }
-                    combinedTypeSolver.add(new JarTypeSolver(dep.getArtifact().getFile()));
-                } catch (Exception e) {
-                    config.getLog().warn(e.getMessage());
-                    config.getLog().debug(e);
+        for (String dep : config.getClassPaths()) {
+            try {
+                File depFile = new File(dep);
+                if (!depFile.exists() || !dep.endsWith("jar")) {
+                    continue;
                 }
+                combinedTypeSolver.add(new JarTypeSolver(depFile));
+            } catch (Exception e) {
+                config.getLog().warn(e.getMessage());
+                config.getLog().debug(e.getMessage());
             }
-        } catch (Exception e) {
-            config.getLog().warn(e.getMessage());
-            config.getLog().debug(e);
         }
-        for (String src : config.getProject().getCompileSourceRoots()) {
+        for (String src : config.getProject().getCompileSourceRoots()) { // TODO: remove MavenProject
             if (new File(src).exists()) {
                 combinedTypeSolver.add(new JavaParserTypeSolver(src));
             }

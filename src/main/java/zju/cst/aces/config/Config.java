@@ -129,7 +129,7 @@ public class Config {
             this.session = session;
             this.project = project;
             this.dependencyGraphBuilder = dependencyGraphBuilder;
-            this.classPaths = TestCompiler.listClassPaths(session, project, dependencyGraphBuilder);
+            this.classPaths = TestCompiler.listClassPaths(project, dependencyGraphBuilder);
             this.log = log;
 
             MavenProject p = project.clone();
