@@ -135,6 +135,19 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         InvocationRequest request = new DefaultInvocationRequest();
                         request.setPomFile(pomFile);
                         request.setGoals(Arrays.asList("clean", "test-compile"));
+                        Properties properties = new Properties();
+                        properties.setProperty("gpg.skip", "true");
+                        properties.setProperty("enforcer.skip", "true");
+                        properties.setProperty("license.skip", "true");
+                        properties.setProperty("sortpom.skip", "true");
+                        properties.setProperty("maven.javadoc.skip", "true");
+                        properties.setProperty("checkstyle.skip", "true");
+                        properties.setProperty("animal.sniffer.skip", "true");
+                        properties.setProperty("cobertura.skip", "true");
+                        properties.setProperty("rat.skip", "true");
+                        properties.setProperty("dependencyVersionsCheck.skip", "true");
+                        request.setProperties(properties);
+
                         Invoker invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
                         try {
