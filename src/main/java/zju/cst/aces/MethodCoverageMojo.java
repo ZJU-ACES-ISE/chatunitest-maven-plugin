@@ -95,19 +95,7 @@ public class MethodCoverageMojo extends AbstractMojo {
             String testclassName = extractClassName(srcTestJavaPath, file);
 
             // attemptNum is used to save different result.
-            String attemptNum = "0";
-            String testFileName = file.getName();
-            if(testFileName.contains("_")){
-                String[] elements = testFileName.split("_");
-                if(elements.length >= 3){
-                    String candidate = elements[elements.length - 3];
-                    boolean isNumber = candidate.matches("-?\\d+(\\.\\d+)?");
-                    if(isNumber){
-                        attemptNum = candidate;
-                    }
-                }
-            }
-
+            String testFileName = file.getName().replace(".java","");
 
             testclassName = testclassName.replace(".", "/");
             try {
@@ -226,7 +214,7 @@ public class MethodCoverageMojo extends AbstractMojo {
 
 
                 try {
-                    File designate_path = Paths.get(targetDir,"separate", attemptNum).toFile();
+                    File designate_path = Paths.get(targetDir,"separate", testFileName).toFile();
                     createDirectory(designate_path);
                     copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
                 } catch (IOException e) {
