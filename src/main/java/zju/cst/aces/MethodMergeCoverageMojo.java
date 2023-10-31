@@ -48,6 +48,13 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
     public String mavenHome;
 
 
+    public static boolean createDirectory(File directoryPath){
+        if(!directoryPath.exists()){
+            return directoryPath.mkdirs();
+        }
+        return false;
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
@@ -100,15 +107,16 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
 
         for (String key : executeClassMap.keySet()) {
             List<String> executeClasses = executeClassMap.get(key);
+            for (int i = 0; i < executeClasses.size(); i++) {
+                String s = executeClasses.get(i);
+                s=s.replaceAll("\\.","/");
+                executeClasses.set(i,s);
+            }
             if(executeClasses.size()>1){
                 for (int i = 0; i < executeClasses.size(); i++) {
-                    String s = executeClasses.get(i);
-                    s=s.replaceAll("\\.","/");
-                    executeClasses.set(i,s);
-                }
-                for (int i = 0; i < executeClasses.size(); i++) {
                     String join_execute_classes = String.join(",", sortByLastDigit(executeClasses).subList(0,i+1));
-                    log.info("ssss"+join_execute_classes);
+                    log.info("debugging 1" + join_execute_classes);
+                    log.info("ssss "+join_execute_classes);
                     //遍历executeClassMap，一个list为一次运行，抽取覆盖率
                     String testclassName = key+"_"+"X";//X表示第几轮生成的
 //            log.info(testclassName);
@@ -206,22 +214,23 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         } else {
                             log.info("未找到覆盖率表格");
                         }
+                        try {
+                            File designate_path = Paths.get(targetDir,"merge", String.valueOf(i+1)).toFile();
+                            createDirectory(designate_path);
+                            copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 }
-
             }
             else {
-                for (int i = 0; i < executeClasses.size(); i++) {
-                    String s = executeClasses.get(i);
-                    s=s.replaceAll("\\.","/");
-                    executeClasses.set(i,s);
-                }
                 String join_execute_classes = String.join(",", executeClasses);
                 //遍历executeClassMap，一个list为一次运行，抽取覆盖率
                 String testclassName = key+"_"+"X";//X表示第几轮生成的
-//            log.info(testclassName);
+                log.info("debugging 2" + testclassName);
                 testclassName = testclassName.replaceAll("\\.", "/");
                 try {
                     String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
@@ -315,6 +324,13 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         }
                     } else {
                         log.info("未找到覆盖率表格");
+                    }
+                    try {
+                        File designate_path = Paths.get(targetDir,"merge", String.valueOf(0)).toFile();
+                        createDirectory(designate_path);
+                        copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);

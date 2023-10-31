@@ -105,8 +105,6 @@ public class MethodCoverageMojo extends AbstractMojo {
                 String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
-                log.info("xml_methodName = " + xml_methodName);
-
                 Properties properties = new Properties();
                 properties.setProperty("gpg.skip", "true");
                 properties.setProperty("enforcer.skip", "true");
@@ -164,9 +162,6 @@ public class MethodCoverageMojo extends AbstractMojo {
                     tempName=prefix+"/"+postfix;
                 }
                 File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
-                System.out.println("Branson:" + htmlFile);
-                System.out.println(targetDir);
-
 
                 //jacoco.xml路径
                 String xmlFilePath = project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
