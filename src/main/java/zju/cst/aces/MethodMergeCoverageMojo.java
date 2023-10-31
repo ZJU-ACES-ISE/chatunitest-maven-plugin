@@ -171,6 +171,9 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                             tempName=prefix+"/"+postfix;
                         }
                         File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
+
+                        log.info(htmlFile.toString());
+
                         //jacoco.xml路径
                         String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                         String htmlContent = "";
