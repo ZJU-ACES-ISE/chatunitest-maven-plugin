@@ -91,7 +91,7 @@ public class MethodCoverageMojo extends AbstractMojo {
         HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
 
         for (File file : files) {
-            log.info(file.toString());
+            log.info("testClassName:" + file.toString());
             String testclassName = extractClassName(srcTestJavaPath, file);
 //            log.info(testclassName);
             testclassName = testclassName.replace(".", "/");
