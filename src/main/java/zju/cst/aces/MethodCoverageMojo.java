@@ -72,12 +72,10 @@ public class MethodCoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
                 Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
-
                 if(!Files.exists(resolvedSourceDir)){
                     log.warn(resolvedSourceDir.toString()+" does not exist.");
                     return;
                 }
-
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
