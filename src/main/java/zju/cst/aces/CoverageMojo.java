@@ -9,6 +9,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.*;
+import zju.cst.aces.util.InvocationProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +64,8 @@ public class CoverageMojo extends AbstractMojo {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(new File(project.getBasedir(), "pom.xml"));
         request.setGoals(Arrays.asList("clean", "test-compile"));
+        InvocationProperties.setSkipProperties(request);
+
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(new File(mavenHome));
         try {
@@ -84,6 +87,7 @@ public class CoverageMojo extends AbstractMojo {
         request = new DefaultInvocationRequest();
         request.setPomFile(new File(project.getBasedir(), "pom.xml"));
         request.setGoals(Arrays.asList("test", "-Dtest=" + commandTest));
+        InvocationProperties.setSkipProperties(request);
         invoker = new DefaultInvoker();
         invoker.setMavenHome(new File(mavenHome));
         try {
@@ -92,6 +96,7 @@ public class CoverageMojo extends AbstractMojo {
             throw new RuntimeException(e);
         }
 
+        // Generate coverage report
         request = new DefaultInvocationRequest();
         request.setPomFile(new File(project.getBasedir(), "pom.xml"));
         request.setGoals(Arrays.asList("jacoco:report"));

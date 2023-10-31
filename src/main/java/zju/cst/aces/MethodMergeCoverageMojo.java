@@ -20,6 +20,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import zju.cst.aces.util.InvocationProperties;
 import zju.cst.aces.util.XmlParser;
 
 import java.io.File;
@@ -140,6 +141,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         InvocationRequest request = new DefaultInvocationRequest();
                         request.setPomFile(pomFile);
                         request.setGoals(Arrays.asList("clean", "test-compile"));
+                        InvocationProperties.setSkipProperties(request);
 
                         Invoker invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
@@ -154,18 +156,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         request.setPomFile(pomFile);
                         request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
 
-                        Properties properties = new Properties();
-                        properties.setProperty("gpg.skip", "true");
-                        properties.setProperty("enforcer.skip", "true");
-                        properties.setProperty("license.skip", "true");
-                        properties.setProperty("sortpom.skip", "true");
-                        properties.setProperty("maven.javadoc.skip", "true");
-                        properties.setProperty("checkstyle.skip", "true");
-                        properties.setProperty("animal.sniffer.skip", "true");
-                        properties.setProperty("cobertura.skip", "true");
-                        properties.setProperty("rat.skip", "true");
-                        properties.setProperty("dependencyVersionsCheck.skip", "true");
-                        request.setProperties(properties);
+                        InvocationProperties.setSkipProperties(request);
 
                         invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
@@ -271,6 +262,9 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     InvocationRequest request = new DefaultInvocationRequest();
                     request.setPomFile(pomFile);
                     request.setGoals(Arrays.asList("clean", "test-compile"));
+
+                    InvocationProperties.setSkipProperties(request);
+
                     Invoker invoker = new DefaultInvoker();
                     invoker.setMavenHome(new File(mavenHome));
                     try {

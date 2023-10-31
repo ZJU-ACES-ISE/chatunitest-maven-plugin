@@ -21,6 +21,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import zju.cst.aces.util.XmlParser;
+import zju.cst.aces.util.InvocationProperties;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -103,23 +104,14 @@ public class MethodCoverageMojo extends AbstractMojo {
                 String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
-                Properties properties = new Properties();
-                properties.setProperty("gpg.skip", "true");
-                properties.setProperty("enforcer.skip", "true");
-                properties.setProperty("license.skip", "true");
-                properties.setProperty("sortpom.skip", "true");
-                properties.setProperty("maven.javadoc.skip", "true");
-                properties.setProperty("checkstyle.skip", "true");
-                properties.setProperty("animal.sniffer.skip", "true");
-                properties.setProperty("cobertura.skip", "true");
-                properties.setProperty("rat.skip", "true");
-                properties.setProperty("dependencyVersionsCheck.skip", "true");
 
                 // 运行 Maven 测试
                 InvocationRequest request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("clean", "test-compile"));
-                request.setProperties(properties);
+
+                InvocationProperties.setSkipProperties(request);
+
                 Invoker invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -132,7 +124,9 @@ public class MethodCoverageMojo extends AbstractMojo {
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
-                request.setProperties(properties);
+
+                InvocationProperties.setSkipProperties(request);
+
                 invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
