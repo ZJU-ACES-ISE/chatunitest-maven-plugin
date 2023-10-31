@@ -131,10 +131,24 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         //解析jacoco.xml需要用到的methodName
                         String xml_methodName=s[2];
                         log.info("xml_methodName = " + xml_methodName);
-                        // 运行 Maven 测试
+                        // Clean up history
                         InvocationRequest request = new DefaultInvocationRequest();
                         request.setPomFile(pomFile);
                         request.setGoals(Arrays.asList("clean", "test-compile"));
+
+                        Invoker invoker = new DefaultInvoker();
+                        invoker.setMavenHome(new File(mavenHome));
+                        try {
+                            invoker.execute(request);
+                        } catch (MavenInvocationException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        // 运行 Maven 测试
+                        request = new DefaultInvocationRequest();
+                        request.setPomFile(pomFile);
+                        request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
+
                         Properties properties = new Properties();
                         properties.setProperty("gpg.skip", "true");
                         properties.setProperty("enforcer.skip", "true");
@@ -148,16 +162,6 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         properties.setProperty("dependencyVersionsCheck.skip", "true");
                         request.setProperties(properties);
 
-                        Invoker invoker = new DefaultInvoker();
-                        invoker.setMavenHome(new File(mavenHome));
-                        try {
-                            invoker.execute(request);
-                        } catch (MavenInvocationException e) {
-                            throw new RuntimeException(e);
-                        }
-                        request = new DefaultInvocationRequest();
-                        request.setPomFile(pomFile);
-                        request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
                         invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
                         try {
@@ -185,7 +189,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         }
                         File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
 
-                        log.info("branson :"+ join_execute_classes + project.getBasedir().toString());
+                        log.info("branson :"+join_execute_classes + project.getBasedir().toString());
 
                         //jacoco.xml路径
                         String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
