@@ -72,7 +72,7 @@ public class MethodRunner extends ClassRunner {
                 + classInfo.methodSigs.get(methodInfo.methodSignature) + separator + num + separator + "Test";
         String fullTestName = fullClassName + separator + methodInfo.methodName + separator
                 + classInfo.methodSigs.get(methodInfo.methodSignature) + separator + num + separator + "Test";
-        config.getLog().info("\n==========================\n[ChatTester] Generating test for method < "
+        config.getLog().info("\n==========================\n[ChatUniTest] Generating test for method < "
                 + methodInfo.methodName + " > number " + num + "...\n");
 
         for (int rounds = 0; rounds < config.getMaxRounds(); rounds++) {
