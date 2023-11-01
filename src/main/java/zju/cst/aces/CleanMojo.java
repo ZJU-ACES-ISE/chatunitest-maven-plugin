@@ -36,11 +36,11 @@ public class CleanMojo
      */
     public void execute() throws MojoExecutionException {
         init();
-        log.info("\n==========================\n[ChatTester] Cleaning project " +  project.getBasedir().getName() + " ...");
-        log.info("\n==========================\n[ChatTester] Cleaning output directory "
+        log.info("\n==========================\n[ChatUniTest] Cleaning project " +  project.getBasedir().getName() + " ...");
+        log.info("\n==========================\n[ChatUniTest] Cleaning output directory "
                 + config.getTmpOutput() + " and " + config.getTestOutput() + " ...");
         try {
-            log.info("\n==========================\n[ChatTester] Restoring backup folder ...");
+            log.info("\n==========================\n[ChatUniTest] Restoring backup folder ...");
             FileUtils.deleteDirectory(config.getTmpOutput().toFile());
             FileUtils.deleteDirectory(config.getTestOutput().toFile());
             TestCompiler compiler = new TestCompiler(config);
@@ -48,6 +48,6 @@ public class CleanMojo
         } catch (Exception e) {
             log.error(e);
         }
-        log.info("\n==========================\n[ChatTester] Finished");
+        log.info("\n==========================\n[ChatUniTest] Finished");
     }
 }

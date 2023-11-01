@@ -84,7 +84,7 @@ public class ProjectParser {
         exportClassMapping();
         exportJson(config.getClassNameMapPath(), classMap);
         config.getLog().info("\nParsed classes: " + classCount + "\nParsed methods: " + methodCount);
-        config.getLog().info("\n==========================\n[ChatTester] Parse finished");
+        config.getLog().info("\n==========================\n[ChatUniTest] Parse finished");
     }
 
     public void addClassMap(Path outputPath, String packagePath) {

@@ -48,7 +48,7 @@ public class ClassTestMojo
         }
         init();
         if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
             return;
         }
         printConfiguration();
@@ -56,13 +56,13 @@ public class ClassTestMojo
         ProjectParser parser = new ProjectParser(config);
         parser.parse();
 
-        log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
+        log.info("\n==========================\n[ChatUniTest] Generating tests for class < " + className + " > ...");
         try {
             new ClassRunner(getFullClassName(config, className), config).start();
         } catch (IOException e) {
             log.warn("Class not found: " + className + " in " + project.getArtifactId());
         }
 
-        log.info("\n==========================\n[ChatTester] Generation finished");
+        log.info("\n==========================\n[ChatUniTest] Generation finished");
     }
 }

@@ -51,7 +51,7 @@ public class MethodTestMojo
         }
         init();
         if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
             return;
         }
         printConfiguration();
@@ -61,7 +61,7 @@ public class MethodTestMojo
         ProjectParser parser = new ProjectParser(config);
         parser.parse();
 
-        log.info("\n==========================\n[ChatTester] Generating tests for class: < " + className
+        log.info("\n==========================\n[ChatUniTest] Generating tests for class: < " + className
                 + "> method: < " + methodName + " > ...");
 
         try {
@@ -108,6 +108,6 @@ public class MethodTestMojo
             return;
         }
 
-        log.info("\n==========================\n[ChatTester] Generation finished");
+        log.info("\n==========================\n[ChatUniTest] Generation finished");
     }
 }
