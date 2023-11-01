@@ -27,20 +27,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
-import zju.cst.aces.config.Config;
-import zju.cst.aces.dto.ClassInfo;
-import zju.cst.aces.parser.ProjectParser;
-import zju.cst.aces.runner.ClassRunner;
+import zju.cst.aces.api.Task;
+import zju.cst.aces.api.config.Config;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
 
 /**
  * @author chenyi
@@ -114,97 +104,15 @@ public class ProjectTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
-        try {
-            checkTargetFolder(project);
-        } catch (RuntimeException e) {
-            log.error(e.toString());
-            return;
-        }
         init();
-        if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
-            return;
-        }
-        printConfiguration();
         log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
         log.warn("[ChatUniTest] It may consume a significant number of tokens!");
-
-        ProjectParser parser = new ProjectParser(config);
-        parser.parse();
-
-        List<String> classPaths = new ArrayList<>();
-        parser.scanSourceDirectory(project, classPaths);
-
-        if (config.isEnableMultithreading() == true) {
-            classJob(classPaths);
-        } else {
-            for (String classPath : classPaths) {
-                String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
-                try {
-                    className = getFullClassName(config, className);
-                    log.info("\n==========================\n[ChatUniTest] Generating tests for class < " + className + " > ...");
-                    ClassRunner runner = new ClassRunner(className, config);
-                    if (!filter(runner.classInfo)) {
-                        config.getLog().info("Skip class: " + classPath);
-                        continue;
-                    }
-                    runner.start();
-                } catch (IOException e) {
-                    log.error("[ChatUniTest] Generate tests for class " + className + " failed: " + e);
-                }
-            }
-        }
-
-        log.info("\n==========================\n[ChatUniTest] Generation finished");
-    }
-
-    public void classJob(List<String> classPaths) {
-        ExecutorService executor = Executors.newFixedThreadPool(config.getClassThreads());
-        List<Future<String>> futures = new ArrayList<>();
-        for (String classPath : classPaths) {
-            Callable<String> callable = new Callable<String>() {
-                @Override
-                public String call() throws Exception {
-                    String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
-                    try {
-                        className = getFullClassName(config, className);
-                        log.info("\n==========================\n[ChatUniTest] Generating tests for class < " + className + " > ...");
-                        ClassRunner runner = new ClassRunner(className, config);
-                        if (!filter(runner.classInfo)) {
-                            return "Skip class: " + classPath;
-                        }
-                        runner.start();
-                    } catch (IOException e) {
-                        log.error("[ChatUniTest] Generate tests for class " + className + " failed: " + e);
-                    }
-                    return "Processed " + classPath;
-                }
-            };
-            Future<String> future = executor.submit(callable);
-            futures.add(future);
-        }
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                executor.shutdownNow();
-            }
-        });
-
-        for (Future<String> future : futures) {
-            try {
-                String result = future.get();
-                System.out.println(result);
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-
-        executor.shutdown();
+        new Task(config).startProjectTask();
     }
 
     public void init() {
         log = getLog();
-        config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
+        config = new Config.ConfigBuilder(project, dependencyGraphBuilder)
                 .promptPath(promptPath)
                 .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
@@ -230,83 +138,6 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .build();
-    }
-
-    public void printConfiguration() {
-        log.info("\n========================== Configuration ==========================\n");
-        log.info(" Multithreading >>>> " + config.isEnableMultithreading());
-        if (config.isEnableMultithreading()) {
-            log.info(" - Class threads: " + config.getClassThreads() + ", Method threads: " + config.getMethodThreads());
-        }
-        log.info(" Stop when success >>>> " + config.isStopWhenSuccess());
-        log.info(" No execution >>>> " + config.isNoExecution());
-        log.info(" Enable Merge >>>> " + config.isEnableMerge());
-        log.info(" --- ");
-        log.info(" TestOutput Path >>> " + config.getTestOutput());
-        log.info(" TmpOutput Path >>> " + config.getTmpOutput());
-        log.info(" Prompt path >>> " + config.getPromptPath());
-        log.info(" Example path >>> " + config.getExamplePath());
-        log.info(" MaxThreads >>> " + config.getMaxThreads());
-        log.info(" TestNumber >>> " + config.getTestNumber());
-        log.info(" MaxRounds >>> " + config.getMaxRounds());
-        log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
-        log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
-        log.info(" SleepTime >>> " + config.getSleepTime());
-        log.info(" DependencyDepth >>> " + config.getDependencyDepth());
-        log.info("\n===================================================================\n");
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static String getFullClassName(Config config, String name) throws IOException {
-        if (isFullName(name)) {
-            return name;
-        }
-        Path classMapPath = config.getClassNameMapPath();
-        Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
-        if (classMap.containsKey(name)) {
-            if (classMap.get(name).size() > 1) {
-                throw new RuntimeException("[ChatUniTest] Multiple classes Named " + name + ": " + classMap.get(name)
-                + " Please use full qualified name!");
-            }
-            return classMap.get(name).get(0);
-        }
-        return name;
-    }
-
-    public static boolean isFullName(String name) {
-        if (name.contains(".")) {
-            return true;
-        }
-        return false;
-    }
-
-
-    /**
-     * Check if the classes is compiled
-     * @param project
-     */
-    public static void checkTargetFolder(MavenProject project) {
-        if (project.getPackaging().equals("pom")) {
-            return;
-        }
-        if (!new File(project.getBuild().getOutputDirectory()).exists()) {
-            throw new RuntimeException("In ProjectTestMojo.checkTargetFolder: " +
-                    "The project is not compiled to the target directory. " +
-                    "Please run 'mvn install' first.");
-        }
-    }
-
-    private boolean filter(ClassInfo classInfo) {
-        if (classInfo.isFinal) {
-            return true;
-        }
-        if (!classInfo.isPublic || classInfo.isAbstract || classInfo.isInterface) {
-            return false;
-        }
-        return true;
+        config.print();
     }
 }
