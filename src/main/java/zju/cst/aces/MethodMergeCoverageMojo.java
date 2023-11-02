@@ -203,7 +203,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     if(!dir.exists()){
                         dir.mkdirs();
                     }
-                    File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_SEPARATE.json").toFile();
+                    File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_MERGE.json").toFile();
                     if(!file.exists()){
                         try {
                             file.createNewFile();
@@ -211,7 +211,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                             throw new RuntimeException(e);
                         }
                     }
-                    file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_SEPARATE.json").toFile();
+                    file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_MERGE.json").toFile();
                     try (FileWriter writer = new FileWriter(file)) {
                         Gson gson = new Gson();
                         gson.toJson(coverageMap, writer);
@@ -340,7 +340,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                 if(!dir.exists()){
                     dir.mkdirs();
                 }
-                File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_SEPARATE.json").toFile();
+                File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_MERGE.json").toFile();
                 if(!file.exists()){
                     try {
                         file.createNewFile();
@@ -348,7 +348,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         throw new RuntimeException(e);
                     }
                 }
-                file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_SEPARATE.json").toFile();
+                file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_MERGE.json").toFile();
                 try (FileWriter writer = new FileWriter(file)) {
                     Gson gson = new Gson();
                     gson.toJson(coverageMap, writer);
