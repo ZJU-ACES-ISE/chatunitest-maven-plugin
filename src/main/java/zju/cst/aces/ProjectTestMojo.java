@@ -66,8 +66,12 @@ public class ProjectTestMojo
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
+    @Parameter(alias = "obfuscate", property = "obfuscate", defaultValue = "false")
+    public boolean enableObfuscate;
     @Parameter(alias = "merge", property = "merge", defaultValue = "true")
     public boolean enableMerge;
+    @Parameter(property = "obfuscateGroupIds")
+    public String[] obfuscateGroupIds;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
     @Parameter(property = "testNumber", defaultValue = "5")
@@ -122,7 +126,9 @@ public class ProjectTestMojo
                 .testOutput(testOutput == null? null : testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
                 .noExecution(noExecution)
+                .enableObfuscate(enableObfuscate)
                 .enableMerge(enableMerge)
+                .obfuscateGroupIds(obfuscateGroupIds)
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
