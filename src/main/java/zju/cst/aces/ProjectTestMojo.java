@@ -25,12 +25,23 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
+import org.apache.maven.shared.dependency.graph.DependencyNode;
 import zju.cst.aces.api.Task;
 import zju.cst.aces.api.config.Config;
+import zju.cst.aces.parser.ProjectParser;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author chenyi
@@ -116,7 +127,8 @@ public class ProjectTestMojo
 
     public void init() {
         log = getLog();
-        config = new Config.ConfigBuilder(project, dependencyGraphBuilder)
+        config = new Config.ConfigBuilder(project)
+                .classPaths(listClassPaths(project, dependencyGraphBuilder))
                 .promptPath(promptPath)
                 .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
@@ -146,4 +158,33 @@ public class ProjectTestMojo
                 .build();
         config.print();
     }
+
+    public static List<String> listClassPaths(MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
+        List<String> classPaths = new ArrayList<>();
+        Path artifactPath = Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName() + ".jar");
+        if (!artifactPath.toFile().exists()) {
+            throw new RuntimeException("In TestCompiler.listClassPaths: " + artifactPath + " does not exist. Run mvn install first.");
+        }
+        classPaths.add(artifactPath.toString());
+        try {
+            classPaths.addAll(project.getCompileClasspathElements());
+            Class<?> clazz = project.getClass();
+            Field privateField = clazz.getDeclaredField("projectBuilderConfiguration");
+            privateField.setAccessible(true);
+            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest((DefaultProjectBuildingRequest) privateField.get(project));
+            buildingRequest.setProject(project);
+            DependencyNode root = dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
+            Set<DependencyNode> depSet = new HashSet<>();
+            ProjectParser.walkDep(root, depSet);
+            for (DependencyNode dep : depSet) {
+                if (dep.getArtifact().getFile() != null) {
+                    classPaths.add(dep.getArtifact().getFile().getAbsolutePath());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return classPaths;
+    }
+
 }
