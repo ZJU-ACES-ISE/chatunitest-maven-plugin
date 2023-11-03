@@ -72,6 +72,8 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 - `noExecution`: (**Optional**) Skip the execution verification step of generated tests. Default: `false`.
 - `merge` : (**Optional**) Merge all tests for each focal class. Default: `true`.
 - `promptPath` : (**Optional**) Path to your custom prompt. Refer to default prompt in `src/main/resources/prompt`.
+- `obfuscate` : (**Optional**) Enable prompt obfuscation for enhanced privacy protection. Default: `false`.
+- `obfuscateGroupIds` : (**Opional**) Group IDs you want to obfuscate. Default: only your group ID.
 
 All these parameters also can be specified in the command line with `-D` option.
 
