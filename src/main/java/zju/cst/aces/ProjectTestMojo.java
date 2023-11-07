@@ -161,11 +161,13 @@ public class ProjectTestMojo
 
     public static List<String> listClassPaths(MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
         List<String> classPaths = new ArrayList<>();
-        Path artifactPath = Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName() + ".jar");
-        if (!artifactPath.toFile().exists()) {
-            throw new RuntimeException("In TestCompiler.listClassPaths: " + artifactPath + " does not exist. Run mvn install first.");
+        if (project.getPackaging().equals("jar")) {
+            Path artifactPath = Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName() + ".jar");
+            if (!artifactPath.toFile().exists()) {
+                throw new RuntimeException("In TestCompiler.listClassPaths: " + artifactPath + " does not exist. Run mvn install first.");
+            }
+            classPaths.add(artifactPath.toString());
         }
-        classPaths.add(artifactPath.toString());
         try {
             classPaths.addAll(project.getCompileClasspathElements());
             Class<?> clazz = project.getClass();
