@@ -27,10 +27,10 @@
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
-        <apiKeys></apiKeys>
+        <apiKeys></apiKeys>g
         <model>gpt-3.5-turbo</model>
         <testNumber>5</testNumber>
         <maxRounds>5</maxRounds>
@@ -81,7 +81,7 @@
 <dependency>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-starter</artifactId>
-    <version>1.1.0</version>
+    <version>1.4.0</version>
     <type>pom</type>
 </dependency>
 ```
