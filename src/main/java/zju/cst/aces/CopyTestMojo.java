@@ -36,7 +36,7 @@ public class CopyTestMojo
     public void execute() throws MojoExecutionException {
         init();
         try {
-            log.info("\n==========================\n[ChatTester] Copying tests ...");
+            log.info("\n==========================\n[ChatUniTest] Copying tests ...");
             TestCompiler compiler = new TestCompiler(config);
             compiler.copyAndBackupTestFolder();
             compiler.copyAndBackupCompiledTest();
@@ -44,6 +44,6 @@ public class CopyTestMojo
             log.error(e);
             throw new MojoExecutionException("Failed to copy test folder, please try again.");
         }
-        log.info("\n==========================\n[ChatTester] Finished");
+        log.info("\n==========================\n[ChatUniTest] Finished");
     }
 }

@@ -68,6 +68,8 @@
 所有这些参数也可以在命令行中使用-D选项指定。
 - `merge` : (**可选**) 将每个类对应的所有测试合并为测试套件，默认值: `true`.
 - `promptPath` : (**可选**) 自定义prompt的路径. 参考默认promp目录: `src/main/resources/prompt`.
+- `obfuscate` : (**可选**) 开启混淆功能以保护隐私代码. 默认值: false. 
+- `obfuscateGroupIds` : (**可选**) 需要进行混淆的group ID. 默认值仅包含当前项目的group ID. 所有这些参数也可以在命令行中使用-D选项指定。
 
 
 一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：

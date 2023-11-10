@@ -25,6 +25,8 @@ import zju.cst.aces.util.XmlParser;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -50,13 +52,34 @@ public class MethodCoverageMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
+            return;
+        }
         File pomFile = new File(project.getBasedir(), "pom.xml");
 
         // 复制外部目录到 src/test/java
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
-            copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
+                copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            } else {
+                MavenProject p = project.clone();
+                String parentPath = "";
+                while(p != null && p.getBasedir() != null) {
+                    parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                    p = p.getParent();
+                }
+                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+
+                if(!Files.exists(resolvedSourceDir)){
+                    log.warn(resolvedSourceDir.toString()+" does not exist.");
+                    return;
+                }
+
+                copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -68,23 +91,37 @@ public class MethodCoverageMojo extends AbstractMojo {
         HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
 
         for (File file : files) {
+            log.info("testClassName:" + file.toString());
             String testclassName = extractClassName(srcTestJavaPath, file);
-//            log.info(testclassName);
+
+            // attemptNum is used to save different result.
+            String testFileName = file.getName().replace(".java","");
+
             testclassName = testclassName.replace(".", "/");
             try {
                 String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                 String className = s[0];
-//                log.info(className);
                 int index = Integer.parseInt(s[1]);
                 String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
-//                log.info(methodSignature);
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
-                log.info("xml_methodName = " + xml_methodName);
+                Properties properties = new Properties();
+                properties.setProperty("gpg.skip", "true");
+                properties.setProperty("enforcer.skip", "true");
+                properties.setProperty("license.skip", "true");
+                properties.setProperty("sortpom.skip", "true");
+                properties.setProperty("maven.javadoc.skip", "true");
+                properties.setProperty("checkstyle.skip", "true");
+                properties.setProperty("animal.sniffer.skip", "true");
+                properties.setProperty("cobertura.skip", "true");
+                properties.setProperty("rat.skip", "true");
+                properties.setProperty("dependencyVersionsCheck.skip", "true");
+
                 // 运行 Maven 测试
                 InvocationRequest request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("clean", "test-compile"));
+                request.setProperties(properties);
                 Invoker invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -93,9 +130,11 @@ public class MethodCoverageMojo extends AbstractMojo {
                     throw new RuntimeException(e);
                 }
 //                String commandTest = String.join(",", testclassName);//就是上面log的className
+                log.info("Running mvn test ...");
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
+                request.setProperties(properties);
                 invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -104,6 +143,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                     throw new RuntimeException(e);
                 }
 
+                log.info("Running mvn jacoco:report");
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("jacoco:report"));
@@ -122,8 +162,10 @@ public class MethodCoverageMojo extends AbstractMojo {
                     tempName=prefix+"/"+postfix;
                 }
                 File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
+
                 //jacoco.xml路径
-                String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
+                log.info("branson :" + project.getBasedir().toString());
+                String xmlFilePath = project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                 String htmlContent = "";
                 try {
                     htmlContent = FileUtils.readFileToString(htmlFile, "UTF-8");
@@ -165,6 +207,15 @@ public class MethodCoverageMojo extends AbstractMojo {
                 } else {
                     log.info("未找到覆盖率表格");
                 }
+
+
+                try {
+                    File designate_path = Paths.get(targetDir,"separate", testFileName).toFile();
+                    createDirectory(designate_path);
+                    copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -192,6 +243,13 @@ public class MethodCoverageMojo extends AbstractMojo {
 
     public static void copyDirectory(File sourceDirectory, File targetDirectory) throws IOException {
         FileUtils.copyDirectory(sourceDirectory, targetDirectory);
+    }
+
+    public static boolean createDirectory(File directoryPath){
+        if(!directoryPath.exists()){
+            return directoryPath.mkdirs();
+        }
+        return false;
     }
 
     public class SignatureGetter {

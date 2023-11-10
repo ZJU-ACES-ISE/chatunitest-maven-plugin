@@ -19,10 +19,7 @@ package zju.cst.aces;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import zju.cst.aces.parser.ProjectParser;
-import zju.cst.aces.runner.ClassRunner;
-
-import java.io.IOException;
+import zju.cst.aces.api.Task;
 
 /**
  * @author chenyi
@@ -40,28 +37,9 @@ public class ClassTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
-        checkTargetFolder(project);
         init();
-        if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
-            return;
-        }
-        printConfiguration();
         String className = selectClass;
-        if (! config.getParseOutput().toFile().exists()) {
-            log.info("\n==========================\n[ChatTester] Parsing class info ...");
-            ProjectParser parser = new ProjectParser(config);
-            parser.parse();
-            log.info("\n==========================\n[ChatTester] Parse finished");
-        }
 
-        log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-        try {
-            new ClassRunner(getFullClassName(config, className), config).start();
-        } catch (IOException e) {
-            log.warn("Class not found: " + className + " in " + project.getArtifactId());
-        }
-
-        log.info("\n==========================\n[ChatTester] Generation finished");
+        new Task(config).startClassTask(className);
     }
 }

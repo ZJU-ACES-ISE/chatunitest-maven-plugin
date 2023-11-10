@@ -25,22 +25,24 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
-import zju.cst.aces.config.Config;
-import zju.cst.aces.dto.ClassInfo;
+import org.apache.maven.shared.dependency.graph.DependencyNode;
+import zju.cst.aces.api.Task;
+import zju.cst.aces.api.config.Config;
+import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
-import zju.cst.aces.runner.ClassRunner;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
+import java.util.Set;
 
 /**
  * @author chenyi
@@ -54,7 +56,7 @@ public class ProjectTestMojo
     public MavenSession session;
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
-    @Parameter(defaultValue = "${project.basedir}/chatunitest-tests", property = "testOutput")
+    @Parameter(property = "testOutput")
     public File testOutput;
     @Parameter(defaultValue = "/tmp/chatunitest-info", property = "tmpOutput")
     public File tmpOutput;
@@ -76,8 +78,12 @@ public class ProjectTestMojo
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
+    @Parameter(alias = "obfuscate", property = "obfuscate", defaultValue = "false")
+    public boolean enableObfuscate;
     @Parameter(alias = "merge", property = "merge", defaultValue = "true")
     public boolean enableMerge;
+    @Parameter(property = "obfuscateGroupIds")
+    public String[] obfuscateGroupIds;
     @Parameter(property = "maxThreads", defaultValue = "0")
     public int maxThreads;
     @Parameter(property = "testNumber", defaultValue = "5")
@@ -90,6 +96,8 @@ public class ProjectTestMojo
     public int minErrorTokens;
     @Parameter(property = "sleepTime", defaultValue = "0")
     public int sleepTime;
+    @Parameter(property = "dependencyDepth", defaultValue = "1")
+    public int dependencyDepth;
     @Parameter(property = "temperature", defaultValue = "0.5")
     public Double temperature;
     @Parameter(property = "topP", defaultValue = "1")
@@ -112,112 +120,37 @@ public class ProjectTestMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
-        checkTargetFolder(project);
         init();
-        if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
-            return;
-        }
-        printConfiguration();
-        log.info("\n==========================\n[ChatTester] Generating tests for project " + project.getBasedir().getName() + " ...");
-        log.warn("[ChatTester] It may consume a significant number of tokens!");
-
-        ProjectParser parser = new ProjectParser(config);
-        if (! config.getParseOutput().toFile().exists()) {
-            log.info("\n==========================\n[ChatTester] Parsing class info ...");
-            parser.parse();
-            log.info("\n==========================\n[ChatTester] Parse finished");
-        }
-
-        List<String> classPaths = new ArrayList<>();
-        parser.scanSourceDirectory(project, classPaths);
-
-        if (config.isEnableMultithreading() == true) {
-            classJob(classPaths);
-        } else {
-            for (String classPath : classPaths) {
-                String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
-                try {
-                    className = getFullClassName(config, className);
-                    log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                    ClassRunner runner = new ClassRunner(className, config);
-                    if (!filter(runner.classInfo)) {
-                        config.getLog().info("Skip class: " + classPath);
-                        continue;
-                    }
-                    runner.start();
-                } catch (IOException e) {
-                    log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
-                }
-            }
-        }
-
-        log.info("\n==========================\n[ChatTester] Generation finished");
-    }
-
-    public void classJob(List<String> classPaths) {
-        ExecutorService executor = Executors.newFixedThreadPool(config.getClassThreads());
-        List<Future<String>> futures = new ArrayList<>();
-        for (String classPath : classPaths) {
-            Callable<String> callable = new Callable<String>() {
-                @Override
-                public String call() throws Exception {
-                    String className = classPath.substring(classPath.lastIndexOf(File.separator) + 1, classPath.lastIndexOf("."));
-                    try {
-                        className = getFullClassName(config, className);
-                        log.info("\n==========================\n[ChatTester] Generating tests for class < " + className + " > ...");
-                        ClassRunner runner = new ClassRunner(className, config);
-                        if (!filter(runner.classInfo)) {
-                            return "Skip class: " + classPath;
-                        }
-                        runner.start();
-                    } catch (IOException e) {
-                        log.error("[ChatTester] Generate tests for class " + className + " failed: " + e);
-                    }
-                    return "Processed " + classPath;
-                }
-            };
-            Future<String> future = executor.submit(callable);
-            futures.add(future);
-        }
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                executor.shutdownNow();
-            }
-        });
-
-        for (Future<String> future : futures) {
-            try {
-                String result = future.get();
-                System.out.println(result);
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-
-        executor.shutdown();
+        log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
+        log.warn("[ChatUniTest] It may consume a significant number of tokens!");
+        new Task(config).startProjectTask();
     }
 
     public void init() {
         log = getLog();
-        config = new Config.ConfigBuilder(session, project, dependencyGraphBuilder, log)
+        MavenLogger mLogger = new MavenLogger(log);
+        config = new Config.ConfigBuilder(project)
+                .log(mLogger)
+                .classPaths(listClassPaths(project, dependencyGraphBuilder))
                 .promptPath(promptPath)
                 .examplePath(examplePath.toPath())
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
                 .enableRuleRepair(enableRuleRepair)
                 .tmpOutput(tmpOutput.toPath())
-                .testOutput(testOutput.toPath())
+                .testOutput(testOutput == null? null : testOutput.toPath())
                 .stopWhenSuccess(stopWhenSuccess)
                 .noExecution(noExecution)
+                .enableObfuscate(enableObfuscate)
                 .enableMerge(enableMerge)
+                .obfuscateGroupIds(obfuscateGroupIds)
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
                 .maxPromptTokens(maxPromptTokens)
                 .minErrorTokens(minErrorTokens)
                 .sleepTime(sleepTime)
+                .dependencyDepth(dependencyDepth)
                 .model(model)
                 .url(url)
                 .temperature(temperature)
@@ -226,78 +159,37 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .build();
+        config.print();
     }
 
-    public void printConfiguration() {
-        log.info("\n========================== Configuration ==========================\n");
-        log.info(" Multithreading >>>> " + config.isEnableMultithreading());
-        if (config.isEnableMultithreading()) {
-            log.info(" - Class threads: " + config.getClassThreads() + ", Method threads: " + config.getMethodThreads());
-        }
-        log.info(" Stop when success >>>> " + config.isStopWhenSuccess());
-        log.info(" No execution >>>> " + config.isNoExecution());
-        log.info(" Enable Merge >>>> " + config.isEnableMerge());
-        log.info(" --- ");
-        log.info(" TestOutput Path >>> " + config.getTestOutput());
-        log.info(" TmpOutput Path >>> " + config.getTmpOutput());
-        log.info(" Prompt path >>> " + config.getPromptPath());
-        log.info(" Example path >>> " + config.getExamplePath());
-        log.info(" MaxThreads >>> " + config.getMaxThreads());
-        log.info(" TestNumber >>> " + config.getTestNumber());
-        log.info(" MaxRounds >>> " + config.getMaxRounds());
-        log.info(" MinErrorTokens >>> " + config.getMinErrorTokens());
-        log.info(" MaxPromptTokens >>> " + config.getMaxPromptTokens());
-        log.info("\n===================================================================\n");
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static String getFullClassName(Config config, String name) throws IOException {
-        if (isFullName(name)) {
-            return name;
-        }
-        Path classMapPath = config.getClassNameMapPath();
-        Map<String, List<String>> classMap = GSON.fromJson(Files.readString(classMapPath, StandardCharsets.UTF_8), Map.class);
-        if (classMap.containsKey(name)) {
-            if (classMap.get(name).size() > 1) {
-                throw new RuntimeException("[ChatTester] Multiple classes Named " + name + ": " + classMap.get(name)
-                + " Please use full qualified name!");
+    public static List<String> listClassPaths(MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
+        List<String> classPaths = new ArrayList<>();
+        if (project.getPackaging().equals("jar")) {
+            Path artifactPath = Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName() + ".jar");
+            if (!artifactPath.toFile().exists()) {
+                throw new RuntimeException("In TestCompiler.listClassPaths: " + artifactPath + " does not exist. Run mvn install first.");
             }
-            return classMap.get(name).get(0);
+            classPaths.add(artifactPath.toString());
         }
-        return name;
+        try {
+            classPaths.addAll(project.getCompileClasspathElements());
+            Class<?> clazz = project.getClass();
+            Field privateField = clazz.getDeclaredField("projectBuilderConfiguration");
+            privateField.setAccessible(true);
+            ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest((DefaultProjectBuildingRequest) privateField.get(project));
+            buildingRequest.setProject(project);
+            DependencyNode root = dependencyGraphBuilder.buildDependencyGraph(buildingRequest, null);
+            Set<DependencyNode> depSet = new HashSet<>();
+            ProjectParser.walkDep(root, depSet);
+            for (DependencyNode dep : depSet) {
+                if (dep.getArtifact().getFile() != null) {
+                    classPaths.add(dep.getArtifact().getFile().getAbsolutePath());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return classPaths;
     }
 
-    public static boolean isFullName(String name) {
-        if (name.contains(".")) {
-            return true;
-        }
-        return false;
-    }
-
-
-    /**
-     * Check if the classes is compiled
-     * @param project
-     */
-    public static void checkTargetFolder(MavenProject project) {
-        if (project.getPackaging().equals("pom")) {
-            return;
-        }
-        if (!new File(project.getBuild().getOutputDirectory()).exists()) {
-            throw new RuntimeException("In ProjectTestMojo.checkTargetFolder: " +
-                    "The project is not compiled to the target directory. " +
-                    "Please run 'mvn install' first.");
-        }
-    }
-
-    private boolean filter(ClassInfo classInfo) {
-        if (!classInfo.isPublic || classInfo.isAbstract || classInfo.isInterface) {
-            return false;
-        }
-        return true;
-    }
 }

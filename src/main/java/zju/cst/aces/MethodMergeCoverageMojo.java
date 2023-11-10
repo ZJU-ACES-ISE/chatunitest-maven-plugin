@@ -25,11 +25,12 @@ import zju.cst.aces.util.XmlParser;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * 为每个测试类单独生成覆盖率数据merge版本（1-n的顺序依次执行）
+ * 为每个测试类单独生成覆盖率数据（每个都是单独运行）
  */
 @Mojo(name = "generateMethodCoverage_merge")
 public class MethodMergeCoverageMojo extends AbstractMojo {
@@ -47,16 +48,38 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
     public String mavenHome;
 
 
+    public static boolean createDirectory(File directoryPath){
+        if(!directoryPath.exists()){
+            return directoryPath.mkdirs();
+        }
+        return false;
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
+        if (project.getPackaging().equals("pom")) {
+            log.info("\n==========================\n[ChatUniTest] Skip pom-packaging ...");
+            return;
+        }
         File pomFile = new File(project.getBasedir(), "pom.xml");
 
         // 复制外部目录到 src/test/java
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
-            copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
+                copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
+            } else {
+                MavenProject p = project.clone();
+                String parentPath = "";
+                while(p != null && p.getBasedir() != null) {
+                    parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
+                    p = p.getParent();
+                }
+                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+                copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -82,20 +105,18 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
             }
         }
 
-        File directory = new File(targetDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
         for (String key : executeClassMap.keySet()) {
             List<String> executeClasses = executeClassMap.get(key);
+            for (int i = 0; i < executeClasses.size(); i++) {
+                String s = executeClasses.get(i);
+                s=s.replaceAll("\\.","/");
+                executeClasses.set(i,s);
+            }
             if(executeClasses.size()>1){
                 for (int i = 0; i < executeClasses.size(); i++) {
-                    String s = executeClasses.get(i);
-                    s=s.replaceAll("\\.","/");
-                    executeClasses.set(i,s);
-                }
-                for (int i = 0; i < executeClasses.size(); i++) {
                     String join_execute_classes = String.join(",", sortByLastDigit(executeClasses).subList(0,i+1));
+                    log.info("debugging 1" + join_execute_classes);
+                    log.info("ssss "+join_execute_classes);
                     //遍历executeClassMap，一个list为一次运行，抽取覆盖率
                     String testclassName = key+"_"+"X";//X表示第几轮生成的
 //            log.info(testclassName);
@@ -150,6 +171,9 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                             tempName=prefix+"/"+postfix;
                         }
                         File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
+
+                        log.info("branson :" + project.getBasedir().toString());
+
                         //jacoco.xml路径
                         String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                         String htmlContent = "";
@@ -193,49 +217,23 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         } else {
                             log.info("未找到覆盖率表格");
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    //存储每轮数据
-                    String[] s = testclassName.split("_");
-                    File dir = Paths.get(directory.getAbsolutePath(), s[0]+"/"+s[1]+"/"+"Merge_"+(i+1)).toFile();
-                    if(!dir.exists()){
-                        dir.mkdirs();
-                    }
-                    File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_MERGE.json").toFile();
-                    if(!file.exists()){
                         try {
-                            file.createNewFile();
+                            File designate_path = Paths.get(targetDir,"merge", String.valueOf(i+1)).toFile();
+                            createDirectory(designate_path);
+                            copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
-                    }
-                    file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1), "methodCoverage_MERGE.json").toFile();
-                    try (FileWriter writer = new FileWriter(file)) {
-                        Gson gson = new Gson();
-                        gson.toJson(coverageMap, writer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        copyDirectory(new File(project.getBasedir(),"/target/site/jacoco"),Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+(i+1)).toFile());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    coverageMap.clear();
                 }
             }
             else {
-                for (int i = 0; i < executeClasses.size(); i++) {
-                    String s = executeClasses.get(i);
-                    s=s.replaceAll("\\.","/");
-                    executeClasses.set(i,s);
-                }
                 String join_execute_classes = String.join(",", executeClasses);
                 //遍历executeClassMap，一个list为一次运行，抽取覆盖率
                 String testclassName = key+"_"+"X";//X表示第几轮生成的
-//            log.info(testclassName);
+                log.info("debugging 2" + testclassName);
                 testclassName = testclassName.replaceAll("\\.", "/");
                 try {
                     String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
@@ -322,7 +320,6 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                                     dataList=new ArrayList<>();
                                     coverageMap.put(className,dataList);
                                 }
-                                dataList.clear();
                                 dataList.add(coverateData);
 //                    System.out.println("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
                                 break;
@@ -331,40 +328,20 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     } else {
                         log.info("未找到覆盖率表格");
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                //存储每轮数据
-                String[] s = testclassName.split("_");
-                File dir = Paths.get(directory.getAbsolutePath(), s[0]+"/"+s[1]+"/"+"Merge_"+1).toFile();
-                if(!dir.exists()){
-                    dir.mkdirs();
-                }
-                File file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_MERGE.json").toFile();
-                if(!file.exists()){
                     try {
-                        file.createNewFile();
+                        File designate_path = Paths.get(targetDir,"merge", String.valueOf(0)).toFile();
+                        createDirectory(designate_path);
+                        copyDirectory(new File(project.getBasedir().toString()+"/target/site"), designate_path);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                }
-                file = Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1, "methodCoverage_MERGE.json").toFile();
-                try (FileWriter writer = new FileWriter(file)) {
-                    Gson gson = new Gson();
-                    gson.toJson(coverageMap, writer);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    copyDirectory(new File(project.getBasedir(),"/target/site/jacoco"),Paths.get(directory.getAbsolutePath(),s[0]+"/"+s[1]+"/"+"Merge_"+1).toFile());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                coverageMap.clear();
             }
         }
 
-        /*File directory = new File(targetDir);
+        File directory = new File(targetDir);
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -374,7 +351,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
             gson.toJson(coverageMap, writer);
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
 
         // 删除临时复制的目录
         try {

@@ -18,7 +18,7 @@ package zju.cst.aces;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import zju.cst.aces.parser.ProjectParser;
+import zju.cst.aces.api.impl.Parser;
 
 /**
  * @author chenyi
@@ -34,17 +34,8 @@ public class ParseMojo
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
-        checkTargetFolder(project);
+        log = getLog();
         init();
-        if (project.getPackaging().equals("pom")) {
-            log.info("\n==========================\n[ChatTester] Skip pom-packaging ...");
-            return;
-        }
-        if (! config.getParseOutput().toFile().exists()) {
-            log.info("\n==========================\n[ChatTester] Parsing class info ...");
-            ProjectParser parser = new ProjectParser(config);
-            parser.parse();
-            log.info("\n==========================\n[ChatTester] Parse finished");
-        }
+        new Parser(config).process();
     }
 }
