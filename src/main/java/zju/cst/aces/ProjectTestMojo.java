@@ -32,6 +32,7 @@ import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import zju.cst.aces.api.Task;
 import zju.cst.aces.api.config.Config;
+import zju.cst.aces.api.impl.ProjectImpl;
 import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
 
@@ -129,7 +130,7 @@ public class ProjectTestMojo
     public void init() {
         log = getLog();
         MavenLogger mLogger = new MavenLogger(log);
-        config = new Config.ConfigBuilder(project)
+        config = new Config.ConfigBuilder(new ProjectImpl(project))
                 .log(mLogger)
                 .classPaths(listClassPaths(project, dependencyGraphBuilder))
                 .promptPath(promptPath)
