@@ -21,7 +21,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import zju.cst.aces.util.XmlParser;
-import zju.cst.aces.util.InvocationProperties;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -73,10 +72,12 @@ public class MethodCoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
                 Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+
                 if(!Files.exists(resolvedSourceDir)){
                     log.warn(resolvedSourceDir.toString()+" does not exist.");
                     return;
                 }
+
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
@@ -104,14 +105,23 @@ public class MethodCoverageMojo extends AbstractMojo {
                 String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
+                Properties properties = new Properties();
+                properties.setProperty("gpg.skip", "true");
+                properties.setProperty("enforcer.skip", "true");
+                properties.setProperty("license.skip", "true");
+                properties.setProperty("sortpom.skip", "true");
+                properties.setProperty("maven.javadoc.skip", "true");
+                properties.setProperty("checkstyle.skip", "true");
+                properties.setProperty("animal.sniffer.skip", "true");
+                properties.setProperty("cobertura.skip", "true");
+                properties.setProperty("rat.skip", "true");
+                properties.setProperty("dependencyVersionsCheck.skip", "true");
 
                 // 运行 Maven 测试
                 InvocationRequest request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
-                request.setGoals(Arrays.asList("clean", "test-compile"));
-
-                InvocationProperties.setSkipProperties(request);
-
+                request.setGoals(Arrays.asList("clean", "install"));
+                request.setProperties(properties);
                 Invoker invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -124,9 +134,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
-
-                InvocationProperties.setSkipProperties(request);
-
+                request.setProperties(properties);
                 invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
@@ -156,7 +164,6 @@ public class MethodCoverageMojo extends AbstractMojo {
                 File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
 
                 //jacoco.xml路径
-                log.info("branson :" + project.getBasedir().toString());
                 String xmlFilePath = project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                 String htmlContent = "";
                 try {

@@ -20,13 +20,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import zju.cst.aces.util.InvocationProperties;
 import zju.cst.aces.util.XmlParser;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -80,10 +78,6 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
                 Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
-                if(!Files.exists(resolvedSourceDir)){
-                    log.warn(resolvedSourceDir.toString()+" does not exist.");
-                    return;
-                }
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
@@ -137,12 +131,10 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         //解析jacoco.xml需要用到的methodName
                         String xml_methodName=s[2];
                         log.info("xml_methodName = " + xml_methodName);
-                        // Clean up history
+                        // 运行 Maven 测试
                         InvocationRequest request = new DefaultInvocationRequest();
                         request.setPomFile(pomFile);
-                        request.setGoals(Arrays.asList("clean", "test-compile"));
-                        InvocationProperties.setSkipProperties(request);
-
+                        request.setGoals(Arrays.asList("clean", "install"));
                         Invoker invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
                         try {
@@ -150,14 +142,9 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         } catch (MavenInvocationException e) {
                             throw new RuntimeException(e);
                         }
-
-                        // 运行 Maven 测试
                         request = new DefaultInvocationRequest();
                         request.setPomFile(pomFile);
                         request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
-
-                        InvocationProperties.setSkipProperties(request);
-
                         invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
                         try {
@@ -185,7 +172,6 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         }
                         File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
 
-                        log.info("branson :"+join_execute_classes + project.getBasedir().toString());
 
                         //jacoco.xml路径
                         String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
@@ -261,10 +247,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     // 运行 Maven 测试
                     InvocationRequest request = new DefaultInvocationRequest();
                     request.setPomFile(pomFile);
-                    request.setGoals(Arrays.asList("clean", "test-compile"));
-
-                    InvocationProperties.setSkipProperties(request);
-
+                    request.setGoals(Arrays.asList("clean", "install"));
                     Invoker invoker = new DefaultInvoker();
                     invoker.setMavenHome(new File(mavenHome));
                     try {
