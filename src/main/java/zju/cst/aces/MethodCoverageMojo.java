@@ -20,6 +20,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import zju.cst.aces.util.BackupUtil;
 import zju.cst.aces.util.XmlParser;
 
 import java.io.File;
@@ -59,7 +60,7 @@ public class MethodCoverageMojo extends AbstractMojo {
         File pomFile = new File(project.getBasedir(), "pom.xml");
 
         // 复制外部目录到 src/test/java
-        String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
+        String srcTestJavaPath = Paths.get(project.getBasedir().toString() , "/src/test/java/chatunitest").toString();
 
         try {
             if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
@@ -71,8 +72,14 @@ public class MethodCoverageMojo extends AbstractMojo {
                     parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
                     p = p.getParent();
                 }
-                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
 
+                Path resolvedSourceDir ;
+                if(p==null){//没有父模块
+                    resolvedSourceDir =Paths.get(sourceDir);
+                }
+                else {
+                    resolvedSourceDir=Paths.get(sourceDir).resolve(parentPath);
+                }
                 if(!Files.exists(resolvedSourceDir)){
                     log.warn(resolvedSourceDir.toString()+" does not exist.");
                     return;
@@ -87,6 +94,12 @@ public class MethodCoverageMojo extends AbstractMojo {
         SignatureGetter signatureGetter = new SignatureGetter();
         ArrayList<String> classNames = new ArrayList<>();
         List<File> files = listJavaFiles(new File(srcTestJavaPath));
+        //先备份target目录（执行mvn clean compile的状态）
+        try {
+            BackupUtil.backupTargetFolder(Paths.get(project.getBasedir().toString() , "target").toString(), Paths.get(project.getBasedir().toString() , "backup").toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
 
@@ -117,8 +130,8 @@ public class MethodCoverageMojo extends AbstractMojo {
                 properties.setProperty("rat.skip", "true");
                 properties.setProperty("dependencyVersionsCheck.skip", "true");
 
-                // 运行 Maven 测试
-                InvocationRequest request = new DefaultInvocationRequest();
+
+                /*InvocationRequest request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("clean", "install"));
                 request.setProperties(properties);
@@ -128,9 +141,17 @@ public class MethodCoverageMojo extends AbstractMojo {
                     invoker.execute(request);
                 } catch (MavenInvocationException e) {
                     throw new RuntimeException(e);
-                }
+                }*/
 //                String commandTest = String.join(",", testclassName);//就是上面log的className
+                //清空上一次的测试信息
+                BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
+
+                // 运行 Maven 测试
                 log.info("Running mvn test ...");
+                InvocationRequest request = new DefaultInvocationRequest();
+                Invoker invoker = new DefaultInvoker();
+                invoker.setMavenHome(new File(mavenHome));
+                request.setPomFile(pomFile);
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
@@ -221,8 +242,15 @@ public class MethodCoverageMojo extends AbstractMojo {
         }
 
         File directory = new File(targetDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
+        try {
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            else {
+                FileUtils.cleanDirectory(directory);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         File file = new File(directory, "methodCoverage.json");
         try (FileWriter writer = new FileWriter(file)) {
@@ -235,6 +263,9 @@ public class MethodCoverageMojo extends AbstractMojo {
         // 删除临时复制的目录
         try {
             FileUtils.deleteDirectory(new File(srcTestJavaPath));
+            //恢复target
+            BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
+            BackupUtil.deleteBackupFolder(Paths.get(project.getBasedir().toString() , "backup").toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
