@@ -119,6 +119,8 @@ public class MethodCoverageMojo extends AbstractMojo {
                 //解析jacoco.xml需要用到的methodName
                 String xml_methodName=s[2];
                 Properties properties = new Properties();
+                String javaHome = System.getenv("JAVA_HOME");
+                properties.setProperty("JAVA_HOME", javaHome);
                 properties.setProperty("gpg.skip", "true");
                 properties.setProperty("enforcer.skip", "true");
                 properties.setProperty("license.skip", "true");
@@ -150,12 +152,14 @@ public class MethodCoverageMojo extends AbstractMojo {
                 log.info("Running mvn test ...");
                 InvocationRequest request = new DefaultInvocationRequest();
                 Invoker invoker = new DefaultInvoker();
+
                 invoker.setMavenHome(new File(mavenHome));
                 request.setPomFile(pomFile);
                 request = new DefaultInvocationRequest();
                 request.setPomFile(pomFile);
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
                 request.setProperties(properties);
+
                 invoker = new DefaultInvoker();
                 invoker.setMavenHome(new File(mavenHome));
                 try {
