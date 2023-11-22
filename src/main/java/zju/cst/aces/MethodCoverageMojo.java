@@ -121,16 +121,16 @@ public class MethodCoverageMojo extends AbstractMojo {
                 Properties properties = new Properties();
                 String javaHome = System.getenv("JAVA_HOME");
                 properties.setProperty("JAVA_HOME", javaHome);
-                properties.setProperty("gpg.skip", "true");
-                properties.setProperty("enforcer.skip", "true");
-                properties.setProperty("license.skip", "true");
-                properties.setProperty("sortpom.skip", "true");
-                properties.setProperty("maven.javadoc.skip", "true");
-                properties.setProperty("checkstyle.skip", "true");
-                properties.setProperty("animal.sniffer.skip", "true");
-                properties.setProperty("cobertura.skip", "true");
-                properties.setProperty("rat.skip", "true");
-                properties.setProperty("dependencyVersionsCheck.skip", "true");
+//                properties.setProperty("gpg.skip", "true");
+//                properties.setProperty("enforcer.skip", "true");
+//                properties.setProperty("license.skip", "true");
+//                properties.setProperty("sortpom.skip", "true");
+//                properties.setProperty("maven.javadoc.skip", "true");
+//                properties.setProperty("checkstyle.skip", "true");
+//                properties.setProperty("animal.sniffer.skip", "true");
+//                properties.setProperty("cobertura.skip", "true");
+//                properties.setProperty("rat.skip", "true");
+//                properties.setProperty("dependencyVersionsCheck.skip", "true");
 
 
                 /*InvocationRequest request = new DefaultInvocationRequest();
