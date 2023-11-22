@@ -20,6 +20,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import zju.cst.aces.util.BackupUtil;
 import zju.cst.aces.util.XmlParser;
 
 import java.io.File;
@@ -65,7 +66,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         File pomFile = new File(project.getBasedir(), "pom.xml");
 
         // 复制外部目录到 src/test/java
-        String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
+        String srcTestJavaPath = Paths.get(project.getBasedir().toString() , "/src/test/java/chatunitest").toString();
 
         try {
             if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
@@ -77,7 +78,13 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
                     p = p.getParent();
                 }
-                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+                Path resolvedSourceDir ;
+                if(p==null){//没有父模块
+                    resolvedSourceDir =Paths.get(sourceDir);
+                }
+                else {
+                    resolvedSourceDir=Paths.get(sourceDir).resolve(parentPath);
+                }
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
@@ -87,10 +94,18 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         SignatureGetter signatureGetter = new SignatureGetter();
         ArrayList<String> classNames = new ArrayList<>();
         List<File> files = listJavaFiles(new File(srcTestJavaPath));
-
+        //先备份target目录（执行mvn clean compile的状态）
+        try {
+            BackupUtil.backupTargetFolder(Paths.get(project.getBasedir().toString() , "target").toString(), Paths.get(project.getBasedir().toString() , "backup").toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
 
         HashMap<String, List<String>> executeClassMap = new HashMap<>();
+        Properties properties = new Properties();
+        String javaHome = System.getenv("JAVA_HOME");
+        properties.setProperty("JAVA_HOME", javaHome);
         for(File file:files){
             String testclassName=extractClassName(srcTestJavaPath,file);
             String[] s1=testclassName.split("_", 4);
@@ -132,21 +147,18 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         String xml_methodName=s[2];
                         log.info("xml_methodName = " + xml_methodName);
                         // 运行 Maven 测试
+                        /*request.setPomFile(pomFile);
+                        request.setGoals(Arrays.asList("clean", "install"));*/
+
+                        //清空上一次的测试信息
+                        BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
+
                         InvocationRequest request = new DefaultInvocationRequest();
-                        request.setPomFile(pomFile);
-                        request.setGoals(Arrays.asList("clean", "install"));
                         Invoker invoker = new DefaultInvoker();
                         invoker.setMavenHome(new File(mavenHome));
-                        try {
-                            invoker.execute(request);
-                        } catch (MavenInvocationException e) {
-                            throw new RuntimeException(e);
-                        }
-                        request = new DefaultInvocationRequest();
                         request.setPomFile(pomFile);
                         request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
-                        invoker = new DefaultInvoker();
-                        invoker.setMavenHome(new File(mavenHome));
+                        request.setProperties(properties);
                         try {
                             invoker.execute(request);
                         } catch (MavenInvocationException e) {
@@ -245,20 +257,14 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     String xml_methodName=s[2];
                     log.info("xml_methodName = " + xml_methodName);
                     // 运行 Maven 测试
+                    //清空上一次的测试信息
+                    BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
+
                     InvocationRequest request = new DefaultInvocationRequest();
-                    request.setPomFile(pomFile);
-                    request.setGoals(Arrays.asList("clean", "install"));
                     Invoker invoker = new DefaultInvoker();
-                    invoker.setMavenHome(new File(mavenHome));
-                    try {
-                        invoker.execute(request);
-                    } catch (MavenInvocationException e) {
-                        throw new RuntimeException(e);
-                    }
-                    request = new DefaultInvocationRequest();
                     request.setPomFile(pomFile);
                     request.setGoals(Arrays.asList("test", "-Dtest=" + join_execute_classes));
-                    invoker = new DefaultInvoker();
+                    request.setProperties(properties);
                     invoker.setMavenHome(new File(mavenHome));
                     try {
                         invoker.execute(request);
@@ -355,6 +361,8 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         // 删除临时复制的目录
         try {
             FileUtils.deleteDirectory(new File(srcTestJavaPath));
+            BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
+            BackupUtil.deleteBackupFolder(Paths.get(project.getBasedir().toString() , "backup").toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

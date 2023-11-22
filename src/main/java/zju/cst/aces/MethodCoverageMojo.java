@@ -247,15 +247,8 @@ public class MethodCoverageMojo extends AbstractMojo {
         }
 
         File directory = new File(targetDir);
-        try {
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            else {
-                FileUtils.cleanDirectory(directory);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (!directory.exists()) {
+            directory.mkdirs();
         }
         File file = new File(directory, "methodCoverage.json");
         try (FileWriter writer = new FileWriter(file)) {
