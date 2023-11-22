@@ -164,6 +164,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                 invoker.setMavenHome(new File(mavenHome));
                 try {
                     invoker.execute(request);
+                    log.info("running mvn test"+request.getGoals());
                 } catch (MavenInvocationException e) {
                     throw new RuntimeException(e);
                 }
