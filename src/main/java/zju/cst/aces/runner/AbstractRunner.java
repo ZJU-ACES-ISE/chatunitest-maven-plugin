@@ -303,7 +303,7 @@ public abstract class AbstractRunner {
     }
 
     public static MethodInfo getMethodInfo(Config config, ClassInfo info, String mSig) throws IOException {
-        String packagePath = info.packageDeclaration
+        String packagePath = info.getPackageName()
                 .replace("package ", "")
                 .replace(".", File.separator)
                 .replace(";", "");
