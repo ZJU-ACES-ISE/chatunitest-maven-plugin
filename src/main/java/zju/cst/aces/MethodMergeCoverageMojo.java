@@ -78,13 +78,14 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
                     p = p.getParent();
                 }
-                Path resolvedSourceDir ;
-                if(p==null){//没有父模块
-                    resolvedSourceDir =Paths.get(sourceDir);
-                }
-                else {
-                    resolvedSourceDir=Paths.get(sourceDir).resolve(parentPath);
-                }
+                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+//                Path resolvedSourceDir ;
+//                if(p==null){//没有父模块
+//                    resolvedSourceDir =Paths.get(sourceDir);
+//                }
+//                else {
+//                    resolvedSourceDir=Paths.get(sourceDir).resolve(parentPath);
+//                }
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {

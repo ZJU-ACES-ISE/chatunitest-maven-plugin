@@ -73,13 +73,14 @@ public class MethodCoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
 
-                Path resolvedSourceDir ;
-                if(p==null){//没有父模块
-                    resolvedSourceDir =Paths.get(sourceDir);
-                }
-                else {
-                    resolvedSourceDir=Paths.get(sourceDir).resolve(parentPath);
-                }
+                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+//                Path resolvedSourceDir ;
+//                if(p==null){//没有父模块
+//                    resolvedSourceDir =Paths.get(sourceDir);
+//                }
+//                else {
+//                    resolvedSourceDir=Paths.get(sourceDir).resolve(parentPath);
+//                }
                 if(!Files.exists(resolvedSourceDir)){
                     log.warn(resolvedSourceDir.toString()+" does not exist.");
                     return;
