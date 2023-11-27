@@ -13,6 +13,7 @@ import zju.cst.aces.util.InvocationProperties;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -55,6 +56,11 @@ public class CoverageMojo extends AbstractMojo {
                     p = p.getParent();
                 }
                 Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
+                if(!Files.exists(resolvedSourceDir)){
+                    log.warn(resolvedSourceDir.toString()+" does not exist.");
+                    return;
+                }
+
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {

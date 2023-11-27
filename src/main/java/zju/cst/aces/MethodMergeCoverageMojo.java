@@ -91,6 +91,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     log.warn(resolvedSourceDir.toString()+" does not exist.");
                     return;
                 }
+
                 copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
             }
         } catch (IOException e) {
