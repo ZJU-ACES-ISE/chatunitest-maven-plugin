@@ -38,7 +38,7 @@ public class XmlParser {
                     NodeList classNodes = packageElement.getElementsByTagName("class");
                     for (int j = 0; j < classNodes.getLength(); j++) {
                         Element classElement = (Element) classNodes.item(j);
-                        if (classElement.getAttribute("name").equals(className)) {
+                        if (classElement.getAttribute("name").contains(className)) {
                             NodeList methodNodes = classElement.getElementsByTagName("method");
                             for (int k = 0; k < methodNodes.getLength(); k++) {
                                 Element methodElement = (Element) methodNodes.item(k);
@@ -88,7 +88,6 @@ public class XmlParser {
                 result.append(", ");
             }
         }
-
         result.append(")");
         return result.toString();
     }
@@ -144,12 +143,16 @@ public class XmlParser {
 
     public static void main(String[] args) {
         // 指定XML文件路径
-        String xmlFilePath = "D:\\idea_plugin\\test_plugin\\target\\site\\jacoco\\jacoco.xml";
+      /*  String xmlFilePath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco.xml";
 
         // 指定要查找的信息
-        String className = "com/hhh/plugin/MyTest1";
-        String methodName = "sayHello3";
-        String methodSignature = "sayHello3()";
+        String className = "de/openknowledge/jaxrs/reactive/GenericsUtil";
+        String methodName = "fromGenericType";
+        String methodSignature = "fromGenericType(Class, Class)";*/
+        String xmlFilePath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco_correct.xml";
+        String className="name.pehl.piriti.converter.client.CharacterConverter".replaceAll("\\.","/");
+        String methodName="convert";
+        String methodSignature="convert(String)";
         XmlParser xmlParser = new XmlParser();
         List<CoverageInfo> coverageInfoList = xmlParser.getCoverageInfo(xmlFilePath, className, methodName, methodSignature);
         for (CoverageInfo coverageInfo : coverageInfoList) {
