@@ -85,6 +85,7 @@ public class MethodTestMojo
                     new MethodRunner(fullClassName, config, methodInfo).start();
                 } catch (Exception e) {
                     log.error("Error when generating tests for " + methodName + " in " + className + " " + project.getArtifactId());
+                    log.error(e.toString());
                 }
             } else {
                 for (String mSig : classInfo.methodSigs.keySet()) {
@@ -98,6 +99,7 @@ public class MethodTestMojo
                             new MethodRunner(fullClassName, config, methodInfo).start(); // generate for all methods with the same name;
                         } catch (Exception e) {
                             log.error("Error when generating tests for " + methodName + " in " + className + " " + project.getArtifactId());
+                            log.error(e.toString());
                         }
                     }
                 }
