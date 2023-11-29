@@ -202,13 +202,14 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         }
                         Document doc = Jsoup.parse(htmlContent);
                         Element coverageTable = doc.getElementById("coveragetable");
+                        double maxCoverage=0;
                         if (coverageTable != null) {
                             Elements rows = coverageTable.select("tbody > tr");
                             for (Element row : rows) {
                                 Element methodNameElement = row.selectFirst("td[id^='a']");
                                 String methodName = methodNameElement.text();
-                                if (methodName.replace(" ", "").equals(methodSignature.replace
-                                        (" ", ""))) {//target_methodSignature就是上面抽取的getMethodSignature的返回结果
+                                if (methodName.replace(" ", "").split("\\(")[0].equals(methodSignature.replace
+                                        (" ", "").split("\\(")[0])) {//target_methodSignature就是上面抽取的getMethodSignature的返回结果
                                     Element instructionCoverageElement = row.selectFirst("td.ctr2:nth-child(3)");
                                     Element branchCoverageElement = row.selectFirst("td.ctr2:nth-child(5)");
                                     String instructionCoverage = instructionCoverageElement.text();
@@ -222,14 +223,17 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                                     List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
 //                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
                                     CoverageData coverateData = new CoverageData(testclassName.replaceAll("/",".")+"_1To"+(i+1),methodSignature,instructionCoverage,xml_extract_result);
-                                    List<CoverageData> dataList=coverageMap.get(className);
-                                    if(dataList==null){
-                                        dataList=new ArrayList<>();
-                                        coverageMap.put(className,dataList);
+                                    double instructionCoverageValue=Double.parseDouble(instructionCoverage.split("%")[0]);
+                                    if(instructionCoverageValue>=maxCoverage){
+                                        maxCoverage=instructionCoverageValue;
+                                        List<CoverageData> dataList = coverageMap.get(className);
+                                        if (dataList == null) {
+                                            dataList = new ArrayList<>();
+                                            coverageMap.put(className, dataList);
+                                        }
+                                        dataList.clear();
+                                        dataList.add(coverateData);
                                     }
-                                    dataList.add(coverateData);
-//                    System.out.println("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
-                                    break;
                                 }
                             }
                         } else {
@@ -307,13 +311,14 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     }
                     Document doc = Jsoup.parse(htmlContent);
                     Element coverageTable = doc.getElementById("coveragetable");
+                    double maxCoverage=0;
                     if (coverageTable != null) {
                         Elements rows = coverageTable.select("tbody > tr");
                         for (Element row : rows) {
                             Element methodNameElement = row.selectFirst("td[id^='a']");
                             String methodName = methodNameElement.text();
-                            if (methodName.replace(" ", "").equals(methodSignature.replace
-                                    (" ", ""))) {//target_methodSignature就是上面抽取的getMethodSignature的返回结果
+                            if (methodName.replace(" ", "").split("\\(")[0].equals(methodSignature.replace
+                                    (" ", "").split("\\(")[0])) {//target_methodSignature就是上面抽取的getMethodSignature的返回结果
                                 Element instructionCoverageElement = row.selectFirst("td.ctr2:nth-child(3)");
                                 Element branchCoverageElement = row.selectFirst("td.ctr2:nth-child(5)");
                                 String instructionCoverage = instructionCoverageElement.text();
@@ -327,14 +332,17 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                                 List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
 //                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
                                 CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,xml_extract_result);
-                                List<CoverageData> dataList=coverageMap.get(className);
-                                if(dataList==null){
-                                    dataList=new ArrayList<>();
-                                    coverageMap.put(className,dataList);
+                                double instructionCoverageValue=Double.parseDouble(instructionCoverage.split("%")[0]);
+                                if(instructionCoverageValue>=maxCoverage){
+                                    maxCoverage=instructionCoverageValue;
+                                    List<CoverageData> dataList = coverageMap.get(className);
+                                    if (dataList == null) {
+                                        dataList = new ArrayList<>();
+                                        coverageMap.put(className, dataList);
+                                    }
+                                    dataList.clear();
+                                    dataList.add(coverateData);
                                 }
-                                dataList.add(coverateData);
-//                    System.out.println("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
-                                break;
                             }
                         }
                     } else {

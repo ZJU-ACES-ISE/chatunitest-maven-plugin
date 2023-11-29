@@ -33,6 +33,7 @@ public class XmlParser {
             Document document = builder.parse(new File(xmlFilePath));
             // 查找对应的方法信息
             NodeList packageNodes = document.getElementsByTagName("package");
+            double maxcoverage=0;
             for (int i = 0; i < packageNodes.getLength(); i++) {
                 Element packageElement = (Element) packageNodes.item(i);
                     NodeList classNodes = packageElement.getElementsByTagName("class");
@@ -44,7 +45,9 @@ public class XmlParser {
                                 Element methodElement = (Element) methodNodes.item(k);
                                 String methodNameAttr = methodElement.getAttribute("name");
                                 String methodDescAttr = methodElement.getAttribute("desc");
-                                if (methodName.equals(methodNameAttr) && (methodNameAttr+parseMethodDescriptor(methodDescAttr)).replaceAll(" ","").equals(methodSignature.replaceAll(" ",""))) {
+//                              if (methodName.equals(methodNameAttr) && (methodNameAttr+parseMethodDescriptor(methodDescAttr)).replaceAll(" ","").equals(methodSignature.replaceAll(" ",""))) {
+                                //只比较方法名，不比较签名
+                                if (methodName.equals(methodNameAttr) ) {
                                     // 找到了对应的方法信息
                                     NodeList counterNodes = methodElement.getElementsByTagName("counter");
                                     for (int l = 0; l < counterNodes.getLength(); l++) {
@@ -52,6 +55,18 @@ public class XmlParser {
                                         String type = counterElement.getAttribute("type");
                                         String missed = counterElement.getAttribute("missed");
                                         String covered = counterElement.getAttribute("covered");
+                                        if(type.equals("INSTRUCTION")){
+                                            double covered_line=Double.parseDouble(covered);
+                                            double missed_line=Double.parseDouble(missed);
+                                            if(covered_line/(covered_line+missed_line)>=maxcoverage)
+                                            {
+                                                coverageInfoList.clear();
+                                            }
+                                            else{
+                                                break;
+                                            }
+                                            maxcoverage=covered_line/(covered_line+missed_line);
+                                        }
                                         ObjectNode coverageNode = objectMapper.createObjectNode();
                                         coverageNode.put("type", type);
                                         coverageNode.put("missed", Integer.parseInt(missed));
@@ -143,18 +158,22 @@ public class XmlParser {
 
     public static void main(String[] args) {
         // 指定XML文件路径
-      /*  String xmlFilePath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco.xml";
+     /*   String xmlFilePath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco.xml";
 
         // 指定要查找的信息
         String className = "de/openknowledge/jaxrs/reactive/GenericsUtil";
         String methodName = "fromGenericType";
         String methodSignature = "fromGenericType(Class, Class)";*/
-        String xmlFilePath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco_correct.xml";
+ /*       String xmlFilePath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco_correct.xml";
         String className="name.pehl.piriti.converter.client.CharacterConverter".replaceAll("\\.","/");
         String methodName="convert";
-        String methodSignature="convert(String)";
+        String methodSignature="convert(String)";*/
+        String jacocoXmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\27674753\\jacoco.xml";
+        String jacocoHtmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\27674753\\SubClassSupportInstanceInitializer.html";
+        String methodSignature="getClass(T)";
+        String className="org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer";
         XmlParser xmlParser = new XmlParser();
-        List<CoverageInfo> coverageInfoList = xmlParser.getCoverageInfo(xmlFilePath, className, methodName, methodSignature);
+        List<CoverageInfo> coverageInfoList = xmlParser.getCoverageInfo(jacocoXmlPath, className.replaceAll("\\.","/"),methodSignature.split("\\(")[0], methodSignature);
         for (CoverageInfo coverageInfo : coverageInfoList) {
             System.out.println(coverageInfo.toString());
         }
