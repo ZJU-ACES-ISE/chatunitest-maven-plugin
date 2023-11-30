@@ -151,6 +151,11 @@ public class MethodCoverageMojo extends AbstractMojo {
                 String xmlFilePath = project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                 log.info("jacoco xml file path:"+xmlFilePath);
                 JacocoParser jacocoParser = new JacocoParser();
+                log.warn("htmlpath:"+htmlFile.getAbsolutePath());
+                log.warn("methodSignature:"+methodSignature);
+                log.warn("testclassName:"+testclassName.replaceAll("/", "."));
+                log.warn("xmlFilePath:"+xmlFilePath);
+                log.warn("className:"+className);
                 CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(htmlFile, methodSignature, testclassName.replaceAll("/", "."));
                 List<JacocoParser.CoverageInfo> coverageInfo = jacocoParser.getCoverageInfo(xmlFilePath, className, methodSignature);
                 coverageData.setCoverageInfo(coverageInfo);
@@ -160,6 +165,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                     dataList = new ArrayList<>();
                     coverageMap.put(className, dataList);
                 }
+                log.warn("coveragedata:"+coverageData);
                 dataList.add(coverageData);
                 try {
                     File designate_path = Paths.get(targetDir,"separate", testFileName).toFile();

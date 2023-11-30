@@ -50,7 +50,7 @@ public class JacocoParser {
                 NodeList classNodes = packageElement.getElementsByTagName("class");
                 for (int j = 0; j < classNodes.getLength(); j++) {
                     Element classElement = (Element) classNodes.item(j);
-                    if (classElement.getAttribute("name").contains(className)) {
+                    if (classElement.getAttribute("name").equals(className)) {
                         NodeList methodNodes = classElement.getElementsByTagName("method");
                         for (int k = 0; k < methodNodes.getLength(); k++) {
                             Element methodElement = (Element) methodNodes.item(k);
@@ -308,11 +308,11 @@ public class JacocoParser {
         String jacocoHtmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\27674753\\SubClassSupportInstanceInitializer.html";
         String methodSignature="getClass(T)";
         String className="org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer";*/
-        String jacocoXmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\52409237\\jacoco.xml";
+        String jacocoXmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\41423327\\jacoco.xml";
         JacocoParser jacocoParser = new JacocoParser();
-        String jacocoHtmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\52409237\\jacoco.html";
-        String className="com.tqmall.search.commons.nlp.TraditionToSimple";
-        String methodSignature="convert(char)";
+        String jacocoHtmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\41423327\\jacoco.html";
+        String className="org.unix4j.util.RelativePathBase";
+        String methodSignature="getRelativePathFor(File)";
         List<CoverageInfo> coverageInfoList = jacocoParser.getCoverageInfo(jacocoXmlPath, className,  methodSignature);
         System.out.println(coverageInfoList);
         CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(new File(jacocoHtmlPath), methodSignature, "com.github.haiger.dqueue.client.DQueue_popAlways_4_1_Test");
