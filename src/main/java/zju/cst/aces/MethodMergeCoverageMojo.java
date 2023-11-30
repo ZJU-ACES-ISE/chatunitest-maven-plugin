@@ -174,9 +174,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         //jacoco.xml路径
                         String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                         JacocoParser jacocoParser = new JacocoParser();
-                        List<HashMap<String, List<JacocoParser.CoverageInfo>>> coverageData = jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
-                        List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList = coverageMap.get(originTestClassName);
-                        //添加记录
+                        List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList=jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
                         coverageMap.put(originTestClassName,dataList);
                         try {
                             File designate_path = Paths.get(targetDir,"merge", String.valueOf(i+1)).toFile();
@@ -239,9 +237,8 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     //jacoco.xml路径
                     String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                     JacocoParser jacocoParser = new JacocoParser();
-                    List<HashMap<String, List<JacocoParser.CoverageInfo>>> coverageData = jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
-                    List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList = coverageMap.get(originTestClassName);
                     //添加记录
+                    List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList=jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
                     coverageMap.put(originTestClassName,dataList);
                     try {
                         File designate_path = Paths.get(targetDir,"merge", String.valueOf(0)).toFile();

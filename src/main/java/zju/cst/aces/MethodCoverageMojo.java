@@ -156,9 +156,8 @@ public class MethodCoverageMojo extends AbstractMojo {
                 log.warn("testclassName:"+testclassName.replaceAll("/", "."));
                 log.warn("xmlFilePath:"+xmlFilePath);
                 log.warn("className:"+className);*/
-                List<HashMap<String, List<JacocoParser.CoverageInfo>>> coverageData = jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
-                List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList = coverageMap.get(originTestClassName);
                 //添加记录
+                List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList=jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
                 coverageMap.put(originTestClassName,dataList);
                 try {
                     File designate_path = Paths.get(targetDir,"separate", testFileName).toFile();
