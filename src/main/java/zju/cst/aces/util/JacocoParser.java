@@ -315,7 +315,7 @@ public class JacocoParser {
         String methodSignature="getRelativePathFor(File)";
         List<CoverageInfo> coverageInfoList = jacocoParser.getCoverageInfo(jacocoXmlPath, className,  methodSignature);
         System.out.println(coverageInfoList);
-        CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(new File(jacocoHtmlPath), methodSignature, "com.github.haiger.dqueue.client.DQueue_popAlways_4_1_Test");
+        CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(new File(jacocoHtmlPath), methodSignature, "org.unix4j.util.RelativePathBase_getRelativePathFor_2_2_Test");
         List<JacocoParser.CoverageInfo> coverageInfo = jacocoParser.getCoverageInfo(jacocoXmlPath, className, methodSignature);
         coverageData.setCoverageInfo(coverageInfo);
         System.out.println(coverageData);

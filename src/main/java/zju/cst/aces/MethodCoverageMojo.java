@@ -101,7 +101,6 @@ public class MethodCoverageMojo extends AbstractMojo {
                 int index = Integer.parseInt(s[1]);
                 String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
                 //解析jacoco.xml需要用到的methodName
-                String xml_methodName=s[2];
                 Properties properties = new Properties();
                 String javaHome = System.getenv("JAVA_HOME");
                 properties.setProperty("JAVA_HOME", javaHome);
@@ -218,6 +217,9 @@ public class MethodCoverageMojo extends AbstractMojo {
             JavaParser javaParser = new JavaParser();
             ParseResult<CompilationUnit> parseResult = javaParser.parse(Paths.get(projectPath, "src/main/java",
                     className.replace(".", "/") + ".java"));
+            String s = Paths.get(projectPath, "src/main/java",
+                    className.replace(".", "/") + ".java").toString();
+            log.error(s);
             if (parseResult.isSuccessful()) {
                 CompilationUnit cu = parseResult.getResult().get();
                 MethodSignatureVisitor methodVisitor = new MethodSignatureVisitor(methodIndex);
