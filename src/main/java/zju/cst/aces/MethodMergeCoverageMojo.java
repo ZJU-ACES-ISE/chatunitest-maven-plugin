@@ -130,7 +130,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     String join_execute_classes = String.join(",", sortByLastDigit(executeClasses).subList(0,i+1));
                     log.info("the test this epoch runs: "+join_execute_classes);
                     //遍历executeClassMap，一个list为一次运行，抽取覆盖率
-                    String originTestClassName = key+"_"+"X";//X表示第几轮生成的
+                    String originTestClassName = key+"_" +1+" to "+(i+1);//X表示第几轮生成的
                     String testclassName = originTestClassName.replaceAll("\\.", "/");
                     try {
                         String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
@@ -191,7 +191,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
             else {
                 String join_execute_classes = String.join(",", executeClasses);
                 //遍历executeClassMap，一个list为一次运行，抽取覆盖率
-                String originTestClassName = key+"_"+"X";//X表示第几轮生成的
+                String originTestClassName = key+"_"+"1 to 1";//X表示第几轮生成的
                 String testclassName = originTestClassName.replaceAll("\\.", "/");
                 try {
                     String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
@@ -199,7 +199,6 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     int index = Integer.parseInt(s[1]);
                     //解析jacoco.xml需要用到的methodName
                     String xml_methodName=s[2];
-                    log.info("xml_methodName = " + xml_methodName);
                     // 运行 Maven 测试
                     //清空上一次的测试信息
                     BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
