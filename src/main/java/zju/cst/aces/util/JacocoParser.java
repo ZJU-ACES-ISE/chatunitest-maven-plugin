@@ -1,5 +1,6 @@
 package zju.cst.aces.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -17,25 +18,24 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class JacocoParser {
     /**
-     * @param xmlFilePath     jacoco.xml path
-     * @param className       TargetClassName eg:"name.pehl.piriti.converter.client.CharacterConverter"
-     * @param methodSignature eg:"convert(String)"
+     * @param xmlFilePath jacoco.xml path
+     * @param className   TargetClassName eg:"name.pehl.piriti.converter.client.CharacterConverter"
      * @return
      */
-    public List<CoverageInfo> getCoverageInfo(String xmlFilePath, String className, String methodSignature) {
+    public List<HashMap<String, List<CoverageInfo>>> getJacocoXmlParsedInfo(String xmlFilePath, String className) {
         //设置返回值为json类型
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayNode coverageArray = objectMapper.createArrayNode();
         //single methodName
-        String methodName = methodSignature.split("\\(")[0];
         //jacoco需要的格式
-        className=className.replaceAll("\\.","/");
+        className = className.replaceAll("\\.", "/");
         //遇到jacoco对signature解析（更改参数类型）的问题，将每一个method的coverageInfo存储，最后进行比较
-        List<List<CoverageInfo>> coverageInfoList = new ArrayList<>();
+        List<HashMap<String, List<CoverageInfo>>> coverageInfoList = new ArrayList<>();
         try {
             // 创建DOM解析器工厂
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -57,35 +57,19 @@ public class JacocoParser {
                             String methodNameAttr = methodElement.getAttribute("name");
                             String methodDescAttr = methodElement.getAttribute("desc");
                             //method signature完全匹配
-                            if (methodName.equals(methodNameAttr) && (methodNameAttr + parseMethodDescriptor(methodDescAttr)).replaceAll(" ", "").equals(methodSignature.replaceAll(" ", ""))) {
-                                return getCoverageInfo(methodElement);
-                            }
-                            //只比较方法名，不比较签名
-                            else if (methodName.equals(methodNameAttr)) {
-                                // 找到了对应的方法信息
-                                coverageInfoList.add(getCoverageInfo(methodElement));
-                            }
+                            // 找到了对应的方法信息
+                            String methodSignature = (methodNameAttr + parseMethodDescriptor(methodDescAttr));
+                            coverageInfoList.add(getCoverageInfo(methodSignature, methodElement));
                         }
                     }
                 }
             }
-        } catch (
-                Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 //        return result.equals("")?"Failure":result;
         //先初始化最大覆盖率为0
-        double maxCoverage=0;
-        List<CoverageInfo> maxCoverageNode = new ArrayList<>();
-        for (List<CoverageInfo> coverageInfos : coverageInfoList) {
-            double covered=coverageInfos.get(0).getCovered();
-            double missed=coverageInfos.get(0).getMissed();
-            double coverage=covered/(covered+missed);
-            if(coverage>=maxCoverage){
-                maxCoverageNode=coverageInfos;
-            }
-        }
-        return maxCoverageNode;
+        return coverageInfoList;
     }
 
     public static String parseMethodDescriptor(String descriptor) {
@@ -110,7 +94,7 @@ public class JacocoParser {
 
 
     //html的覆盖率信息解析xxx%的覆盖率
-    public CoverageData getJacocoHtmlParsedInfo(File htmlFile,String methodSignature,String testClassName){
+    public CoverageData getJacocoHtmlParsedInfo(File htmlFile, String methodSignature, String testClassName) {
         String htmlContent = "";
         try {
             htmlContent = FileUtils.readFileToString(htmlFile, "UTF-8");
@@ -130,34 +114,31 @@ public class JacocoParser {
                 org.jsoup.nodes.Element branchCoverageElement = row.selectFirst("td.ctr2:nth-child(5)");
                 String instructionCoverage = instructionCoverageElement.text();
                 String branchCoverage = branchCoverageElement.text();
-                coverageData = new CoverageData(testClassName.replaceAll("/","."),methodSignature,branchCoverage,instructionCoverage,null);
+                coverageData = new CoverageData(testClassName.replaceAll("/", "."), methodSignature, branchCoverage, instructionCoverage, null);
                 if (methodName.replace(" ", "").equals(methodSignature.replace
                         (" ", ""))) {//methodSignature完全匹配
                     return coverageData;
-                }
-                else if(methodName.split("\\(")[0].equals(methodSignature.split("\\(")[0])){
+                } else if (methodName.split("\\(")[0].equals(methodSignature.split("\\(")[0])) {
                     coverageDataList.add(coverageData);
                 }
             }
-        }
-        else {
+        } else {
             return null;
         }
-        double maxInstructionCoverage=0;
-        CoverageData maxCoverageData=new CoverageData();
+        double maxInstructionCoverage = 0;
+        CoverageData maxCoverageData = new CoverageData();
         for (CoverageData data : coverageDataList) {
-            double instructionCoverage=Double.parseDouble(data.getInstructionCoverage().split("\\%")[0]);
-            if(instructionCoverage>=instructionCoverage)
-            {
-                maxCoverageData=data;
+            double instructionCoverage = Double.parseDouble(data.getInstructionCoverage().split("\\%")[0]);
+            if (instructionCoverage >= instructionCoverage) {
+                maxCoverageData = data;
             }
         }
         return maxCoverageData;
     }
 
     //xml的覆盖信息解析，type covered missed等
-    public List<CoverageInfo> getCoverageInfo(Element methodElement) {
-        ArrayList<CoverageInfo> coverageItem = new ArrayList<>();
+    public HashMap<String, List<CoverageInfo>> getCoverageInfo(String methodSignature, Element methodElement) {
+        List<CoverageInfo> coverageItem = new ArrayList<>();
         NodeList counterNodes = methodElement.getElementsByTagName("counter");
         ObjectMapper objectMapper = new ObjectMapper();
         for (int l = 0; l < counterNodes.getLength(); l++) {
@@ -172,22 +153,15 @@ public class JacocoParser {
             CoverageInfo coverageInfo = new CoverageInfo(type, Integer.parseInt(missed), Integer.parseInt(covered));
             coverageItem.add(coverageInfo);
         }
-        return coverageItem;
+        HashMap<String, List<CoverageInfo>> map = new HashMap<>();
+        map.put(methodSignature, coverageItem);
+        return map;
     }
 
     public class CoverageInfo {
         private String type;
         private Integer missed;
         private Integer covered;
-
-        public CoverageInfo(String type, Integer missed, Integer covered) {
-            this.type = type;
-            this.missed = missed;
-            this.covered = covered;
-        }
-
-        public CoverageInfo() {
-        }
 
         public String getType() {
             return type;
@@ -213,17 +187,17 @@ public class JacocoParser {
             this.covered = covered;
         }
 
-        @Override
-        public String toString() {
-            return "CoverageInfo{" +
-                    "type='" + type + '\'' +
-                    ", missed=" + missed +
-                    ", covered=" + covered +
-                    '}';
+        public CoverageInfo(String type, Integer missed, Integer covered) {
+            this.type = type;
+            this.missed = missed;
+            this.covered = covered;
         }
 
+        public CoverageInfo() {
+        }
     }
-    public class CoverageData{
+
+    public class CoverageData {
         private String testClassName;
         private String methodSignature;
         private String branchCoverage;
@@ -292,6 +266,7 @@ public class JacocoParser {
             this.coverageInfo = coverageInfo;
         }
     }
+
     public static void main(String[] args) {
         // 指定XML文件路径
 /*        String jacocoXmlPath = "C:\\Users\\86138\\Desktop\\test-jacoco-parser\\jacoco.xml";
@@ -308,7 +283,7 @@ public class JacocoParser {
         String jacocoHtmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\27674753\\SubClassSupportInstanceInitializer.html";
         String methodSignature="getClass(T)";
         String className="org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer";*/
-        String jacocoXmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\41423327\\jacoco.xml";
+       /* String jacocoXmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\41423327\\jacoco.xml";
         JacocoParser jacocoParser = new JacocoParser();
         String jacocoHtmlPath="C:\\Users\\86138\\Desktop\\test-jacoco-parser\\41423327\\jacoco.html";
         String className="org.unix4j.util.RelativePathBase";
@@ -318,6 +293,16 @@ public class JacocoParser {
         CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(new File(jacocoHtmlPath), methodSignature, "org.unix4j.util.RelativePathBase_getRelativePathFor_2_2_Test");
         List<JacocoParser.CoverageInfo> coverageInfo = jacocoParser.getCoverageInfo(jacocoXmlPath, className, methodSignature);
         coverageData.setCoverageInfo(coverageInfo);
-        System.out.println(coverageData);
+        System.out.println(coverageData);*/
+        ObjectMapper objectMapper = new ObjectMapper();
+        JacocoParser jacocoParser = new JacocoParser();
+        List<HashMap<String, List<CoverageInfo>>> jacocoXmlParsedInfo = jacocoParser.getJacocoXmlParsedInfo("C:\\Users\\86138\\Desktop\\test-jacoco-parser\\41423327\\jacoco.xml", "org.unix4j.util.RelativePathBase");
+        try {
+            String json = objectMapper.writeValueAsString(jacocoXmlParsedInfo);
+            System.out.println(json);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

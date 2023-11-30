@@ -100,7 +100,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        HashMap<String, List<CoverageData>> coverageMap = new HashMap<>();
+        HashMap<String, List<HashMap<String, List<JacocoParser.CoverageInfo>>>> coverageMap = new HashMap<>();
         HashMap<String, List<String>> executeClassMap = new HashMap<>();
         Properties properties = new Properties();
         String javaHome = System.getenv("JAVA_HOME");
@@ -130,8 +130,8 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     String join_execute_classes = String.join(",", sortByLastDigit(executeClasses).subList(0,i+1));
                     log.info("the test this epoch runs: "+join_execute_classes);
                     //遍历executeClassMap，一个list为一次运行，抽取覆盖率
-                    String testclassName = key+"_"+"X";//X表示第几轮生成的
-                    testclassName = testclassName.replaceAll("\\.", "/");
+                    String originTestClassName = key+"_"+"X";//X表示第几轮生成的
+                    String testclassName = originTestClassName.replaceAll("\\.", "/");
                     try {
                         String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                         String className = s[0];
@@ -174,16 +174,10 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         //jacoco.xml路径
                         String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                         JacocoParser jacocoParser = new JacocoParser();
-                        CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(htmlFile, methodSignature, testclassName.replaceAll("/", "."));
-                        List<JacocoParser.CoverageInfo> coverageInfo = jacocoParser.getCoverageInfo(xmlFilePath, className, methodSignature);
-                        coverageData.setCoverageInfo(coverageInfo);
-                        List<CoverageData> dataList = coverageMap.get(className);
+                        List<HashMap<String, List<JacocoParser.CoverageInfo>>> coverageData = jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
+                        List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList = coverageMap.get(originTestClassName);
                         //添加记录
-                        if (dataList == null) {
-                            dataList = new ArrayList<>();
-                            coverageMap.put(className, dataList);
-                        }
-                        dataList.add(coverageData);
+                        coverageMap.put(originTestClassName,dataList);
                         try {
                             File designate_path = Paths.get(targetDir,"merge", String.valueOf(i+1)).toFile();
                             createDirectory(designate_path);
@@ -199,14 +193,12 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
             else {
                 String join_execute_classes = String.join(",", executeClasses);
                 //遍历executeClassMap，一个list为一次运行，抽取覆盖率
-                String testclassName = key+"_"+"X";//X表示第几轮生成的
-                log.info("debugging 2" + testclassName);
-                testclassName = testclassName.replaceAll("\\.", "/");
+                String originTestClassName = key+"_"+"X";//X表示第几轮生成的
+                String testclassName = originTestClassName.replaceAll("\\.", "/");
                 try {
                     String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                     String className = s[0];
                     int index = Integer.parseInt(s[1]);
-                    String methodSignature=signatureGetter.getMethodSignature(className, String.valueOf(project.getBasedir()),index);
                     //解析jacoco.xml需要用到的methodName
                     String xml_methodName=s[2];
                     log.info("xml_methodName = " + xml_methodName);
@@ -247,16 +239,10 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                     //jacoco.xml路径
                     String xmlFilePath=project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                     JacocoParser jacocoParser = new JacocoParser();
-                    CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(htmlFile, methodSignature, testclassName.replaceAll("/", "."));
-                    List<JacocoParser.CoverageInfo> coverageInfo = jacocoParser.getCoverageInfo(xmlFilePath, className, methodSignature);
-                    coverageData.setCoverageInfo(coverageInfo);
-                    List<CoverageData> dataList = coverageMap.get(className);
+                    List<HashMap<String, List<JacocoParser.CoverageInfo>>> coverageData = jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
+                    List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList = coverageMap.get(originTestClassName);
                     //添加记录
-                    if (dataList == null) {
-                        dataList = new ArrayList<>();
-                        coverageMap.put(className, dataList);
-                    }
-                    dataList.add(coverageData);
+                    coverageMap.put(originTestClassName,dataList);
                     try {
                         File designate_path = Paths.get(targetDir,"merge", String.valueOf(0)).toFile();
                         createDirectory(designate_path);

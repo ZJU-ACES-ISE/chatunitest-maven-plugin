@@ -88,13 +88,14 @@ public class MethodCoverageMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        HashMap<String, List<JacocoParser.CoverageData>> coverageMap = new HashMap<>();
+        HashMap<String, List<HashMap<String, List<JacocoParser.CoverageInfo>>>> coverageMap = new HashMap<>();
 
         for (File file : files) {
             log.info("testClassName:" + file.toString());
-            String testclassName = extractClassName(srcTestJavaPath, file);
+            String originTestClassName = extractClassName(srcTestJavaPath, file);
+            String testclassName;
             String testFileName = file.getName().replace(".java","");
-            testclassName = testclassName.replace(".", "/");
+            testclassName = originTestClassName.replace(".", "/");
             try {
                 String[] s = signatureGetter.extractClassNameAndIndex(testclassName);
                 String className = s[0];
@@ -144,28 +145,21 @@ public class MethodCoverageMojo extends AbstractMojo {
                     tempName=prefix+"/"+postfix;
                 }
                 //jacoco html路径 "your.package.name/ClassName.html"
-                File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
-                log.info("jacoco html file path:"+htmlFile);
+                /*File htmlFile = new File(project.getBasedir().toString() + "/target/site/jacoco/" + tempName + ".html");
+                log.info("jacoco html file path:"+htmlFile);*/
                 //jacoco.xml路径
                 String xmlFilePath = project.getBasedir().toString()+"/target/site/jacoco/jacoco.xml";
                 log.info("jacoco xml file path:"+xmlFilePath);
                 JacocoParser jacocoParser = new JacocoParser();
-                log.warn("htmlpath:"+htmlFile.getAbsolutePath());
+                /*log.warn("htmlpath:"+htmlFile.getAbsolutePath());
                 log.warn("methodSignature:"+methodSignature);
                 log.warn("testclassName:"+testclassName.replaceAll("/", "."));
                 log.warn("xmlFilePath:"+xmlFilePath);
-                log.warn("className:"+className);
-                CoverageData coverageData = jacocoParser.getJacocoHtmlParsedInfo(htmlFile, methodSignature, testclassName.replaceAll("/", "."));
-                List<JacocoParser.CoverageInfo> coverageInfo = jacocoParser.getCoverageInfo(xmlFilePath, className, methodSignature);
-                coverageData.setCoverageInfo(coverageInfo);
-                List<CoverageData> dataList = coverageMap.get(className);
+                log.warn("className:"+className);*/
+                List<HashMap<String, List<JacocoParser.CoverageInfo>>> coverageData = jacocoParser.getJacocoXmlParsedInfo(xmlFilePath, className);
+                List<HashMap<String, List<JacocoParser.CoverageInfo>>> dataList = coverageMap.get(originTestClassName);
                 //添加记录
-                if (dataList == null) {
-                    dataList = new ArrayList<>();
-                    coverageMap.put(className, dataList);
-                }
-                log.warn("coveragedata:"+coverageData);
-                dataList.add(coverageData);
+                coverageMap.put(originTestClassName,dataList);
                 try {
                     File designate_path = Paths.get(targetDir,"separate", testFileName).toFile();
                     createDirectory(designate_path);
@@ -212,14 +206,11 @@ public class MethodCoverageMojo extends AbstractMojo {
         return false;
     }
 
-    public class SignatureGetter {
+    public static class SignatureGetter {
         public String getMethodSignature(String className, String projectPath, int methodIndex) throws IOException {
             JavaParser javaParser = new JavaParser();
             ParseResult<CompilationUnit> parseResult = javaParser.parse(Paths.get(projectPath, "src/main/java",
                     className.replace(".", "/") + ".java"));
-            String s = Paths.get(projectPath, "src/main/java",
-                    className.replace(".", "/") + ".java").toString();
-            log.error(s);
             if (parseResult.isSuccessful()) {
                 CompilationUnit cu = parseResult.getResult().get();
                 MethodSignatureVisitor methodVisitor = new MethodSignatureVisitor(methodIndex);
