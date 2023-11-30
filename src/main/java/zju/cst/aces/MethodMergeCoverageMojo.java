@@ -201,6 +201,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                             throw new RuntimeException(e);
                         }
                         Document doc = Jsoup.parse(htmlContent);
+                        CoverageData coverageData = new CoverageData();
                         Element coverageTable = doc.getElementById("coveragetable");
                         double maxCoverage=0;
                         if (coverageTable != null) {
@@ -222,20 +223,20 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                                     XmlParser xmlParser = new XmlParser();
                                     List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
 //                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
-                                    CoverageData coverateData = new CoverageData(testclassName.replaceAll("/",".")+"_1To"+(i+1),methodSignature,instructionCoverage,xml_extract_result);
                                     double instructionCoverageValue=Double.parseDouble(instructionCoverage.split("%")[0]);
                                     if(instructionCoverageValue>=maxCoverage){
                                         maxCoverage=instructionCoverageValue;
-                                        List<CoverageData> dataList = coverageMap.get(className);
-                                        if (dataList == null) {
-                                            dataList = new ArrayList<>();
-                                            coverageMap.put(className, dataList);
-                                        }
-                                        dataList.clear();
-                                        dataList.add(coverateData);
+                                        coverageData = new CoverageData(testclassName.replaceAll("/",".")+"_1To"+(i+1),methodSignature,instructionCoverage,xml_extract_result);
                                     }
                                 }
                             }
+                            List<CoverageData> dataList = coverageMap.get(className);
+                            if (dataList == null) {
+                                dataList = new ArrayList<>();
+                                coverageMap.put(className, dataList);
+                            }
+//                                    dataList.clear();
+                            dataList.add(coverageData);
                         } else {
                             log.info("未找到覆盖率表格");
                         }
@@ -310,6 +311,7 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                         throw new RuntimeException(e);
                     }
                     Document doc = Jsoup.parse(htmlContent);
+                    CoverageData coverageData = new CoverageData();
                     Element coverageTable = doc.getElementById("coveragetable");
                     double maxCoverage=0;
                     if (coverageTable != null) {
@@ -331,20 +333,21 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
                                 XmlParser xmlParser = new XmlParser();
                                 List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
 //                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
-                                CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,xml_extract_result);
                                 double instructionCoverageValue=Double.parseDouble(instructionCoverage.split("%")[0]);
                                 if(instructionCoverageValue>=maxCoverage){
                                     maxCoverage=instructionCoverageValue;
-                                    List<CoverageData> dataList = coverageMap.get(className);
-                                    if (dataList == null) {
-                                        dataList = new ArrayList<>();
-                                        coverageMap.put(className, dataList);
-                                    }
-                                    dataList.clear();
-                                    dataList.add(coverateData);
+                                    coverageData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,xml_extract_result);
+
                                 }
                             }
                         }
+                        List<CoverageData> dataList = coverageMap.get(className);
+                        if (dataList == null) {
+                            dataList = new ArrayList<>();
+                            coverageMap.put(className, dataList);
+                        }
+//                                    dataList.clear();
+                        dataList.add(coverageData);
                     } else {
                         log.info("未找到覆盖率表格");
                     }

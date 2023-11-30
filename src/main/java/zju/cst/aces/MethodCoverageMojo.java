@@ -200,6 +200,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                 }
                 Document doc = Jsoup.parse(htmlContent);
                 Element coverageTable = doc.getElementById("coveragetable");
+                CoverageData coverageData = new CoverageData();
                 double maxCoverage=0;
                 if (coverageTable != null) {
                     Elements rows = coverageTable.select("tbody > tr");
@@ -220,23 +221,23 @@ public class MethodCoverageMojo extends AbstractMojo {
                             XmlParser xmlParser = new XmlParser();
                             List<XmlParser.CoverageInfo> xml_extract_result= xmlParser.getCoverageInfo(xmlFilePath,xml_className,xml_methodName,xml_methodSignature);
 //                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,branchCoverage);
-                            CoverageData coverateData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,xml_extract_result);
 
                             double instructionCoverageValue=Double.parseDouble(instructionCoverage.split("%")[0]);
                             if(instructionCoverageValue>=maxCoverage){
                                 maxCoverage=instructionCoverageValue;
-                                List<CoverageData> dataList = coverageMap.get(className);
-                                if (dataList == null) {
-                                    dataList = new ArrayList<>();
-                                    coverageMap.put(className, dataList);
-                                }
-                                dataList.clear();
-                                dataList.add(coverateData);
+                                coverageData = new CoverageData(testclassName.replaceAll("/","."),methodSignature,instructionCoverage,xml_extract_result);
                             }
 //                    System.out.println("行覆盖率: " + instructionCoverage + ", 分支覆盖率: " + branchCoverage);
 //                            break;
                         }
                     }
+                    List<CoverageData> dataList = coverageMap.get(className);
+                    if (dataList == null) {
+                        dataList = new ArrayList<>();
+                        coverageMap.put(className, dataList);
+                    }
+//                                dataList.clear();
+                    dataList.add(coverageData);
                 } else {
                     log.info("未找到覆盖率表格");
                 }
