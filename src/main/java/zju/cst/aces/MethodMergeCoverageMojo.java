@@ -105,6 +105,12 @@ public class MethodMergeCoverageMojo extends AbstractMojo {
         Properties properties = new Properties();
         String javaHome = System.getenv("JAVA_HOME");
         properties.setProperty("JAVA_HOME", javaHome);
+        properties.setProperty("gpg.skip", "true");
+        properties.setProperty("license.skip", "true");
+        properties.setProperty("sortpom.skip", "true");
+        properties.setProperty("maven.javadoc.skip", "true");
+        properties.setProperty("checkstyle.skip", "true");
+        properties.setProperty("rat.skip", "true");
         for(File file:files){
             String testclassName=extractClassName(srcTestJavaPath,file);
             String[] s1=testclassName.split("_", 4);

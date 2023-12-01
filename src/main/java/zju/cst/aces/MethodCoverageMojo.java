@@ -105,6 +105,12 @@ public class MethodCoverageMojo extends AbstractMojo {
                 Properties properties = new Properties();
                 String javaHome = System.getenv("JAVA_HOME");
                 properties.setProperty("JAVA_HOME", javaHome);
+                properties.setProperty("gpg.skip", "true");
+                properties.setProperty("license.skip", "true");
+                properties.setProperty("sortpom.skip", "true");
+                properties.setProperty("maven.javadoc.skip", "true");
+                properties.setProperty("checkstyle.skip", "true");
+                properties.setProperty("rat.skip", "true");
                 //清空上一次的测试信息
                 BackupUtil.restoreTargetFolder(Paths.get(project.getBasedir().toString() , "backup").toString(), Paths.get(project.getBasedir().toString() , "target").toString());
                 // 运行 Maven 测试
