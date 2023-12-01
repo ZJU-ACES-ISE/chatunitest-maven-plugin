@@ -38,11 +38,15 @@ public class MethodTestMojo
     @Parameter(property = "selectMethod", required = true)
     public String selectMethod;
 
+
     /**
      * Generate test for target method in given class
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
+        if(log == null){
+            log = getLog();
+        }
         try {
             checkTargetFolder(project);
         } catch (RuntimeException e) {
