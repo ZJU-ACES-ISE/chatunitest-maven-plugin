@@ -4,14 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Message {
     private String role;
     private String content;
-    private String name;
+//    private String name;
 
     public Message(String role, String content) {
         this.role = role;
