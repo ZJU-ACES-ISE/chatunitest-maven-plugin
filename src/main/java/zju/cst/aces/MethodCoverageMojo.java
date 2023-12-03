@@ -40,7 +40,6 @@ public class MethodCoverageMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
 
-
     public static Log log;
     @Parameter(property = "targetDir")
     public String targetDir;
@@ -74,7 +73,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                 log.warn(resolvedSourceDir.toString() + " does not exist.");
                 return;
             }
-            testDir = resolvedSourceDir.toString();
+            testDir = resolvedSourceDir.toFile().toString();
         }
 
         SignatureGetter signatureGetter = new SignatureGetter();
