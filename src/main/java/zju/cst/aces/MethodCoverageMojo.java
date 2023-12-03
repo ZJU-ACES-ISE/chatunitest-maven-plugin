@@ -88,12 +88,19 @@ public class MethodCoverageMojo extends AbstractMojo {
 
         for (File file : files) {
             log.info("testClassName:" + file.toString());
+            File copiedFile;
             try {
-                FileUtils.copyFile(file, new File(srcTestJavaPath + "/" + file.getName()));
+                Path basePath = (new File(testDir)).toPath();
+                Path filePath = file.toPath();
+                Path relativePath = basePath.relativize(filePath);
+                Path destinationDir = Paths.get(srcTestJavaPath);
+                copiedFile = destinationDir.resolve(relativePath).toFile();
+                copiedFile.getParentFile().mkdirs();
+                FileUtils.copyFile(file, copiedFile);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            File copiedFile = new File(srcTestJavaPath + "/" + file.getName());
+
             String originTestClassName = extractClassName(srcTestJavaPath, copiedFile);
             String testclassName;
             String testFileName = copiedFile.getName().replace(".java", "");
