@@ -133,8 +133,13 @@ public class MethodCoverageMojo extends AbstractMojo {
                 request.setGoals(Arrays.asList("test", "-Dtest=" + testclassName));
                 request.setProperties(properties);
                 try {
-                    invoker.execute(request);
+                    InvocationResult result = invoker.execute(request);
                     log.info("running mvn test" + request.getGoals());
+                    if(result.getExitCode() != 0){
+                        log.warn("Error happened during compilation or execution of "+file.getName());
+                        FileUtils.deleteQuietly(file);
+                        FileUtils.deleteQuietly(copiedFile);
+                    }
                 } catch (Exception e) {
                     log.warn("Error happened during compilation or execution of "+file.getName());
                     FileUtils.deleteQuietly(file);
