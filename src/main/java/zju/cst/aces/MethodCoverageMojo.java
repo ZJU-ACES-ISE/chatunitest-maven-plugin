@@ -139,6 +139,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                         log.warn("Error happened during compilation or execution of "+file.getName());
                         FileUtils.deleteQuietly(file);
                         FileUtils.deleteQuietly(copiedFile);
+                        continue;
                     }
                 } catch (Exception e) {
                     log.warn("Error happened during compilation or execution of "+file.getName());
