@@ -155,8 +155,10 @@ public class PromptGenerator implements Prompt {
             return promptTemplate.renderTemplate(filename);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return "An error occurred while generating the system prompt.";
+            if (e instanceof IOException) {
+                return "";
+            }
+            throw new RuntimeException("An error occurred while generating the system prompt: " + e);
         }
     }
 

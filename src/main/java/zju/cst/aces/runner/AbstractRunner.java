@@ -55,7 +55,10 @@ public abstract class AbstractRunner {
     public List<Message> generateMessages(PromptInfo promptInfo) throws IOException {
         List<Message> messages = new ArrayList<>();
         if (promptInfo.errorMsg == null) { // round 0
-            messages.add(Message.ofSystem(generateSystemPrompt(promptInfo)));
+            Message systemMessage = Message.ofSystem(generateSystemPrompt(promptInfo));
+            if (!systemMessage.getContent().equals("")) {
+                messages.add(Message.ofSystem(generateSystemPrompt(promptInfo)));
+            }
         }
         messages.add(Message.of(generateUserPrompt(promptInfo)));
         return messages;
