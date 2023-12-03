@@ -135,7 +135,7 @@ public class MethodCoverageMojo extends AbstractMojo {
                 try {
                     invoker.execute(request);
                     log.info("running mvn test" + request.getGoals());
-                } catch (MavenInvocationException e) {
+                } catch (Exception e) {
                     log.warn("Error happened during compilation or execution of "+file.getName());
                     FileUtils.deleteQuietly(file);
                     FileUtils.deleteQuietly(copiedFile);
