@@ -6,9 +6,12 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import zju.cst.aces.config.Config;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -45,6 +48,16 @@ public class PromptTemplate {
             configuration.setClassForTemplateLoading(PromptTemplate.class, "/prompt");
         } else {
             configuration.setDirectoryForTemplateLoading(config.getPromptPath().toFile());
+        }
+
+        if(config.getPromptPath() != null){
+            // 外面处理好的文件，直接读取 txt
+            String processedFileName = templateFileName.replace(".ftl",".txt");
+            File promptPath = config.getPromptPath().toFile();
+            File processedFile = new File(promptPath, processedFileName);
+            if(processedFile.exists()){
+                return Files.readString(processedFile.toPath());
+            }
         }
 
         configuration.setDefaultEncoding("utf-8");
