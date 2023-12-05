@@ -195,6 +195,11 @@ public class MethodRunner extends ClassRunner {
                     }
                 }
             });
+            if (errors.isEmpty()) {
+                summary.getFailures().forEach(failure -> {
+                    errors.add(failure.toString());
+                });
+            }
             testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
             testMessage.setErrorMessage(errors);
             promptInfo.setErrorMsg(testMessage);
