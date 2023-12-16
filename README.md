@@ -32,7 +32,7 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
