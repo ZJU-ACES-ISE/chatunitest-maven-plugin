@@ -37,7 +37,8 @@ public class RestoreBackupMojo
         init();
         try {
             log.info("\n==========================\n[ChatUniTest] Restoring test folder ...");
-            TestCompiler compiler = new TestCompiler(config);
+            TestCompiler compiler = new TestCompiler(config.getTestOutput(), config.getCompileOutputPath(),
+                    config.getProject().getBasedir().toPath().resolve("target"), config.getClassPaths());
             compiler.restoreBackupFolder();
         } catch (Exception e) {
             log.error(e);

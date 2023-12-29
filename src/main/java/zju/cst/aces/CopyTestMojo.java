@@ -37,7 +37,8 @@ public class CopyTestMojo
         init();
         try {
             log.info("\n==========================\n[ChatUniTest] Copying tests ...");
-            TestCompiler compiler = new TestCompiler(config);
+            TestCompiler compiler = new TestCompiler(config.getTestOutput(), config.getCompileOutputPath(),
+                    config.getProject().getBasedir().toPath().resolve("target"), config.getClassPaths());
             compiler.copyAndBackupTestFolder();
             compiler.copyAndBackupCompiledTest();
         } catch (Exception e) {

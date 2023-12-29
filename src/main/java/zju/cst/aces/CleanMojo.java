@@ -43,7 +43,8 @@ public class CleanMojo
             log.info("\n==========================\n[ChatUniTest] Restoring backup folder ...");
             FileUtils.deleteDirectory(config.getTmpOutput().toFile());
             FileUtils.deleteDirectory(config.getTestOutput().toFile());
-            TestCompiler compiler = new TestCompiler(config);
+            TestCompiler compiler = new TestCompiler(config.getTestOutput(), config.getCompileOutputPath(),
+                    config.getProject().getBasedir().toPath().resolve("target"), config.getClassPaths());
             compiler.restoreBackupFolder();
         } catch (Exception e) {
             log.error(e);
