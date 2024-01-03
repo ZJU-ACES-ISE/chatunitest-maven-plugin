@@ -5,6 +5,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
 
 ## 更新
+💥 添加docker映像以在隔离的沙箱环境中生成测试。
+
 💥 新增多线程功能，实现更快的测试生成。
 
 💥 插件现在可以导出运行时和错误日志。
@@ -17,6 +19,9 @@
 
 ## 动机
 相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件 开发，最新版1.1.0已发布到Maven中心仓库，欢迎试用和反馈。IDEA插件正在开发中，欢迎持续关注。
+
+## 运行步骤（Docker）
+见[chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/chatunitest/general)
 
 ## 运行步骤
 
@@ -48,6 +53,7 @@
 
 - `apiKeys`: (**必需**) 您的OpenAI API keys，示例：`Key1, Key2, ...`
 - `model`: (**可选**) OpenAI模型，默认值：`gpt-3.5-turbo`
+- `url`: (**可选**) 调用模型的API，默认值：`https://api.openai.com/v1/chat/completions`
 - `testNumber`: (**可选**) 每个方法的生成的测试数量，默认值：`5`
 - `maxRounds`: (**可选**) 修复过程的最大轮次，默认值：`5`
 - `minErrorTokens`: (**可选**) 修复过程中错误信息的最小token数，默认值：`500`
