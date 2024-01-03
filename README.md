@@ -8,6 +8,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
 
 ## Updates:
+💥 Add docker image to generate tests in isolated sandbox environment.
+
 💥 Added multithreading feature for faster test generation.
 
 💥 Plugin now exports runtime and error logs.
@@ -20,6 +22,10 @@
 
 ## Background
 Many people have tried using ChatGPT to help them with various programming tasks and have achieved good results. However, there are some issues with using ChatGPT directly. Firstly, the generated code often fails to execute correctly, leading to the famous saying **"five minutes to code, two hours to debug"**. Secondly, it is inconvenient to integrate with existing projects as it requires manual interaction with ChatGPT and switching between different platforms. To address these problems, we have proposed the **"Generate-Validate-Repair"** framework and implemented a prototype. Additionally, to make it easier for everyone to use, we have developed some plugins that can be seamlessly integrated into existing development workflows.
+
+## Steps to run (Docker)
+
+See [chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/chatunitest/general).
 
 ## Steps to run
 
@@ -53,6 +59,7 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 
 - `apiKeys`: (**Required**) Your OpenAI API keys. Example: `Key1, Key2, ...`.
 - `model`: (**Optional**) The OpenAI model. Default: `gpt-3.5-turbo`.
+- `url`: (**Optional**) The API to use your model. Default: `"https://api.openai.com/v1/chat/completions"`.
 - `testNumber`: (**Optional**) The number of tests for each method. Default: `5`.
 - `maxRounds`: (**Optional**) The maximum rounds of the repair process. Default: `5`.
 - `minErrorTokens`: (**Optional**) The minimum tokens of error message in the repair process. Default: `500`.
