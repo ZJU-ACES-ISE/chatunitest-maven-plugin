@@ -24,8 +24,6 @@ import org.jsoup.select.Elements;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -61,24 +59,7 @@ public class MethodCoverageMojo extends AbstractMojo {
         String srcTestJavaPath = project.getBasedir().toString() + "/src/test/java/chatunitest";
 
         try {
-            if (sourceDir.equals(project.getBasedir().toPath().resolve("chatunitest-tests").toString())) {
-                copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
-            } else {
-                MavenProject p = project.clone();
-                String parentPath = "";
-                while(p != null && p.getBasedir() != null) {
-                    parentPath =  Paths.get(p.getArtifactId()).resolve(parentPath).toString();
-                    p = p.getParent();
-                }
-                Path resolvedSourceDir = Paths.get(sourceDir).resolve(parentPath);
-
-                if(!Files.exists(resolvedSourceDir)){
-                    log.warn(resolvedSourceDir.toString()+" does not exist.");
-                    return;
-                }
-
-                copyDirectory(resolvedSourceDir.toFile(), new File(srcTestJavaPath));
-            }
+            copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

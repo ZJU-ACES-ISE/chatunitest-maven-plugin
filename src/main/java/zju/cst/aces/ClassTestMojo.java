@@ -20,6 +20,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.api.Task;
+import zju.cst.aces.api.impl.RunnerImpl;
 
 /**
  * @author chenyi
@@ -40,6 +41,6 @@ public class ClassTestMojo
         init();
         String className = selectClass;
 
-        new Task(config).startClassTask(className);
+        new Task(config, new RunnerImpl(config)).startClassTask(className);
     }
 }

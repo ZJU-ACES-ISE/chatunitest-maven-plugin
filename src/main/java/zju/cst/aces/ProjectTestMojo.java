@@ -33,6 +33,7 @@ import org.apache.maven.shared.dependency.graph.DependencyNode;
 import zju.cst.aces.api.Task;
 import zju.cst.aces.api.config.Config;
 import zju.cst.aces.api.impl.ProjectImpl;
+import zju.cst.aces.api.impl.RunnerImpl;
 import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
 
@@ -95,6 +96,8 @@ public class ProjectTestMojo
     public int maxPromptTokens;
     @Parameter(property = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
+    @Parameter(property = "maxResponseTokens", defaultValue = "1024")
+    public int maxResponseTokens;
     @Parameter(property = "sleepTime", defaultValue = "0")
     public int sleepTime;
     @Parameter(property = "dependencyDepth", defaultValue = "1")
@@ -124,7 +127,7 @@ public class ProjectTestMojo
         init();
         log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
         log.warn("[ChatUniTest] It may consume a significant number of tokens!");
-        new Task(config).startProjectTask();
+        new Task(config, new RunnerImpl(config)).startProjectTask();
     }
 
     public void init() {
@@ -148,11 +151,10 @@ public class ProjectTestMojo
                 .maxThreads(maxThreads)
                 .testNumber(testNumber)
                 .maxRounds(maxRounds)
-                .maxPromptTokens(maxPromptTokens)
-                .minErrorTokens(minErrorTokens)
                 .sleepTime(sleepTime)
                 .dependencyDepth(dependencyDepth)
                 .model(model)
+                .maxResponseTokens(maxResponseTokens)
                 .url(url)
                 .temperature(temperature)
                 .topP(topP)
