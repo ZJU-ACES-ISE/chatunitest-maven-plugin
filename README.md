@@ -34,7 +34,6 @@ See [chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/cha
 You can configure the plugin with the following parameters to your `pom.xml` file:
 
 ```xml
-
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
@@ -43,14 +42,6 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
         <model>gpt-3.5-turbo</model>
-        <testNumber>5</testNumber>
-        <maxRounds>5</maxRounds>
-        <minErrorTokens>500</minErrorTokens>
-        <temperature>0.5</temperature>
-        <topP>1</topP>
-        <frequencyPenalty>0</frequencyPenalty>
-        <presencePenalty>0</presencePenalty>
-        <proxy>${proxy}</proxy>
     </configuration>
 </plugin>
 ```
@@ -85,6 +76,21 @@ You can configure the plugin with the following parameters to your `pom.xml` fil
 All these parameters also can be specified in the command line with `-D` option.
 
 Essentially, the only thing you need to provide are your API keys.
+
+If you use local LLM (such as code-llama), simply specify the model and url in the configuration:
+```xml
+<plugin>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <artifactId>chatunitest-maven-plugin</artifactId>
+    <version>1.4.1</version>
+    <configuration>
+        <!-- Required: Use any string to replace your API keys -->
+        <apiKeys>xxx</apiKeys>
+        <model>code-llama</model>
+        <url>http://0.0.0.0:8000/v1/chat/completions</url>
+    </configuration>
+</plugin>
+```
 
 ### 1. Add the following dependency to pom.xml
 
