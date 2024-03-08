@@ -37,17 +37,11 @@
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>g
         <model>gpt-3.5-turbo</model>
-        <testNumber>5</testNumber>
-        <maxRounds>5</maxRounds>
-        <minErrorTokens>500</minErrorTokens>
-        <temperature>0.5</temperature>
-        <topP>1</topP>
-        <frequencyPenalty>0</frequencyPenalty>
-        <presencePenalty>0</presencePenalty>
         <proxy>${proxy}</proxy>
     </configuration>
 </plugin>
 ```
+一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
 
 **下面是每个配置选项的详细说明:**
 
@@ -77,8 +71,20 @@
 - `obfuscate` : (**可选**) 开启混淆功能以保护隐私代码. 默认值: false. 
 - `obfuscateGroupIds` : (**可选**) 需要进行混淆的group ID. 默认值仅包含当前项目的group ID. 所有这些参数也可以在命令行中使用-D选项指定。
 
-
-一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
+如果使用本地大模型（例如code-llama），只需修改模型名和请求url即可，例如：
+```xml
+<plugin>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <artifactId>chatunitest-maven-plugin</artifactId>
+    <version>1.4.1</version>
+    <configuration>
+        <!-- Required: Use any string to replace your API keys -->
+        <apiKeys>xxx</apiKeys>
+        <model>code-llama</model>
+        <url>http://0.0.0.0:8000/v1/chat/completions</url>
+    </configuration>
+</plugin>
+```
 
 ![img.png](src/main/resources/img/win_proxy.png)
 
