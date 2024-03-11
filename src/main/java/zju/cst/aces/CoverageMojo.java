@@ -49,7 +49,7 @@ public class CoverageMojo extends AbstractMojo {
         // 运行 Maven 测试
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(new File(project.getBasedir(), "pom.xml"));
-        request.setGoals(Arrays.asList("clean", "test-compile"));
+        request.setGoals(Arrays.asList("test-compile"));
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(new File(mavenHome));
         try {
