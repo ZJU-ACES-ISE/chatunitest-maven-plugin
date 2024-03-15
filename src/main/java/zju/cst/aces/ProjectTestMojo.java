@@ -161,6 +161,7 @@ public class ProjectTestMojo
                 .frequencyPenalty(frequencyPenalty)
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
+                .pluginSign("ChatUniTest")
                 .build();
         config.print();
     }
