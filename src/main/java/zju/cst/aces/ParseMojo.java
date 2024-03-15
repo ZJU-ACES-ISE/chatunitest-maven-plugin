@@ -18,7 +18,7 @@ package zju.cst.aces;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import zju.cst.aces.api.impl.Parser;
+import zju.cst.aces.api.Phase;
 
 /**
  * @author chenyi
@@ -36,6 +36,6 @@ public class ParseMojo
     public void execute() throws MojoExecutionException {
         log = getLog();
         init();
-        new Parser(config).process();
+        new Phase(config).new Preparation().execute();
     }
 }
