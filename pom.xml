@@ -47,12 +47,12 @@
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-core</artifactId>
-            <version>3.25.3</version>
+            <version>3.23.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-symbol-solver-core</artifactId>
-            <version>3.25.3</version>
+            <version>3.23.1</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
