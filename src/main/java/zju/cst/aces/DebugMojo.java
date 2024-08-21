@@ -18,24 +18,31 @@ package zju.cst.aces;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import zju.cst.aces.api.Phase;
+import org.apache.maven.plugins.annotations.Parameter;
 
 /**
  * @author chenyi
  * ChatUniTest maven plugin
  */
 
-@Mojo(name = "parse")
-public class ParseMojo
+@Mojo(name = "debug")
+public class DebugMojo
         extends ProjectTestMojo {
 
+    @Parameter(property = "testName", required = true)
+    public String fullTestName;
+
     /**
-     * Parse target project
      * @throws MojoExecutionException
      */
     public void execute() throws MojoExecutionException {
-        log = getLog();
         init();
-        new Phase(config).new Preparation().execute();
+        try {
+            log.info("\n==========================\n[ChatUniTest] Debugging tests ...");
+            config.getValidator().execute(fullTestName);
+        } catch (Exception e) {
+            log.error(e);
+        }
+        log.info("\n==========================\n[ChatUniTest] Finished");
     }
 }
