@@ -82,7 +82,7 @@ If you use local LLM (such as code-llama), simply specify the model and url in t
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <configuration>
         <!-- Required: Use any string to replace your API keys -->
         <apiKeys>xxx</apiKeys>
