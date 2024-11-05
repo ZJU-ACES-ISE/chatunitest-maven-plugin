@@ -39,6 +39,7 @@ import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -69,7 +70,7 @@ public class ProjectTestMojo
     public File examplePath;
     @Parameter(property = "url", defaultValue = "https://api.gptsapi.net/v1/chat/completions")
     public String url;
-    @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
+    @Parameter(property = "model", defaultValue = "gpt-4o-mini")
     public String model;
     @Parameter(property = "apiKeys", required = true)
     public String[] apiKeys;
@@ -77,7 +78,7 @@ public class ProjectTestMojo
     public boolean stopWhenSuccess;
     @Parameter(property = "noExecution", defaultValue = "false")
     public boolean noExecution;
-    @Parameter(alias = "thread", property = "thread", defaultValue = "true")
+    @Parameter(alias = "thread", property = "thread", defaultValue = "false")
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
@@ -93,11 +94,11 @@ public class ProjectTestMojo
     public int testNumber;
     @Parameter(property = "maxRounds", defaultValue = "5")
     public int maxRounds;
-    @Parameter(property = "maxPromptTokens", defaultValue = "2600")
+    @Parameter(property = "maxPromptTokens", defaultValue = "122880")
     public int maxPromptTokens;
     @Parameter(property = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
-    @Parameter(property = "maxResponseTokens", defaultValue = "1024")
+    @Parameter(property = "maxResponseTokens", defaultValue = "16000")
     public int maxResponseTokens;
     @Parameter(property = "sleepTime", defaultValue = "0")
     public int sleepTime;
@@ -113,6 +114,8 @@ public class ProjectTestMojo
     public int presencePenalty;
     @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
+    @Parameter(property = "phaseType",defaultValue = "HITS")
+    public String phaseType;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -128,7 +131,11 @@ public class ProjectTestMojo
         init();
         log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
         log.warn("[ChatUniTest] It may consume a significant number of tokens!");
-        new Task(config, new RunnerImpl(config)).startProjectTask();
+        try {
+            new Task(config, new RunnerImpl(config)).startProjectTask();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void init() {
@@ -163,6 +170,7 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .pluginSign("ChatUniTest")
+                .phaseType(phaseType)
                 .build();
         config.print();
     }
