@@ -168,7 +168,7 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .pluginSign("ChatUniTest")
-                .phaseType("COVERUP")
+                .phaseType("SYMPROMPT")
                 .build();
         config.print();
     }
