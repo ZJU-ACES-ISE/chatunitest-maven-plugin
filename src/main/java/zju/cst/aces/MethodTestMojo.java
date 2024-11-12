@@ -22,6 +22,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.api.Task;
 import zju.cst.aces.api.impl.RunnerImpl;
 
+import java.io.IOException;
+
 /**
  * @author chenyi
  * ChatUniTest maven plugin
@@ -41,6 +43,10 @@ public class MethodTestMojo
         init();
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
-        new Task(config, new RunnerImpl(config)).startMethodTask(className, methodName);
+        try {
+            new Task(config, new RunnerImpl(config)).startMethodTask(className, methodName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

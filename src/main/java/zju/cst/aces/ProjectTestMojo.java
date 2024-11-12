@@ -39,6 +39,7 @@ import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,7 +129,11 @@ public class ProjectTestMojo
         init();
         log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
         log.warn("[ChatUniTest] It may consume a significant number of tokens!");
-        new Task(config, new RunnerImpl(config)).startProjectTask();
+        try {
+            new Task(config, new RunnerImpl(config)).startProjectTask();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void init() {
@@ -163,6 +168,7 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .pluginSign("ChatUniTest")
+                .phaseType("COVERUP")
                 .build();
         config.print();
     }
