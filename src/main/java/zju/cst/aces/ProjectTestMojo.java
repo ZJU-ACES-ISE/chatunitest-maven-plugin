@@ -114,6 +114,12 @@ public class ProjectTestMojo
     public int presencePenalty;
     @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
+    @Parameter(property = "phaseType",defaultValue = "chatunitest")
+    public String phaseType;
+    @Parameter(property = "coverageAnalyzer_jar_path",defaultValue = "src/main/resources/jacoco-integration-1.0-SNAPSHOT.jar")
+    public String coverageAnalyzer_jar_path;
+    @Parameter(property = "smartUnitTest_jar_path",defaultValue = "src/main/resources/smartut-master-1.1.0.jar")
+    public String smartUnitTest_path;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -140,6 +146,10 @@ public class ProjectTestMojo
         log = getLog();
         MavenLogger mLogger = new MavenLogger(log);
         Project myProject = new ProjectImpl(project, listClassPaths(project, dependencyGraphBuilder));
+        if(phaseType.equals("TELPA")){
+            TelpaInit telpaInit=new TelpaInit();
+            telpaInit.generateSmartUnitTest(project,smartUnitTest_path);
+        }
         config = new Config.ConfigBuilder(myProject)
                 .logger(mLogger)
                 .promptPath(promptPath)
@@ -168,7 +178,8 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .pluginSign("ChatUniTest")
-                .phaseType("SYMPROMPT")
+                .phaseType(phaseType)
+                .coverageAnalyzer_jar_path(coverageAnalyzer_jar_path)
                 .build();
         config.print();
     }
