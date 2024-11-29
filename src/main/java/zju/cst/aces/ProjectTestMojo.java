@@ -114,11 +114,11 @@ public class ProjectTestMojo
     public int presencePenalty;
     @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
-    @Parameter(property = "phaseType",defaultValue = "chatunitest")
+    @Parameter(property = "phaseType",defaultValue = "COVERUP")
     public String phaseType;
-    @Parameter(property = "coverageAnalyzer_jar_path",defaultValue = "src/main/resources/jacoco-integration-1.0-SNAPSHOT.jar")
+    @Parameter(property = "coverageAnalyzer_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\jacoco-integration-1.0-SNAPSHOT.jar")
     public String coverageAnalyzer_jar_path;
-    @Parameter(property = "smartUnitTest_jar_path",defaultValue = "src/main/resources/smartut-master-1.1.0.jar")
+    @Parameter(property = "smartUnitTest_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\smartut-master-1.1.0.jar")
     public String smartUnitTest_path;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
@@ -133,8 +133,8 @@ public class ProjectTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
-        log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
-        log.warn("[ChatUniTest] It may consume a significant number of tokens!");
+        log.info(String.format("\n==========================\n[%s] Generating tests for project %s ...", phaseType, project.getBasedir().getName()));
+        log.warn(String.format("[%s] It may consume a significant number of tokens!", phaseType));
         try {
             new Task(config, new RunnerImpl(config)).startProjectTask();
         } catch (IOException e) {
@@ -177,7 +177,7 @@ public class ProjectTestMojo
                 .frequencyPenalty(frequencyPenalty)
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
-                .pluginSign("ChatUniTest")
+                .pluginSign("COVERUP")
                 .phaseType(phaseType)
                 .coverageAnalyzer_jar_path(coverageAnalyzer_jar_path)
                 .build();
