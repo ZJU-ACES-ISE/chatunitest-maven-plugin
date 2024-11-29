@@ -146,10 +146,6 @@ public class ProjectTestMojo
         log = getLog();
         MavenLogger mLogger = new MavenLogger(log);
         Project myProject = new ProjectImpl(project, listClassPaths(project, dependencyGraphBuilder));
-        if(phaseType.equals("TELPA")){
-            TelpaInit telpaInit=new TelpaInit();
-            telpaInit.generateSmartUnitTest(project,smartUnitTest_path);
-        }
         config = new Config.ConfigBuilder(myProject)
                 .logger(mLogger)
                 .promptPath(promptPath)
@@ -181,6 +177,10 @@ public class ProjectTestMojo
                 .phaseType(phaseType)
                 .coverageAnalyzer_jar_path(coverageAnalyzer_jar_path)
                 .build();
+        if(phaseType.equals("TELPA")){
+            TelpaInit telpaInit=new TelpaInit();
+            telpaInit.generateSmartUnitTest(project,smartUnitTest_path,config);
+        }
         config.print();
     }
 
