@@ -79,6 +79,7 @@
     - TESTSPARK
     - TESTPILOT
     - MUTAP
+
 如果使用本地大模型（例如code-llama），只需修改模型名和请求url即可，例如：
 ```xml
 <plugin>
