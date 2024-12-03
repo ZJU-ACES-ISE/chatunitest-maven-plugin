@@ -18,16 +18,16 @@
 💥 扩展配置选项。请参考**运行步骤**了解详情。
 
 ## 动机
-相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件 开发，最新版1.1.0已发布到Maven中心仓库，欢迎试用和反馈。IDEA插件正在开发中，欢迎持续关注。
+相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件 开发，最新版1.1.0已发布到Maven中心仓库，欢迎试用和反馈。IDEA插件正在开发中，欢迎持续关注。在该分支，整合了多项我们复现的相关工作，大家可以自行选择，按需使用。
 
 ## 运行步骤（Docker）
 见[chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/chatunitest/general)
 
 ## 运行步骤
 
-### 0. `pom.xml`文件配置
+### 1. `pom.xml`文件配置
 
-在项目的`pom.xml`文件内加入 chatunitest-maven-plugin 的插件配置，并按照您的需求添加参数：
+在待生成单测的项目中的`pom.xml`文件内加入 chatunitest-maven-plugin 的插件配置，并按照您的需求添加参数：
 ```xml
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
@@ -41,7 +41,7 @@
     </configuration>
 </plugin>
 ```
-一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
+一般情况下，您只需要提供API密钥。**如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号**。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
 
 **下面是每个配置选项的详细说明:**
 
@@ -70,7 +70,15 @@
 - `promptPath` : (**可选**) 自定义prompt的路径. 参考默认promp目录: `src/main/resources/prompt`.
 - `obfuscate` : (**可选**) 开启混淆功能以保护隐私代码. 默认值: false. 
 - `obfuscateGroupIds` : (**可选**) 需要进行混淆的group ID. 默认值仅包含当前项目的group ID. 所有这些参数也可以在命令行中使用-D选项指定。
-
+- `phaseType` : (**可选**) 选择复现方案，如果未选择，则会执行默认的chatunitest进程. 所有这些参数也可以在命令行中使用-D选项指定。
+    - CoverUP
+    - HITS
+    - TELPA
+    - SYMPROMPT
+    - CHATTESTER
+    - TESTSPARK
+    - TESTPILOT
+    - MUTAP
 如果使用本地大模型（例如code-llama），只需修改模型名和请求url即可，例如：
 ```xml
 <plugin>
@@ -89,6 +97,7 @@
 ![img.png](src/main/resources/img/win_proxy.png)
 
 ### 1. 将以下依赖项添加到`pom.xml`文件中
+同样的，在待生成单测的项目的pom中添加依赖
 ```xml
 <dependency>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
@@ -176,10 +185,10 @@ mvn chatunitest:restore
 
 ChatUnitest Maven Plugin可以在多个操作系统和不同的 Java 开发工具包和 Maven 版本下运行。以下是已测试并可运行的环境：
 
-- Environment 1: Windows 11 / Oracle JDK 11 / Maven 3.9
-- Environment 2: Windows 10 / Oracle JDK 11 / Maven 3.6
-- Environment 3: Ubuntu 22.04 / OpenJDK 11 / Maven 3.6
-- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 11 / Maven 3.8
+- Environment 1: Windows 11 / Oracle JDK 8 / Maven 3.9
+- Environment 2: Windows 10 / Oracle JDK 8 / Maven 3.6
+- Environment 3: Ubuntu 22.04 / OpenJDK 8 / Maven 3.6
+- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 8 / Maven 3.8
 
 请注意，这些环境是经过测试并可成功运行的示例，您也可以尝试在其他类似的环境中运行该插件。如果您在其他环境中遇到问题，请查看文档或联系开发者。
 
