@@ -32,7 +32,7 @@ See [chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/cha
 
 ## Steps to run
 
-**Overall, you need to introduce two dependencies (core and starter) and a plugin in the project under test**
+**In general, you need to introduce a dependency (core) in the pom of Maven plugin, and introduce a dependency (starter) and a plugin (Maven plugin) in the pom of the project under test**
 
 **And pay attention to whether the introduced version is correct**
 
