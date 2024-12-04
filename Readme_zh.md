@@ -194,6 +194,36 @@ mvn chatunitest:restore
 
 运行该命令将恢复您的测试目录
 
+## 自定义内容
+### 使用 FTL 模板
+
+#### 1. 配置映射关系
+在 `config.properties` 中定义映射关系。
+
+#### 2. 定义 PromptFile 枚举类
+在 `PromptFile` 枚举类中定义枚举常量及其对应的模板文件名。
+
+#### 3. 引用模板
+在 `PromptGenerator` 类中的 `getInitPromptFile` 和 `getRepairPromptFile` 方法中引用 `PromptFile` 的模板。
+
+#### 4. 生成 Prompt
+后续调用 `PromptGenerator` 的 `generateMessages` 方法即可获取 prompt。具体实现方式可参见 HITS 的实现。
+
+### 修改 FTL 模板
+`PromptInfo` 是一个数据实体类，这部分可以按需修改。`PromptTemplate` 中的 `dataModel` 存放着供 FTL 模板使用的变量数据。如果有自定义新的 FTL 模板，请检查是否有新的变量引入，并及时更新 `dataModel`。
+
+### 修改生成单测的粒度
+可以构造一个 `MethodRunner` 的继承类，参见 `HITSRunner`。并在 `selectRunner` 方法中添加新的实现。
+
+### 自定义单元测试生成方案
+如果你想要自行定义单元测试生成方案，下面给出一个示例：
+
+- 首先，你需要定义一个 `PhaseImpl` 的继承类，用于实现核心的生成方案。我们一般将其放置在 `phase` 的 `solution` 文件夹中。
+  
+- 接着，你需要在 `PhaseImpl` 类中的 `createPhase` 方法中添加新的实现。如果有新增模板，请参考上述使用 FTL 模板的部分；如果有新的数据变量引入，请参见修改 FTL 模板的部分。
+
+- 如需修改生成单测的粒度，例如 HITS 是针对方法切片生成单元测试，请参考修改生成单测的粒度部分。
+
 ## 可运行环境
 
 ChatUnitest Maven Plugin可以在多个操作系统和不同的 Java 开发工具包和 Maven 版本下运行。以下是已测试并可运行的环境：
