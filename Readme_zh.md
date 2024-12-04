@@ -20,12 +20,16 @@
 💥 集成多项相关工作。
 
 ## 动机
-相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件 开发，最新版1.1.0已发布到Maven中心仓库，欢迎试用和反馈。IDEA插件正在开发中，欢迎持续关注。在该分支，整合了多项我们复现的相关工作，大家可以自行选择，按需使用。
+相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件开发，并且已发布到Maven中心仓库，欢迎试用和反馈。我们已在 IntelliJ IDEA 插件市场中上架了 Chatunitest 插件，您可以在市场中搜索并安装 ChatUniTest，或者访问插件页面[Chatunitest:IntelliJ IDEA Plugin](https://plugins.jetbrains.com/plugin/22522-chatunitest) 了解有关我们插件的更多信息。在这个最新分支，整合了多项我们复现的相关工作，大家可以自行选择，按需使用。
 
 ## 运行步骤（Docker）
 见[chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/chatunitest/general)
 
 ## 运行步骤
+
+**总的来说，你需要在待测项目中引入两个dependency（core与starter）和一个plugin**
+
+**并且注意引入的version是否正确**
 
 ### 1. `pom.xml`文件配置
 
@@ -34,11 +38,11 @@
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.1</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>g
-        <model>gpt-3.5-turbo</model>
+        <model>gpt-4o-mini</model>
         <proxy>${proxy}</proxy>
     </configuration>
 </plugin>
@@ -73,7 +77,7 @@
 - `obfuscate` : (**可选**) 开启混淆功能以保护隐私代码. 默认值: false. 
 - `obfuscateGroupIds` : (**可选**) 需要进行混淆的group ID. 默认值仅包含当前项目的group ID. 所有这些参数也可以在命令行中使用-D选项指定。
 - `phaseType` : (**可选**) 选择复现方案，如果未选择，则会执行默认的chatunitest进程. 所有这些参数也可以在命令行中使用-D选项指定。
-    - CoverUP
+    - COVERUP
     - HITS
     - TELPA
     - SYMPROMPT
@@ -158,6 +162,12 @@ mvn chatunitest:method -DselectMethod=Example#method1
 
 ```shell
 mvn chatunitest:project
+```
+
+**使用目标方案生成单元测试：**
+
+```shell
+mvn chatunitest:method -DselectMethod=className#methodName -DselectMethod=className#methodName -DphaseType=COVERUP
 ```
 
 **清理生成的测试代码：**
