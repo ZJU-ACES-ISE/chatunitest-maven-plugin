@@ -205,6 +205,36 @@ mvn chatunitest:restore
 
 Running this command will restore your test directory.
 
+## Custom Content
+### Using FTL Templates
+
+#### 1. Configure Mapping Relationships
+Define the mapping relationships in the `config.properties` file.
+
+#### 2. Define the PromptFile Enum Class
+In the `PromptFile` enum class, define the enum constants along with their corresponding template file names.
+
+#### 3. Reference Templates
+Reference the `PromptFile` templates in the `getInitPromptFile` and `getRepairPromptFile` methods of the `PromptGenerator` class.
+
+#### 4. Generate Prompts
+Subsequently, call the `generateMessages` method of the `PromptGenerator` to retrieve the prompts. For specific implementation details, refer to the HITS implementation.
+
+### Modifying FTL Templates
+`PromptInfo` is a data entity class that can be modified as needed. The `dataModel` in `PromptTemplate` stores the variable data used by the FTL templates. If you have custom FTL templates, please check for any new variables introduced and update the `dataModel` accordingly.
+
+### Modifying the Granularity of Generated Unit Tests
+You can create a subclass of `MethodRunner`, as seen in `HITSRunner`, and add a new implementation in the `selectRunner` method.
+
+### Custom Unit Test Generation Scheme
+If you wish to define your own unit test generation scheme, here is an example:
+
+- First, you need to define a subclass of `PhaseImpl` to implement the core generation scheme. We typically place it in the `solution` folder of the `phase`.
+
+- Next, add a new implementation in the `createPhase` method within the `PhaseImpl` class. If there are new templates, refer to the section on using FTL templates; if new data variables are introduced, see the section on modifying FTL templates.
+
+- If you need to modify the granularity of the generated unit tests (for example, HITS generates unit tests based on method slicing), please refer to the section on modifying the granularity of generated unit tests.
+
 ## Supported Environments
 
 The ChatUnitest Maven Plugin can run on multiple operating systems and various Java Development Kits and Maven versions. Here are the tested and supported environments:
