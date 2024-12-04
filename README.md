@@ -221,7 +221,7 @@ Reference the `PromptFile` templates in the `getInitPromptFile` and `getRepairPr
 Subsequently, call the `generateMessages` method of the `PromptGenerator` to retrieve the prompts. For specific implementation details, refer to the HITS implementation.
 
 ### Expand FTL template
-`PromptInfo is a data entity class that can be extended as needed` The 'dataModel' in PromptTemplate stores variable data for use by FTL templates. If there is a custom new FTL template, please check if there are any new variables introduced and update the 'dataModel' in a timely manner.
+`PromptInfo` is a data entity class that can be extended as needed. The `dataModel` in `PromptTemplate` stores variable data for use by FTL templates. If there is a custom new FTL template, please check if there are any new variables introduced and update the `dataModel` in a timely manner.
 
 ### Modifying the Granularity of Generated Unit Tests
 You can create a subclass of `MethodRunner`, as seen in `HITSRunner`, and add a new implementation in the `selectRunner` method.
