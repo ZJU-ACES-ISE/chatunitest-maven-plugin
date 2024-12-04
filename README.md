@@ -20,8 +20,11 @@
 
 💥 Expanded configuration options. Refer to **Steps to Run** for details.
 
+💥 Integrate multiple related tasks.
+
 ## Background
-Many people have tried using ChatGPT to help them with various programming tasks and have achieved good results. However, there are some issues with using ChatGPT directly. Firstly, the generated code often fails to execute correctly, leading to the famous saying **"five minutes to code, two hours to debug"**. Secondly, it is inconvenient to integrate with existing projects as it requires manual interaction with ChatGPT and switching between different platforms. To address these problems, we have proposed the **"Generate-Validate-Repair"** framework and implemented a prototype. Additionally, to make it easier for everyone to use, we have developed some plugins that can be seamlessly integrated into existing development workflows.
+Many people have tried using ChatGPT to assist with various programming tasks and have achieved good results. However, there are some issues with directly using ChatGPT: First, the generated code often does not execute properly, leading to the adage **“five minutes of coding, two hours of debugging.”** Second, it is inconvenient to integrate with existing projects, as it requires manual interaction with ChatGPT and switching between different pages. To address these issues, we have proposed a **“Generate-Validate-Fix”** framework and implemented a prototype system. Additionally, to facilitate usage, we have developed several plugins that can be easily integrated into existing development workflows. We have completed the development of a Maven plugin, which has been published to the Maven Central Repository, and we welcome you to try it out and provide feedback. We have also launched the Chatunitest plugin in the IntelliJ IDEA Plugin Marketplace. You can search for and install ChatUniTest in the marketplace, or visit the plugin page [Chatunitest: IntelliJ IDEA Plugin](https://plugins.jetbrains.com/plugin/22522-chatunitest) for more information about our plugin. In this latest branch, we have integrated multiple related works that we have reproduced, allowing users to choose and use them as needed.
+
 
 ## Steps to run (Docker)
 
@@ -29,55 +32,70 @@ See [chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/cha
 
 ## Steps to run
 
-### 0. Add our plugin to `pom.xml` and config
+**Overall, you need to introduce two dependencies (core and starter) and a plugin in the project under test**
 
-You can configure the plugin with the following parameters to your `pom.xml` file:
+**And pay attention to whether the introduced version is correct**
+
+### 1. Configuration of `pom.xml` File
+
+To configure the `chatunitest-maven-plugin` in the `pom.xml` file of the project where you want to generate unit tests, add the following plugin configuration and adjust the parameters according to your requirements:
 
 ```xml
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.1</version>
+    <version>1.5.1</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>
-        <model>gpt-3.5-turbo</model>
+        <model>gpt-4o-mini</model>
+        <proxy>${proxy}</proxy>
     </configuration>
 </plugin>
 ```
 
-**Here's a detailed explanation of each configuration option:**
+In general, you only need to provide the API key. **If you encounter an APIConnectionError, you can add your proxy IP and port number in the `proxy` parameter.** You can find the proxy IP and port for Windows by navigating to Settings -> Network & Internet -> Proxy:
 
-- `apiKeys`: (**Required**) Your OpenAI API keys. Example: `Key1, Key2, ...`.
-- `model`: (**Optional**) The OpenAI model. Default: `gpt-3.5-turbo`.
-- `url`: (**Optional**) The API to use your model. Default: `"https://api.openai.com/v1/chat/completions"`.
-- `testNumber`: (**Optional**) The number of tests for each method. Default: `5`.
-- `maxRounds`: (**Optional**) The maximum rounds of the repair process. Default: `5`.
-- `minErrorTokens`: (**Optional**) The minimum tokens of error message in the repair process. Default: `500`.
-- `temperature`: (**Optional**) The OpenAI API parameters. Default: `0.5`.
-- `topP`: (**Optional**) The OpenAI API parameters. Default: `1`.
-- `frequencyPenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
-- `presencePenalty`: (**Optional**) The OpenAI API parameters. Default: `0`.
-- `proxy`: (**Optional**) Your host name and port number if you need. Example:`127.0.0.1:7078`.
-- `selectClass`: (**Optional**) Class under test. If the project contains the same class name in different packages, the className should be specified as the fully qualified name.
-- `selectMethod`: (**Optional**) Method under test.
-- `tmpOutput`: (**Optional**) The output path for parsed information. Default: `/tmp/chatunitest-info`.
-- `testOutput`: (**Optional**) The output path for tests generated by `chatunitest`. Default: `{basedir}/chatunitest`.
-- `project`: (**Optional**) The target project path. Default: `{basedir}`.
-- `thread`: (**Optional**) Enable multi-threaded execution. Default: `true`.
-- `maxThread`: (**Optional**) The maximum number of threads. Default: `CPU cores * 5`.
-- `stopWhenSuccess`: (**Optional**) Stop the repair process when the test passes. Default: `true`.
-- `noExecution`: (**Optional**) Skip the execution verification step of generated tests. Default: `false`.
-- `merge` : (**Optional**) Merge all tests for each focal class. Default: `true`.
-- `promptPath` : (**Optional**) Path to your custom prompt. Refer to default prompt in `src/main/resources/prompt`.
-- `obfuscate` : (**Optional**) Enable prompt obfuscation for enhanced privacy protection. Default: `false`.
-- `obfuscateGroupIds` : (**Opional**) Group IDs you want to obfuscate. Default: only your group ID.
+**Here is a detailed explanation of each configuration option:**
 
-All these parameters also can be specified in the command line with `-D` option.
+- `apiKeys`: (**Required**) Your OpenAI API keys, e.g., `Key1, Key2, ...`
+- `model`: (**Optional**) OpenAI model, default value: `gpt-3.5-turbo`
+- `url`: (**Optional**) API for calling the model, default value: `https://api.openai.com/v1/chat/completions`
+- `testNumber`: (**Optional**) The number of tests generated for each method, default value: `5`
+- `maxRounds`: (**Optional**) Maximum rounds for the fixing process, default value: `5`
+- `minErrorTokens`: (**Optional**) Minimum token count for error messages during the fixing process, default value: `500`
+- `temperature`: (**Optional**) OpenAI API parameter, default value: `0.5`
+- `topP`: (**Optional**) OpenAI API parameter, default value: `1`
+- `frequencyPenalty`: (**Optional**) OpenAI API parameter, default value: `0`
+- `presencePenalty`: (**Optional**) OpenAI API parameter, default value: `0`
+- `proxy`: (**Optional**) If needed, enter your hostname and port number, e.g., `127.0.0.1:7078`
+- `selectClass`: (**Optional**) The class to be tested; if there are classes with the same name in the project, specify the full class name.
+- `selectMethod`: (**Optional**) The method to be tested
+- `tmpOutput`: (**Optional**) Output path for parsing project information, default value: `/tmp/chatunitest-info`
+- `testOutput`: (**Optional**) Output path for tests generated by `chatunitest`, default value: `{basedir}/chatunitest`
+- `project`: (**Optional**) Target project path, default value: `{basedir}`
+- `thread`: (**Optional**) Enable or disable multithreading, default value: `true`
+- `maxThread`: (**Optional**) Maximum number of threads, default value: `CPU core count * 5`
+- `stopWhenSuccess`: (**Optional**) Whether to stop after generating a successful test, default value: `true`
+- `noExecution`: (**Optional**) Whether to skip the step of executing test verification, default value: `false`
 
-Essentially, the only thing you need to provide are your API keys.
+All these parameters can also be specified using the `-D` option in the command line.
+- `merge`: (**Optional**) Merge all tests corresponding to each class into a test suite, default value: `true`.
+- `promptPath`: (**Optional**) Path for custom prompts. Reference the default prompt directory: `src/main/resources/prompt`.
+- `obfuscate`: (**Optional**) Enable obfuscation to protect privacy code. Default value: `false`.
+- `obfuscateGroupIds`: (**Optional**) Group IDs that need to be obfuscated. Default value includes only the current project's group ID. All these parameters can also be specified using the `-D` option in the command line.
+- `phaseType`: (**Optional**) Choose the reproduction scheme. If not selected, the default `chatunitest` process will be executed. All these parameters can also be specified using the `-D` option in the command line.
+    - CoverUP
+    - HITS
+    - TELPA
+    - SYMPROMPT
+    - CHATTESTER
+    - TESTSPARK
+    - TESTPILOT
+    - MUTAP
 
-If you use local LLM (such as code-llama), simply specify the model and url in the configuration:
+If you are using a local large model (e.g., code-llama), simply change the model name and request URL as follows:
+
 ```xml
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
@@ -92,7 +110,11 @@ If you use local LLM (such as code-llama), simply specify the model and url in t
 </plugin>
 ```
 
-### 1. Add the following dependency to pom.xml
+![img.png](src/main/resources/img/win_proxy.png)
+
+### 1. Add the Following Dependency to the `pom.xml` File
+
+Similarly, add the following dependency to the `pom.xml` file of the project where you want to generate unit tests:
 
 ```xml
 <dependency>
@@ -103,30 +125,29 @@ If you use local LLM (such as code-llama), simply specify the model and url in t
 </dependency>
 ```
 
-### 2. Run
+### 2. Running the Plugin
 
-**First, you need to install your project and download all necessary dependencies, which can be done by running `mvn install` command.**
+**First, you need to install the project and download the required dependencies, which can be done by running the `mvn install` command.**
 
-**You can run the plugin with the following command:**
+**You can run the plugin using the following commands:**
 
-**Generate unit tests for the target method:**
+**To generate unit tests for a specific method:**
 
 ```shell
 mvn chatunitest:method -DselectMethod=className#methodName
 ```
 
-**Generate unit tests for the target class:**
+**To generate unit tests for a specific class:**
 
 ```shell
 mvn chatunitest:class -DselectClass=className
 ```
 
-You must specify `selectMethod` and `selectClass` when executing `mvn chatunitest:method` or `mvn chatunitest:class`.
-This is done using the -D option.
+When executing the `mvn chatunitest:method` or `mvn chatunitest:class` commands, you must specify `selectMethod` and `selectClass`, which can be achieved using the `-D` option.
 
-Example:
+**Example:**
 
-```
+```java
 public class Example {
     public void method1(Type1 p1, ...) {...}
     public void method2() {...}
@@ -134,119 +155,76 @@ public class Example {
 }
 ```
 
-To test the class `Example` and all methods in it:
+To test the `Example` class and all its methods:
 
 ```shell
 mvn chatunitest:class -DselectClass=Example
 ```
 
-To test the method `method1` in the class `Example` (Now ChatUnitest will generate tests for all methods named method1
-in the class)
+To test the `method1` in the `Example` class (currently, ChatUnitest will generate tests for all methods named `method1` in the class):
 
 ```shell
 mvn chatunitest:method -DselectMethod=Example#method1
 ```
 
-**Generate unit tests for the whole project:**
+**To generate unit tests for the entire project:**
 
-:warning: :warning: :warning: For a large project, it may consume a significant number of tokens, resulting in a
-substantial bill.
+:warning: :warning: :warning: For large projects, this may consume a significant number of tokens, resulting in considerable costs.
 
 ```shell
 mvn chatunitest:project
 ```
 
-**Clean the generated tests:**
+**To generate unit tests using a specific phase type:**
+
+```shell
+mvn chatunitest:method -DselectMethod=className#methodName -DselectMethod=className#methodName -DphaseType=COVERUP
+```
+
+**To clean up the generated test code:**
 
 ```shell
 mvn chatunitest:clean
 ```
-Running this command will delete all generated tests and restore your test folder.
 
+Running this command will delete all generated test code and restore your test directory.
 
-**Run the generated tests manually:**
+**To manually run the generated tests:**
 
 ```shell
 mvn chatunitest:copy
 ```
-Running this command will copy the generated tests into the `src/test/java/` directory for your convenience when you want
-to run the tests manually. Your test folder will be backed up in the `src/back/` directory.
 
-If the merge configuration is enabled, you can run the test suites instead of individual tests for each class.
+Running this command will copy all generated test code to your test folder while backing up your test directory.
+
+If the `merge` configuration is enabled, you can run the test suite for each class:
 
 ```shell
 mvn chatunitest:restore
 ```
 
-Running this command will restore the test folder from the backup in the `src/back/` directory.
+Running this command will restore your test directory.
 
-```
-mvn chatunitest:generateCoverage
-```
-```xml
-<plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
-    <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.3.0</version>
-    <configuration>
-        <targetDir>D:\\coverage</targetDir>
-        <mavenHome>C:\\software\\apache-maven-3.9.2</mavenHome>
-        <sourceDir>chatunitest</sourceDir>
-    </configuration>
-</plugin>
-```
-Running this method will execute the tests in the folder `sourceDir`, the coverage 
-result of the project will remove to folder `targetDir`. 
-```shell
-mvn chatunitest:generateMethodCoverage_separate
-```
-```xml
-<plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
-    <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.3.0</version>
-    <configuration>
-        <targetDir>D:\\coverage</targetDir>
-        <mavenHome>C:\\software\\apache-maven-3.9.2</mavenHome>
-        <sourceDir>chatunitest</sourceDir>
-    </configuration>
-</plugin>
-```
-Running this method will execute all the test classes in `sourceDir` separately 
-and calculate separate coverage for each test class, the result are saved in the `methodCoverage_SEPARATE.json` file under `targetDir`.
+## Supported Environments
 
-```shell
-mvn chatunitest:generateMethodCoverage_merge
-```
-Running this method will group the test classes according to the target test class(
-the test classes for the same method will be summarized into a group). For test classes in the same grouping, the 
-program generates test coverage by subdividing the groups from `1-1` to `1-n`
-and the test coverage calculation will be performed by group, the result are saved in the 
-`methodCoverage_MERGE.json` file under `targetDir`.
+The ChatUnitest Maven Plugin can run on multiple operating systems and various Java Development Kits and Maven versions. Here are the tested and supported environments:
 
-## Requirements
+- Environment 1: Windows 11 / Oracle JDK 8 / Maven 3.9
+- Environment 2: Windows 10 / Oracle JDK 8 / Maven 3.6
+- Environment 3: Ubuntu 22.04 / OpenJDK 8 / Maven 3.6
+- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 8 / Maven 3.8
 
-This Maven plugin can be executed in various operating systems with different Java Development Kits (JDK) and Maven
-versions. The following environments have been tested and proven to work:
-
-- Environment 1: Windows 11 / Oracle JDK 11 / Maven 3.9
-- Environment 2: Windows 10 / Oracle JDK 11 / Maven 3.6
-- Environment 3: Ubuntu 22.04 / OpenJDK 11 / Maven 3.6
-- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 11 / Maven 3.8
-
-Please note that these environments are tested and known to work. You can also try running the plugin in similar
-environments. If you encounter any issues in other environments, please refer to the documentation or seek appropriate
-support.
+Please note that these environments are examples that have been tested and can run successfully; you may also try running the plugin in other similar environments. If you encounter issues in other environments, please refer to the documentation or contact the developers.
 
 ## :construction: TODO
 
-- Add code obfuscation to avoid sending the original code to ChatGPT.
-- Add expense estimation and quota.
-- Optimize the structure of generated test cases.
+- Add code obfuscation to avoid sending raw code to ChatGPT
+- Add cost estimation and quotas
+- Optimize the structure of generated test cases
 
 ## MISC
 
-Our work has been submitted to arXiv. Check it out here: [ChatUniTest](https://arxiv.org/abs/2305.04764).
+Our work has been submitted to arXiv, and you can find the link here: [ChatUniTest](https://arxiv.org/abs/2305.04764).
 
 ```
 @misc{xie2023chatunitest,
@@ -259,10 +237,9 @@ Our work has been submitted to arXiv. Check it out here: [ChatUniTest](https://a
 }
 ```
 
-## :email: Contact us
+## :email: Contact Us
 
-If you have any questions or would like to inquire about our experimental results, please feel free to contact us via
-email. The email addresses of the authors are as follows:
+If you have any questions or would like to learn more about our experimental results, please feel free to contact us via email at the following addresses:
 
 1. Corresponding author: `zjuzhichen AT zju.edu.cn`
 2. Author: `yh_ch AT zju.edu.cn`, `xiezhuokui AT zju.edu.cn`
