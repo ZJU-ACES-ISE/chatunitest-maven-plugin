@@ -100,7 +100,7 @@ If you are using a local large model (e.g., code-llama), simply change the model
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.1</version>
+    <version>1.5.1</version>
     <configuration>
         <!-- Required: Use any string to replace your API keys -->
         <apiKeys>xxx</apiKeys>
