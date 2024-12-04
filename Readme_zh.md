@@ -209,8 +209,8 @@ mvn chatunitest:restore
 #### 4. 生成 Prompt
 后续调用 `PromptGenerator` 的 `generateMessages` 方法即可获取 prompt。具体实现方式可参见 HITS 的实现。
 
-### 修改 FTL 模板
-`PromptInfo` 是一个数据实体类，这部分可以按需修改。`PromptTemplate` 中的 `dataModel` 存放着供 FTL 模板使用的变量数据。如果有自定义新的 FTL 模板，请检查是否有新的变量引入，并及时更新 `dataModel`。
+### 扩展 FTL 模板
+`PromptInfo` 是一个数据实体类，这部分可以按需扩展。`PromptTemplate` 中的 `dataModel` 存放着供 FTL 模板使用的变量数据。如果有自定义新的 FTL 模板，请检查是否有新的变量引入，并及时更新 `dataModel`。
 
 ### 修改生成单测的粒度
 可以构造一个 `MethodRunner` 的继承类，参见 `HITSRunner`。并在 `selectRunner` 方法中添加新的实现。
