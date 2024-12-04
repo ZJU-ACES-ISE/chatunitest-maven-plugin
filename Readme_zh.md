@@ -27,7 +27,7 @@
 
 ## 运行步骤
 
-**总的来说，你需要在待测项目中引入两个dependency（core与starter）和一个plugin**
+**总的来说，你需要在maven-plugin的pom中引入一个dependency（core），在待测项目的pom中引入一个dependency（starter）和一个plugin（maven-plugin）**
 
 **并且注意引入的version是否正确**
 
