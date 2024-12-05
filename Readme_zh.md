@@ -224,44 +224,13 @@ mvn chatunitest:restore
 
 - 如需修改生成单测的粒度，例如 HITS 是针对方法切片生成单元测试，请参考修改生成单测的粒度部分。
 
-## 可运行环境
-
-ChatUnitest Maven Plugin可以在多个操作系统和不同的 Java 开发工具包和 Maven 版本下运行。以下是已测试并可运行的环境：
-
-- Environment 1: Windows 11 / Oracle JDK 8 / Maven 3.9
-- Environment 2: Windows 10 / Oracle JDK 8 / Maven 3.6
-- Environment 3: Ubuntu 22.04 / OpenJDK 8 / Maven 3.6
-- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 8 / Maven 3.8
-
-请注意，这些环境是经过测试并可成功运行的示例，您也可以尝试在其他类似的环境中运行该插件。如果您在其他环境中遇到问题，请查看文档或联系开发者。
-
-## :construction: TODO
-
-- 添加代码混淆以避免将原始代码发送到 ChatGPT
-- 添加费用估算和配额
-- 优化生成的测试用例的结构
-
-## MISC
-
-我们的工作已经提交到arXiv，链接指路：[ChatUniTest](https://arxiv.org/abs/2305.04764).
-
-```
-@misc{xie2023chatunitest,
-      title={ChatUniTest: a ChatGPT-based automated unit test generation tool}, 
-      author={Zhuokui Xie and Yinghao Chen and Chen Zhi and Shuiguang Deng and Jianwei Yin},
-      year={2023},
-      eprint={2305.04764},
-      archivePrefix={arXiv},
-      primaryClass={cs.SE}
-}
-```
 
 ## :email: 联系我们
 
 如果您有任何问题或想了解我们的实验结果，请随时通过电子邮件与我们联系，联系方式如下：
 
 1. Corresponding author: `zjuzhichen AT zju.edu.cn`
-2. Author: `yh_ch AT zju.edu.cn`, `xiezhuokui AT zju.edu.cn`
+2. Author: `yh_ch AT zju.edu.cn`
 
 
 
