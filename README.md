@@ -235,41 +235,11 @@ If you wish to define your own unit test generation scheme, here is an example:
 
 - If you need to modify the granularity of the generated unit tests (for example, HITS generates unit tests based on method slicing), please refer to the section on modifying the granularity of generated unit tests.
 
-## Supported Environments
 
-The ChatUnitest Maven Plugin can run on multiple operating systems and various Java Development Kits and Maven versions. Here are the tested and supported environments:
-
-- Environment 1: Windows 11 / Oracle JDK 8 / Maven 3.9
-- Environment 2: Windows 10 / Oracle JDK 8 / Maven 3.6
-- Environment 3: Ubuntu 22.04 / OpenJDK 8 / Maven 3.6
-- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 8 / Maven 3.8
-
-Please note that these environments are examples that have been tested and can run successfully; you may also try running the plugin in other similar environments. If you encounter issues in other environments, please refer to the documentation or contact the developers.
-
-## :construction: TODO
-
-- Add code obfuscation to avoid sending raw code to ChatGPT
-- Add cost estimation and quotas
-- Optimize the structure of generated test cases
-
-## MISC
-
-Our work has been submitted to arXiv, and you can find the link here: [ChatUniTest](https://arxiv.org/abs/2305.04764).
-
-```
-@misc{xie2023chatunitest,
-      title={ChatUniTest: a ChatGPT-based automated unit test generation tool}, 
-      author={Zhuokui Xie and Yinghao Chen and Chen Zhi and Shuiguang Deng and Jianwei Yin},
-      year={2023},
-      eprint={2305.04764},
-      archivePrefix={arXiv},
-      primaryClass={cs.SE}
-}
-```
 
 ## :email: Contact Us
 
 If you have any questions or would like to learn more about our experimental results, please feel free to contact us via email at the following addresses:
 
 1. Corresponding author: `zjuzhichen AT zju.edu.cn`
-2. Author: `yh_ch AT zju.edu.cn`, `xiezhuokui AT zju.edu.cn`
+2. Author: `yh_ch AT zju.edu.cn`
