@@ -160,7 +160,7 @@ mvn chatunitest:project
 **使用目标方案生成单元测试：**
 
 ```shell
-mvn chatunitest:method -DselectMethod=className#methodName -DselectMethod=className#methodName -DphaseType=COVERUP
+mvn chatunitest:method -DselectMethod=className#methodName -DselectMethod=className#methodName -DphaseType=CHATTESTER
 ```
 
 **清理生成的测试代码：**
