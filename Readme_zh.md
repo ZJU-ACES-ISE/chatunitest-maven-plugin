@@ -191,8 +191,12 @@ mvn chatunitest:restore
 如果您想要自定义内容，例如扩展ftl，或者使用自定义单测生成方案，可以[参考此处](https://github.com/ZJU-ACES-ISE/chatunitest-core/blob/corporation/Readme_zh.md#%E4%BD%BF%E7%94%A8-ftl-%E6%A8%A1%E6%9D%BF)
 
 ## 注意事项
-### 1.COVERUP
+### 1. COVERUP
 初次使用可能报错，需要将resources目录下面的jacoco-integration-1.0-SNAPSHOT.jar放入指定目录（通常是系统指定的maven对应的repository仓库中），根据报错信息可以获得路径。
+
+### 2. HITS
+①切片存放于tmp\chatunitest-info\项目名称\methodSlice中
+②模型能力过弱可能会导致生成不出slices
 
 ## :email: 联系我们
 
