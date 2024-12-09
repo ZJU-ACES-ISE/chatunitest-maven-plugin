@@ -39,6 +39,7 @@ import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -77,7 +78,7 @@ public class ProjectTestMojo
     public boolean stopWhenSuccess;
     @Parameter(property = "noExecution", defaultValue = "false")
     public boolean noExecution;
-    @Parameter(alias = "thread", property = "thread", defaultValue = "true")
+    @Parameter(alias = "thread", property = "thread", defaultValue = "false")
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
@@ -113,6 +114,12 @@ public class ProjectTestMojo
     public int presencePenalty;
     @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
+    @Parameter(property = "phaseType",defaultValue = "COVERUP")
+    public String phaseType;
+    @Parameter(property = "coverageAnalyzer_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\jacoco-integration-1.0-SNAPSHOT.jar")
+    public String coverageAnalyzer_jar_path;
+    @Parameter(property = "smartUnitTest_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\smartut-master-1.1.0.jar")
+    public String smartUnitTest_path;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -126,9 +133,13 @@ public class ProjectTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
-        log.info("\n==========================\n[ChatUniTest] Generating tests for project " + project.getBasedir().getName() + " ...");
-        log.warn("[ChatUniTest] It may consume a significant number of tokens!");
-        new Task(config, new RunnerImpl(config)).startProjectTask();
+        log.info(String.format("\n==========================\n[%s] Generating tests for project %s ...", phaseType, project.getBasedir().getName()));
+        log.warn(String.format("[%s] It may consume a significant number of tokens!", phaseType));
+        try {
+            new Task(config, new RunnerImpl(config)).startProjectTask();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void init() {
@@ -162,8 +173,14 @@ public class ProjectTestMojo
                 .frequencyPenalty(frequencyPenalty)
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
-                .pluginSign("ChatUniTest")
+                .phaseType(phaseType)
+                .coverageAnalyzer_jar_path(coverageAnalyzer_jar_path)
                 .build();
+        if(phaseType.equals("TELPA")){
+            TelpaInit telpaInit=new TelpaInit();
+            telpaInit.generateSmartUnitTest(project,smartUnitTest_path,config);
+        }
+        config.setPluginSign(phaseType);
         config.print();
     }
 

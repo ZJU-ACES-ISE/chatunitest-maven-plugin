@@ -17,31 +17,32 @@
 
 💥 扩展配置选项。请参考**运行步骤**了解详情。
 
-## 动机
-相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件 开发，最新版1.1.0已发布到Maven中心仓库，欢迎试用和反馈。IDEA插件正在开发中，欢迎持续关注。
+💥 集成多项相关工作。
 
-## 运行步骤（Docker）
-见[chenyi26/chatunitest](https://hub.docker.com/repository/docker/chenyi26/chatunitest/general)
+## 动机
+相信很多人试过用ChatGPT帮助自己完成各种各样的编程任务，并且已经取得了不错的效果。但是，直接使用ChatGPT存在一些问题： 一是生成的代码很多时候不能正常执行，**“编程五分钟，调试两小时”**； 二是不方便跟现有工程进行集成，需要手动与ChatGPT进行交互，并且在不同页面间切换。为了解决这些问题，我们提出了 **“生成-验证-修复”** 框架，并实现了原型系统，同时为了方便大家使用，我们开发了一些插件，能够方便的集成到已有开发流程中。已完成Maven插件开发，并且已发布到Maven中心仓库，欢迎试用和反馈。我们已在 IntelliJ IDEA 插件市场中上架了 Chatunitest 插件，您可以在市场中搜索并安装 ChatUniTest，或者访问插件页面[Chatunitest:IntelliJ IDEA Plugin](https://plugins.jetbrains.com/plugin/22522-chatunitest) 了解有关我们插件的更多信息。在这个最新分支，整合了多项我们复现的相关工作，大家可以自行选择，按需使用。
+
 
 ## 运行步骤
 
-### 0. `pom.xml`文件配置
+### 1. `pom.xml`文件配置
 
-在项目的`pom.xml`文件内加入 chatunitest-maven-plugin 的插件配置，并按照您的需求添加参数：
+在待生成单测的项目中的`pom.xml`文件内加入 chatunitest-maven-plugin 的插件配置，并按照您的需求添加参数：
 ```xml
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.0</version>
+    <!-- Required: Use  the lastest version -->
+    <version>2.0.0</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
         <apiKeys></apiKeys>g
-        <model>gpt-3.5-turbo</model>
+        <model>gpt-4o-mini</model>
         <proxy>${proxy}</proxy>
     </configuration>
 </plugin>
 ```
-一般情况下，您只需要提供API密钥。如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
+一般情况下，您只需要提供API密钥。**如果出现APIConnectionError，您可以在proxy参数中添加您的代理ip和端口号**。Windows系统里下的代理ip和端口可以在设置->网络和Internet->代理中查看：
 
 **下面是每个配置选项的详细说明:**
 
@@ -70,13 +71,22 @@
 - `promptPath` : (**可选**) 自定义prompt的路径. 参考默认promp目录: `src/main/resources/prompt`.
 - `obfuscate` : (**可选**) 开启混淆功能以保护隐私代码. 默认值: false. 
 - `obfuscateGroupIds` : (**可选**) 需要进行混淆的group ID. 默认值仅包含当前项目的group ID. 所有这些参数也可以在命令行中使用-D选项指定。
+- `phaseType` : (**可选**) 选择复现方案，如果未选择，则会执行默认的chatunitest进程. 所有这些参数也可以在命令行中使用-D选项指定。
+    - COVERUP
+    - HITS
+    - TELPA
+    - SYMPROMPT
+    - CHATTESTER
+    - TESTSPARK
+    - TESTPILOT
+    - MUTAP
 
 如果使用本地大模型（例如code-llama），只需修改模型名和请求url即可，例如：
 ```xml
 <plugin>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
-    <version>1.4.1</version>
+    <version>1.5.1</version>
     <configuration>
         <!-- Required: Use any string to replace your API keys -->
         <apiKeys>xxx</apiKeys>
@@ -86,9 +96,8 @@
 </plugin>
 ```
 
-![img.png](src/main/resources/img/win_proxy.png)
-
 ### 1. 将以下依赖项添加到`pom.xml`文件中
+同样的，在待生成单测的项目的pom中添加依赖
 ```xml
 <dependency>
     <groupId>io.github.ZJU-ACES-ISE</groupId>
@@ -148,6 +157,12 @@ mvn chatunitest:method -DselectMethod=Example#method1
 mvn chatunitest:project
 ```
 
+**使用目标方案生成单元测试：**
+
+```shell
+mvn chatunitest:method -DselectMethod=className#methodName -DselectMethod=className#methodName -DphaseType=CHATTESTER
+```
+
 **清理生成的测试代码：**
 
 ```shell
@@ -172,44 +187,19 @@ mvn chatunitest:restore
 
 运行该命令将恢复您的测试目录
 
-## 可运行环境
+## 自定义内容
+如果您想要自定义内容，例如扩展ftl，或者使用自定义单测生成方案，可以[参考此处](https://github.com/ZJU-ACES-ISE/chatunitest-core/blob/corporation/Readme_zh.md#%E4%BD%BF%E7%94%A8-ftl-%E6%A8%A1%E6%9D%BF)
 
-ChatUnitest Maven Plugin可以在多个操作系统和不同的 Java 开发工具包和 Maven 版本下运行。以下是已测试并可运行的环境：
-
-- Environment 1: Windows 11 / Oracle JDK 11 / Maven 3.9
-- Environment 2: Windows 10 / Oracle JDK 11 / Maven 3.6
-- Environment 3: Ubuntu 22.04 / OpenJDK 11 / Maven 3.6
-- Environment 4: Darwin Kernel 22.1.0 / Oracle JDK 11 / Maven 3.8
-
-请注意，这些环境是经过测试并可成功运行的示例，您也可以尝试在其他类似的环境中运行该插件。如果您在其他环境中遇到问题，请查看文档或联系开发者。
-
-## :construction: TODO
-
-- 添加代码混淆以避免将原始代码发送到 ChatGPT
-- 添加费用估算和配额
-- 优化生成的测试用例的结构
-
-## MISC
-
-我们的工作已经提交到arXiv，链接指路：[ChatUniTest](https://arxiv.org/abs/2305.04764).
-
-```
-@misc{xie2023chatunitest,
-      title={ChatUniTest: a ChatGPT-based automated unit test generation tool}, 
-      author={Zhuokui Xie and Yinghao Chen and Chen Zhi and Shuiguang Deng and Jianwei Yin},
-      year={2023},
-      eprint={2305.04764},
-      archivePrefix={arXiv},
-      primaryClass={cs.SE}
-}
-```
+## 注意事项
+### 1.COVERUP
+初次使用可能报错，需要将resources目录下面的jacoco-integration-1.0-SNAPSHOT.jar放入指定目录（通常是系统指定的maven对应的repository仓库中），根据报错信息可以获得路径。
 
 ## :email: 联系我们
 
 如果您有任何问题或想了解我们的实验结果，请随时通过电子邮件与我们联系，联系方式如下：
 
 1. Corresponding author: `zjuzhichen AT zju.edu.cn`
-2. Author: `yh_ch AT zju.edu.cn`, `xiezhuokui AT zju.edu.cn`
+2. Author: `yh_ch AT zju.edu.cn`
 
 
 
