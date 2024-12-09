@@ -78,7 +78,7 @@ public class ProjectTestMojo
     public boolean stopWhenSuccess;
     @Parameter(property = "noExecution", defaultValue = "false")
     public boolean noExecution;
-    @Parameter(alias = "thread", property = "thread", defaultValue = "true")
+    @Parameter(alias = "thread", property = "thread", defaultValue = "false")
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
@@ -173,7 +173,6 @@ public class ProjectTestMojo
                 .frequencyPenalty(frequencyPenalty)
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
-                .pluginSign("COVERUP")
                 .phaseType(phaseType)
                 .coverageAnalyzer_jar_path(coverageAnalyzer_jar_path)
                 .build();
@@ -181,6 +180,7 @@ public class ProjectTestMojo
             TelpaInit telpaInit=new TelpaInit();
             telpaInit.generateSmartUnitTest(project,smartUnitTest_path,config);
         }
+        config.setPluginSign(phaseType);
         config.print();
     }
 
