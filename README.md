@@ -193,6 +193,11 @@ If you want to customize content, such as extending FTL or using a custom testin
 ### 1.COVERUP
 Initial use may result in an error. It is necessary to place the Jacoco-inintegration-1.0-SNAPSHOT.jar under the resources directory into a specified directory (usually the repository corresponding to Maven specified by the system), and obtain the path based on the error message.
 
+### 2.  HITS
+① Slices are stored in tmp \ chatunitest info \ project name \ methodSlice
+
+② Weak model capability may result in the inability to generate slices
+
 ## :email: Contact Us
 
 If you have any questions or want to learn about our experimental results, please feel free to contact us via email:
