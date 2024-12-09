@@ -196,6 +196,7 @@ mvn chatunitest:restore
 
 ### 2. HITS
 ①切片存放于tmp\chatunitest-info\项目名称\methodSlice中
+
 ②模型能力过弱可能会导致生成不出slices
 
 ## :email: 联系我们
