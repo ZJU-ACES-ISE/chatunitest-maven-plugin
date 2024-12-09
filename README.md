@@ -189,7 +189,7 @@ Running this command will restore your test directory.
 ## Custom Content
 If you want to customize content, such as extending FTL or using a custom testing generation scheme, you can [refer here](https://github.com/ZJU-ACES-ISE/chatunitest-core/blob/corporation/Readme_zh.md#%E4%BD%BF%E7%94%A8-ftl-%E6%A8%A1%E6%9D%BF).
 
-##Precautions
+## Precautions
 ### 1.COVERUP
 Initial use may result in an error. It is necessary to place the Jacoco-inintegration-1.0-SNAPSHOT.jar under the resources directory into a specified directory (usually the repository corresponding to Maven specified by the system), and obtain the path based on the error message.
 
