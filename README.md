@@ -187,7 +187,7 @@ mvn chatunitest:restore
 Running this command will restore your test directory.
 
 ## Custom Content
-If you want to customize content, such as extending FTL or using a custom testing generation scheme, you can [refer here](https://github.com/ZJU-ACES-ISE/chatunitest-core/blob/corporation/Readme_zh.md#%E4%BD%BF%E7%94%A8-ftl-%E6%A8%A1%E6%9D%BF).
+If you want to customize content, such as extending FTL or using a custom testing generation scheme, you can [refer here](https://github.com/ZJU-ACES-ISE/chatunitest-core/blob/corporation/README.md#custom-content)
 
 ## Precautions
 ### 1.COVERUP
