@@ -194,7 +194,7 @@ If you want to customize content, such as extending FTL or using a custom testin
 Initial use may result in an error. Please extract the Jacoco-integration.zip file from the resources directory to the specified directory (io \ Github \ ZJU-ACES-ISE)
 
 ### 2.  HITS
-① Slices are stored in tmp \ chatunitest info \ {project name} \ methodSlice
+① Slices are stored in tmp \ chatunitest info \ `project name` \ methodSlice
 
 ② Weak model capability may result in the inability to generate slices
 
