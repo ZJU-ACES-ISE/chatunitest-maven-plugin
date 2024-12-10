@@ -195,7 +195,7 @@ mvn chatunitest:restore
 初次使用可能报错，需要将resources目录下面的jacoco-integration.zip解压至指定目录（io\github\ZJU-ACES-ISE）中
 
 ### 2. HITS
-①切片存放于tmp\chatunitest-info\项目名称\methodSlice中
+①切片存放于tmp\chatunitest-info\`项目名称`\methodSlice中
 
 ②模型能力过弱可能会导致生成不出slices
 
