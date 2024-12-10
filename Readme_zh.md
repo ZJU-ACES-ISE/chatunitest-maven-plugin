@@ -192,7 +192,7 @@ mvn chatunitest:restore
 
 ## 注意事项
 ### 1. COVERUP
-初次使用可能报错，需要将resources目录下面的jacoco-integration-1.0-SNAPSHOT.jar放入指定目录（通常是系统指定的maven对应的repository仓库中），根据报错信息可以获得路径。
+初次使用可能报错，需要将resources目录下面的jacoco-integration.zip解压至指定目录（io\github\ZJU-ACES-ISE）中
 
 ### 2. HITS
 ①切片存放于tmp\chatunitest-info\项目名称\methodSlice中
