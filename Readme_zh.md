@@ -192,7 +192,7 @@ mvn chatunitest:restore
 
 ## 注意事项
 ### 1. COVERUP
-初次使用可能报错，需要将resources目录下面的jacoco-integration.zip解压至指定目录（io\github\ZJU-ACES-ISE）中
+初次使用可能报错，需要将resources目录下面的[jacoco-integration.zip](https://github.com/ZJU-ACES-ISE/chatunitest-maven-plugin/blob/main/src/main/resources/jacoco-integration.zip)解压至指定目录（io\github\ZJU-ACES-ISE）中
 
 ### 2. HITS
 ①切片存放于tmp\chatunitest-info\`项目名称`\methodSlice中
