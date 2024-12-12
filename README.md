@@ -191,7 +191,7 @@ If you want to customize content, such as extending FTL or using a custom testin
 
 ## Precautions
 ### 1.COVERUP
-Initial use may result in an error. Please extract the Jacoco-integration.zip file from the resources directory to the specified directory (io \ Github \ ZJU-ACES-ISE)
+Initial use may result in an error. Please extract the [Jacoco-integration.zip](https://github.com/ZJU-ACES-ISE/chatunitest-maven-plugin/blob/main/src/main/resources/jacoco-integration.zip) file from the resources directory to the specified directory (io \ Github \ ZJU-ACES-ISE)
 
 ### 2.  HITS
 ① Slices are stored in tmp \ chatunitest info \ `project name` \ methodSlice
