@@ -11,9 +11,29 @@ The focal method is `${method_sig}` in the focal class `${class_name}`, and thei
     The brief information of dependent class `${key}` is
     ```${m_deps[key]}```.
 </#list>
-You should follow these steps to generate the test, starting each step with the word ${'<INFO>'}:
-1. List all necessary dependencies.
-2. Think step by step, describe how to prepare all necessary classes and methods for invoking the focal method.
-3. Write a complete test class with imports, ensuring to cover all branches and lines in the test.
-4. Review your code to ensure all statements are implemented and free from bugs. Provide a revised version if modifications are made during the review.
-e.g., "${'<INFO>'} First, import the following dependencies...".
+
+Follow these steps to generate the test case, starting each step with ${'<STEP>'}:
+1. **Initialize dependent classes:** Write simple initialization statements for the objects of all dependent classes.
+2. **Initialize the focal class:** Use the class constructor to create the focal class object. Use mock objects for any dependencies not initialized in the first step.
+3. **Review and revise:** Carefully review your initialization code for completeness and correctness, especially the private access. If issues are found during the review, revise the code and provide the updated version.
+4. **Write the test class:** Create a complete test class that ensures full branch and line coverage of the focal method.
+
+**Example**:
+${'<STEP>'} Initialize dependent classes:
+```java
+StringBuilder sb = new StringBuilder();
+```
+${'<STEP>'} Initialize the focal class:
+```java
+UserServer server = new UserServer(sb);
+```
+${'<STEP>'} Review and revise:
+If no revision is needed, write "No revision is needed.", else provide revised code:
+```java
+YOUR REVISED CODE
+```
+${'<STEP>'} Write the test class:
+```java
+YOUR TEST
+```
+
