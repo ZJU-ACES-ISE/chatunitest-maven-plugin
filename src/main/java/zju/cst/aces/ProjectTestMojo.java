@@ -67,6 +67,8 @@ public class ProjectTestMojo
     public File promptPath;
     @Parameter(property = "examplePath", defaultValue = "${project.basedir}/exampleUsage.json")
     public File examplePath;
+    @Parameter(property = "gnnPredictPath", defaultValue = "${project.basedir}/gnnPredict.json")
+    public File gnnPredictPath;
     @Parameter(property = "url", defaultValue = "https://api.openai.com/v1/chat/completions")
     public String url;
     @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
@@ -139,6 +141,7 @@ public class ProjectTestMojo
                 .logger(mLogger)
                 .promptPath(promptPath)
                 .examplePath(examplePath.toPath())
+                .gnnPredictPath(gnnPredictPath.toPath())
                 .apiKeys(apiKeys)
                 .enableMultithreading(enableMultithreading)
                 .enableRuleRepair(enableRuleRepair)
