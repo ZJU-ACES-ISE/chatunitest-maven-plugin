@@ -44,7 +44,7 @@ public class CoverageMojo extends AbstractMojo {
         try {
             copyDirectory(new File(sourceDir), new File(srcTestJavaPath));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error(e);
         }
         // 运行 Maven 测试
         InvocationRequest request = new DefaultInvocationRequest();
@@ -55,7 +55,7 @@ public class CoverageMojo extends AbstractMojo {
         try {
             invoker.execute(request);
         } catch (MavenInvocationException e) {
-            throw new RuntimeException(e);
+            log.error(e);
         }
 
 
@@ -76,7 +76,7 @@ public class CoverageMojo extends AbstractMojo {
         try {
             invoker.execute(request);
         } catch (MavenInvocationException e) {
-            throw new RuntimeException(e);
+            log.error(e);
         }
 
         request = new DefaultInvocationRequest();
@@ -87,20 +87,20 @@ public class CoverageMojo extends AbstractMojo {
         try {
             invoker.execute(request);
         } catch (MavenInvocationException e) {
-            throw new RuntimeException(e);
+            log.error(e);
         }
 
         // 删除临时复制的目录
         try {
             FileUtils.deleteDirectory(new File(srcTestJavaPath));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error(e);
         }
 
         try {
             copyDirectory(new File(project.getBasedir().toString()+"/target/site"), new File(targetDir));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error(e);
         }
     }
 
