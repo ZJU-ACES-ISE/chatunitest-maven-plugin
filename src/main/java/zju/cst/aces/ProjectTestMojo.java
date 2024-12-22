@@ -167,6 +167,8 @@ public class ProjectTestMojo
                 .dependencyDepth(dependencyDepth)
                 .model(model)
                 .maxResponseTokens(maxResponseTokens)
+                .maxPromptTokens(maxPromptTokens)
+                .minErrorTokens(minErrorTokens)
                 .url(url)
                 .temperature(temperature)
                 .topP(topP)
