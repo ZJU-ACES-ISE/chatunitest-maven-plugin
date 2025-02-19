@@ -2,7 +2,7 @@
 
 [English](./README.md) | [中文](./Readme_zh.md)
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.zju-aces-ise/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.zju-aces-ise/chatunitest-maven-plugin)
 
 ## 更新
 💥 添加docker映像以在隔离的沙箱环境中生成测试。
@@ -30,7 +30,7 @@
 在待生成单测的项目中的`pom.xml`文件内加入 chatunitest-maven-plugin 的插件配置，并按照您的需求添加参数：
 ```xml
 <plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <!-- Required: Use  the lastest version -->
     <version>2.0.0</version>
@@ -84,7 +84,7 @@
 如果使用本地大模型（例如code-llama），只需修改模型名和请求url即可，例如：
 ```xml
 <plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <version>2.0.0</version>
     <configuration>
@@ -100,7 +100,7 @@
 同样的，在待生成单测的项目的pom中添加依赖
 ```xml
 <dependency>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-starter</artifactId>
     <version>1.4.0</version>
     <type>pom</type>
