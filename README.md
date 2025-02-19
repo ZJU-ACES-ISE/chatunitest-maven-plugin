@@ -29,7 +29,7 @@ Many have tried using ChatGPT to assist with various programming tasks, achievin
 Add the chatunitest-maven-plugin configuration to the `pom.xml` file in the project for which you want to generate unit tests, and add parameters as needed:
 ```xml
 <plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise </groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <!-- Required: Use the latest version -->
     <version>2.0.0</version>
