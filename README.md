@@ -2,7 +2,7 @@
 
 [English](./README.md) | [中文](./Readme_zh.md)
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.zju-aces-ise/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.zju-aces-ise/chatunitest-maven-plugin)
 
 ## Updates
 💥 Added Docker images for generating tests in an isolated sandbox environment.
@@ -29,7 +29,7 @@ Many have tried using ChatGPT to assist with various programming tasks, achievin
 Add the chatunitest-maven-plugin configuration to the `pom.xml` file in the project for which you want to generate unit tests, and add parameters as needed:
 ```xml
 <plugin>
-    <groupId>io.github.zju-aces-ise </groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <!-- Required: Use the latest version -->
     <version>2.0.0</version>
@@ -83,7 +83,7 @@ Generally, you only need to provide the API key. **If you encounter an APIConnec
 If using a local large model (e.g., code-llama), simply modify the model name and request URL as follows:
 ```xml
 <plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <version>2.0.0</version>
     <configuration>
@@ -99,7 +99,7 @@ If using a local large model (e.g., code-llama), simply modify the model name an
 Similarly, add the dependency in the `pom.xml` of the project for which you want to generate unit tests:
 ```xml
 <dependency>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-starter</artifactId>
     <version>1.4.0</version>
     <type>pom</type>
