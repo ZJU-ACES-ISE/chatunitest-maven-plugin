@@ -116,8 +116,6 @@ public class ProjectTestMojo
     public String proxy;
     @Parameter(property = "phaseType",defaultValue = "COVERUP")
     public String phaseType;
-    @Parameter(property = "coverageAnalyzer_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\jacoco-integration-1.0-SNAPSHOT.jar")
-    public String coverageAnalyzer_jar_path;
     @Parameter(property = "smartUnitTest_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\smartut-master-1.1.0.jar")
     public String smartUnitTest_path;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -176,7 +174,6 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .phaseType(phaseType)
-                .coverageAnalyzer_jar_path(coverageAnalyzer_jar_path)
                 .build();
         if(phaseType.equals("TELPA")){
             TelpaInit telpaInit=new TelpaInit();

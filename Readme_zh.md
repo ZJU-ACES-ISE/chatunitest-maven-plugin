@@ -2,7 +2,7 @@
 
 [English](./README.md) | [中文](./Readme_zh.md)
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.ZJU-ACES-ISE/chatunitest-maven-plugin)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.zju-aces-ise/chatunitest-maven-plugin?color=hex&style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.zju-aces-ise/chatunitest-maven-plugin)
 
 ## 更新
 💥 添加docker映像以在隔离的沙箱环境中生成测试。
@@ -30,7 +30,7 @@
 在待生成单测的项目中的`pom.xml`文件内加入 chatunitest-maven-plugin 的插件配置，并按照您的需求添加参数：
 ```xml
 <plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <!-- Required: Use  the lastest version -->
     <version>2.0.0</version>
@@ -84,7 +84,7 @@
 如果使用本地大模型（例如code-llama），只需修改模型名和请求url即可，例如：
 ```xml
 <plugin>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-maven-plugin</artifactId>
     <version>2.0.0</version>
     <configuration>
@@ -100,7 +100,7 @@
 同样的，在待生成单测的项目的pom中添加依赖
 ```xml
 <dependency>
-    <groupId>io.github.ZJU-ACES-ISE</groupId>
+    <groupId>io.github.zju-aces-ise</groupId>
     <artifactId>chatunitest-starter</artifactId>
     <version>1.4.0</version>
     <type>pom</type>
@@ -192,10 +192,10 @@ mvn chatunitest:restore
 
 ## 注意事项
 ### 1. COVERUP
-初次使用可能报错，需要将resources目录下面的jacoco-integration-1.0-SNAPSHOT.jar放入指定目录（通常是系统指定的maven对应的repository仓库中），根据报错信息可以获得路径。
+初次使用可能报错，需要将resources目录下面的[jacoco-integration.zip](https://github.com/ZJU-ACES-ISE/chatunitest-maven-plugin/blob/main/src/main/resources/jacoco-integration.zip)解压至指定目录（io\github\ZJU-ACES-ISE）中
 
 ### 2. HITS
-①切片存放于tmp\chatunitest-info\项目名称\methodSlice中
+①切片存放于tmp\chatunitest-info\`项目名称`\methodSlice中
 
 ②模型能力过弱可能会导致生成不出slices
 
