@@ -78,7 +78,7 @@ public class ProjectTestMojo
     public boolean stopWhenSuccess;
     @Parameter(property = "noExecution", defaultValue = "false")
     public boolean noExecution;
-    @Parameter(alias = "thread", property = "thread", defaultValue = "false")
+    @Parameter(alias = "thread", property = "thread", defaultValue = "true")
     public boolean enableMultithreading;
     @Parameter(alias = "ruleRepair", property = "ruleRepair", defaultValue = "true")
     public boolean enableRuleRepair;
@@ -94,7 +94,7 @@ public class ProjectTestMojo
     public int testNumber;
     @Parameter(property = "maxRounds", defaultValue = "5")
     public int maxRounds;
-    @Parameter(property = "maxPromptTokens", defaultValue = "2600")
+    @Parameter(property = "maxPromptTokens", defaultValue = "-1")
     public int maxPromptTokens;
     @Parameter(property = "minErrorTokens", defaultValue = "500")
     public int minErrorTokens;
