@@ -99,7 +99,7 @@ If using a local large model (e.g., code-llama), simply modify the model name an
 Similarly, add the dependency in the `pom.xml` of the project for which you want to generate unit tests:
 ```xml
 <dependency>
-    <groupId>io.github.zju-aces-ise</groupId>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-starter</artifactId>
     <version>1.4.0</version>
     <type>pom</type>
