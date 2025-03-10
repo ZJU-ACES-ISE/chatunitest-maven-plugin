@@ -100,7 +100,7 @@
 同样的，在待生成单测的项目的pom中添加依赖
 ```xml
 <dependency>
-    <groupId>io.github.zju-aces-ise</groupId>
+    <groupId>io.github.ZJU-ACES-ISE</groupId>
     <artifactId>chatunitest-starter</artifactId>
     <version>1.4.0</version>
     <type>pom</type>
