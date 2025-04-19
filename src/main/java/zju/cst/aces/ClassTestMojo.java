@@ -22,6 +22,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import zju.cst.aces.api.Task;
 import zju.cst.aces.api.impl.RunnerImpl;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -44,9 +45,39 @@ public class ClassTestMojo
         String className = selectClass;
 
         try {
+            // Execute Maven commands only if phaseType is TELPA
+            if ("TELPA".equals(phaseType)) {
+                File baseDir = project.getBasedir();
+                log.info("TELPA mode: Executing Maven commands in the target project: " + baseDir.getAbsolutePath());
+
+                // Execute Maven command sequence
+                log.info("Step 1: Cleaning the project");
+                executeMavenCommand(baseDir, "clean");
+
+                log.info("Step 2: Compiling the project");
+                executeMavenCommand(baseDir, "compile");
+
+                log.info("Step 3: Installing the project (skipping tests)");
+                executeMavenCommand(baseDir, "install", "-DskipTests");
+
+                log.info("Step 4: Copying dependencies");
+                executeMavenCommand(baseDir, "dependency:copy-dependencies");
+
+                log.info("Maven commands executed successfully.");
+
+                // Execute SmartUnitTest generation
+                log.info("Generating SmartUnitTest...");
+                TelpaInit telpaInit = new TelpaInit();
+                telpaInit.generateSmartUnitTest(project, smartUnitTest_path, config);
+
+                log.info("SmartUnitTest generation completed. Starting test generation for class: " + className);
+            }
+
+            // Generate tests for the class
             new Task(config, new RunnerImpl(config)).startClassTask(className);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("Error during execution: " + e.getMessage(), e);
+            throw new MojoExecutionException("Failed to execute Maven commands or generate tests for class: " + className, e);
         }
     }
 }

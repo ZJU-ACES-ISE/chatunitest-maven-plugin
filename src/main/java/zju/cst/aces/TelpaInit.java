@@ -10,32 +10,31 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TelpaInit {
 
-//    public void initializeProject(MavenProject project, String smartUnitTest_path, Config config) {
-//        // 1. 执行 Maven 命令
-//        // 获取项目根目录
-//        executeMavenCommand("-v");
-//        executeMavenCommand("clean", "compile");
-//        executeMavenCommand("clean", "install", "-Dmaven.test.skip=true");
-//        executeMavenCommand("dependency:copy-dependencies");
-//
-//        // 2. 然后继续执行 SmartUnit 初始化逻辑
-//        generateSmartUnitTest(project, smartUnitTest_path, config);
-//    }
-//
-//    private void executeMavenCommand(String... args) {
-//        // 使用 ProcessBuilder 来执行 Maven 命令
-//        List<String> command = new ArrayList<>();
-//        command.add("mvn");
-//        for (String arg : args) {
-//            command.add(arg);
-//        }
-//        runCommand(command);
-//    }
+    public void initializeProject(MavenProject project, String smartUnitTest_path, Config config) {
+        try {
+            // 执行 SmartUnit 初始化逻辑
+            // Maven commands are now executed in ProjectTestMojo and its subclasses
+            generateSmartUnitTest(project, smartUnitTest_path, config);
+        } catch (Exception e) {
+            System.err.println("Error initializing project: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // This method is no longer used - Maven commands are now executed in ProjectTestMojo
+    @Deprecated
+    private void executeMavenCommand(File workingDir, String... args) {
+        // This method is kept for backward compatibility but is no longer used
+        throw new UnsupportedOperationException("This method is deprecated. Maven commands are now executed in ProjectTestMojo.");
+    }
 
     public void generateSmartUnitTest(MavenProject project, String smartUnitTest_path, Config config) {
 
@@ -51,9 +50,11 @@ public class TelpaInit {
         }
         // 获取 target/classes 目录
         String targetClassesDir = project.getBuild().getOutputDirectory();
-        // 获取 target/dependency/*.jar 目录
-        String targetDependencyDir = project.getBuild().getDirectory() + "\\dependency\\*.jar";
-
+        // 获取 target/dependency 目录
+        String targetDependencyDir = project.getBuild().getDirectory() + File.separator + "dependency";
+        // 构建依赖路径字符串，列出所有JAR文件
+        String dependencyClasspath = buildDependencyClasspath(targetDependencyDir);
+        System.out.println("targetClassesDir: " + targetClassesDir + ", dependencyClasspath: " + dependencyClasspath);
         // 创建 setup 命令和参数
         List<String> setupCommand = new ArrayList<>();
         setupCommand.add("java");
@@ -61,7 +62,7 @@ public class TelpaInit {
         setupCommand.add(smartUnitTest_path);
         setupCommand.add("-setup");
         setupCommand.add(targetClassesDir);
-        setupCommand.add(targetDependencyDir);
+        setupCommand.add(dependencyClasspath);
 
         // 创建 target 命令和参数
         List<String> targetCommand = new ArrayList<>();
@@ -120,6 +121,46 @@ public class TelpaInit {
         } catch (IOException e) {
             System.err.println("Error traversing the directory: " + testDirectory);
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Builds a classpath string from all JAR files in the dependency directory
+     * @param dependencyDirPath Path to the dependency directory
+     * @return A classpath string with all JAR files
+     */
+    private String buildDependencyClasspath(String dependencyDirPath) {
+        File dependencyDir = new File(dependencyDirPath);
+        if (!dependencyDir.exists() || !dependencyDir.isDirectory()) {
+            System.err.println("Dependency directory does not exist: " + dependencyDirPath);
+            return dependencyDirPath; // Return the original path as fallback
+        }
+
+        try {
+            // Get all JAR files in the directory
+            List<Path> jarFiles = Files.list(Paths.get(dependencyDirPath))
+                    .filter(path -> path.toString().toLowerCase().endsWith(".jar"))
+                    .collect(Collectors.toList());
+
+            if (jarFiles.isEmpty()) {
+                System.out.println("No JAR files found in dependency directory: " + dependencyDirPath);
+                return dependencyDirPath; // Return the directory path as fallback
+            }
+
+            // Build classpath string with all JAR files
+            StringBuilder classpath = new StringBuilder();
+            for (int i = 0; i < jarFiles.size(); i++) {
+                classpath.append(jarFiles.get(i).toString());
+                if (i < jarFiles.size() - 1) {
+                    classpath.append(File.pathSeparator); // Use path separator (: on Unix, ; on Windows)
+                }
+            }
+
+            return classpath.toString();
+        } catch (IOException e) {
+            System.err.println("Error listing JAR files in dependency directory: " + e.getMessage());
+            e.printStackTrace();
+            return dependencyDirPath; // Return the original path as fallback
         }
     }
 

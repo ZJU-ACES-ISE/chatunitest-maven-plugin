@@ -38,15 +38,25 @@ import zju.cst.aces.api.impl.RunnerImpl;
 import zju.cst.aces.logger.MavenLogger;
 import zju.cst.aces.parser.ProjectParser;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 
 /**
  * @author chenyi
@@ -114,10 +124,12 @@ public class ProjectTestMojo
     public int presencePenalty;
     @Parameter(property = "proxy",defaultValue = "null:-1")
     public String proxy;
-    @Parameter(property = "phaseType",defaultValue = "COVERUP")
+    @Parameter(property = "phaseType",defaultValue = "CHATUNITEST")
     public String phaseType;
-    @Parameter(property = "smartUnitTest_jar_path",defaultValue = "D:\\APP\\IdeaProjects\\chatunitest-maven-plugin-corporation\\src\\main\\resources\\smartut-master-1.1.0.jar")
+    @Parameter(property = "smartUnitTest_jar_path",defaultValue = "")
     public String smartUnitTest_path;
+    @Parameter(property = "mavenHome", defaultValue = "${maven.home}")
+    public String mavenHome;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -133,10 +145,41 @@ public class ProjectTestMojo
         init();
         log.info(String.format("\n==========================\n[%s] Generating tests for project %s ...", phaseType, project.getBasedir().getName()));
         log.warn(String.format("[%s] It may consume a significant number of tokens!", phaseType));
+
         try {
+//            // Execute Maven commands only if phaseType is TELPA
+//            if ("TELPA".equals(phaseType)) {
+//                File baseDir = project.getBasedir();
+//                log.info("TELPA mode: Executing Maven commands in the target project: " + baseDir.getAbsolutePath());
+//
+//                // Execute Maven command sequence
+//                log.info("Step 1: Cleaning the project");
+//                executeMavenCommand(baseDir, "clean");
+//
+//                log.info("Step 2: Compiling the project");
+//                executeMavenCommand(baseDir, "compile");
+//
+//                log.info("Step 3: Installing the project (skipping tests)");
+//                executeMavenCommand(baseDir, "install", "-DskipTests");
+//
+//                log.info("Step 4: Copying dependencies");
+//                executeMavenCommand(baseDir, "dependency:copy-dependencies");
+//
+//                log.info("Maven commands executed successfully.");
+//
+//                // Execute SmartUnitTest generation
+//                log.info("Generating SmartUnitTest...");
+//                TelpaInit telpaInit = new TelpaInit();
+//                telpaInit.generateSmartUnitTest(project, smartUnitTest_path, config);
+//
+//                log.info("SmartUnitTest generation completed. Starting test generation...");
+//            }
+
+            // Generate tests
             new Task(config, new RunnerImpl(config)).startProjectTask();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("Error during execution: " + e.getMessage(), e);
+            throw new MojoExecutionException("Failed to execute Maven commands or generate tests", e);
         }
     }
 
@@ -175,12 +218,126 @@ public class ProjectTestMojo
                 .proxy(proxy)
                 .phaseType(phaseType)
                 .build();
-        if(phaseType.equals("TELPA")){
-            TelpaInit telpaInit=new TelpaInit();
-            telpaInit.generateSmartUnitTest(project,smartUnitTest_path,config);
-        }
+        // SmartUnitTest generation is now handled in the execute method when phaseType is TELPA
         config.setPluginSign(phaseType);
         config.print();
+    }
+
+    /**
+     * Execute Maven command in the specified directory
+     * @param workingDir The directory to execute the command in
+     * @param args Maven command arguments
+     */
+    /**
+     * Check if the current Maven process is running in debug mode (mvnDebug)
+     * @return true if running in debug mode, false otherwise
+     * @deprecated This method is no longer used as we always use 'mvn' command
+     */
+    @Deprecated
+    protected boolean isRunningInDebugMode() {
+        try {
+            // Check for debug arguments in the JVM
+            String jvmArgs = System.getProperty("sun.java.command", "");
+            return jvmArgs.contains("-Xdebug") || jvmArgs.contains("-agentlib:jdwp");
+        } catch (Exception e) {
+            log.debug("Error checking debug mode: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Execute Maven command in the specified directory
+     * Always uses 'mvn' command regardless of whether the parent process is running with 'mvn' or 'mvnDebug'
+     * @param workingDir The directory to execute the command in
+     * @param args Maven command arguments
+     */
+    protected void executeMavenCommand(File workingDir, String... args) {
+        try {
+            // Set the necessary system property for Maven
+            System.setProperty("maven.multiModuleProjectDirectory", workingDir.getAbsolutePath());
+
+            log.info("Executing Maven command: mvn " + String.join(" ", args));
+
+            // Create InvocationRequest
+            InvocationRequest request = new DefaultInvocationRequest();
+            request.setPomFile(new File(workingDir, "pom.xml"));
+
+            // Handle goals and options separately
+            List<String> goals = new ArrayList<>();
+            if (args.length > 0) {
+                // First argument is the goal
+                goals.add(args[0]);
+
+                // Add any additional options
+                if (args.length > 1) {
+                    for (int i = 1; i < args.length; i++) {
+                        if (args[i].startsWith("-D")) {
+                            // This is a system property
+                            String property = args[i].substring(2);
+                            int equalsIndex = property.indexOf('=');
+                            if (equalsIndex > 0) {
+                                String key = property.substring(0, equalsIndex);
+                                String value = property.substring(equalsIndex + 1);
+                                request.getProperties().setProperty(key, value);
+                            }
+                        } else {
+                            // This is another goal or option
+                            goals.add(args[i]);
+                        }
+                    }
+                }
+            }
+            request.setGoals(goals);
+
+            // Set properties to skip unnecessary plugins
+            Properties properties = request.getProperties();
+            if (properties == null) {
+                properties = new Properties();
+                request.setProperties(properties);
+            }
+            properties.setProperty("cobertura.skip", "true");
+            properties.setProperty("rat.skip", "true");
+            properties.setProperty("dependencyVersionsCheck.skip", "true");
+
+
+
+            // Create and configure Invoker
+            Invoker invoker = new DefaultInvoker();
+
+            // Explicitly set Maven executable to "mvn" regardless of parent process
+            invoker.setMavenExecutable(new File("mvn"));
+
+            // Set Maven home if available
+            if (mavenHome != null && !mavenHome.isEmpty()) {
+                log.info("Using Maven home: " + mavenHome);
+                invoker.setMavenHome(new File(mavenHome));
+            } else {
+                log.warn("Maven home not specified. Using system Maven installation.");
+            }
+
+            // Execute Maven command
+            try {
+                log.info("Executing Maven goal(s): " + String.join(", ", request.getGoals()));
+                org.apache.maven.shared.invoker.InvocationResult result = invoker.execute(request);
+
+                if (result.getExitCode() != 0) {
+                    if (result.getExecutionException() != null) {
+                        log.error("Maven command failed with exception: " + result.getExecutionException().getMessage());
+                        throw new RuntimeException("Failed to execute Maven command: " + Arrays.toString(args), result.getExecutionException());
+                    } else {
+                        log.error("Maven command failed with exit code: " + result.getExitCode());
+                        throw new RuntimeException("Failed to execute Maven command: " + Arrays.toString(args) + ", exit code: " + result.getExitCode());
+                    }
+                }
+
+                log.info("Maven command completed successfully");
+            } catch (MavenInvocationException e) {
+                log.error("Maven command failed: " + e.getMessage());
+                throw new RuntimeException("Failed to execute Maven command: " + Arrays.toString(args), e);
+            }
+        } catch (Exception e) {
+            log.error("Failed to execute Maven command: " + Arrays.toString(args), e);
+        }
     }
 
     public static List<String> listClassPaths(MavenProject project, DependencyGraphBuilder dependencyGraphBuilder) {
