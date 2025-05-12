@@ -130,6 +130,8 @@ public class ProjectTestMojo
     public String smartUnitTest_path;
     @Parameter(property = "mavenHome", defaultValue = "${maven.home}")
     public String mavenHome;
+    @Parameter(property = "sampleSize", defaultValue = "10")
+    public int sampleSize;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -217,6 +219,7 @@ public class ProjectTestMojo
                 .presencePenalty(presencePenalty)
                 .proxy(proxy)
                 .phaseType(phaseType)
+                .sampleSize(sampleSize)
                 .build();
         // SmartUnitTest generation is now handled in the execute method when phaseType is TELPA
         config.setPluginSign(phaseType);
