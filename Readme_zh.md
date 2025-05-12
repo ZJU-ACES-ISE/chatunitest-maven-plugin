@@ -36,7 +36,7 @@
     <version>2.1.1</version>
     <configuration>
         <!-- Required: You must specify your OpenAI API keys. -->
-        <apiKeys></apiKeys>g
+        <apiKeys></apiKeys>
         <model>gpt-4o-mini</model>
         <proxy>${proxy}</proxy>
     </configuration>
