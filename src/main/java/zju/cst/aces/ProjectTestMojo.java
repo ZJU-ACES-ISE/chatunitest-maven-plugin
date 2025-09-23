@@ -78,7 +78,7 @@ public class ProjectTestMojo
     public File promptPath;
     @Parameter(property = "examplePath", defaultValue = "${project.basedir}/exampleUsage.json")
     public File examplePath;
-    @Parameter(property = "url", defaultValue = "https://api.gptsapi.net/v1/chat/completions")
+    @Parameter(property = "url", defaultValue = "https://api.openai.com/v1/chat/completions")
     public String url;
     @Parameter(property = "model", defaultValue = "gpt-3.5-turbo")
     public String model;
