@@ -37,6 +37,7 @@ public class DebugMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         try {
             log.info("\n==========================\n[ChatUniTest] Debugging tests ...");
             config.getValidator().execute(fullTestName);

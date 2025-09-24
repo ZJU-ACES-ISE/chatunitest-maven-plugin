@@ -42,6 +42,7 @@ public class ClassTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         String className = selectClass;
 
         try {

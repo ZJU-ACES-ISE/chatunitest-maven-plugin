@@ -42,6 +42,7 @@ public class MethodTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
 

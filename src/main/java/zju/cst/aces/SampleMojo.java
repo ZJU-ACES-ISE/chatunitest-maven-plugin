@@ -32,6 +32,7 @@ public class SampleMojo extends ProjectTestMojo {
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         log = getLog();
         log.info("\n==========================\n[ChatUniTest] Generating sample data...");
         
