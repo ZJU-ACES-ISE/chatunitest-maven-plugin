@@ -129,6 +129,8 @@ public class ProjectTestMojo
     public int sampleSize;
     @Parameter(property = "module", defaultValue = "")
     public String module;
+    @Parameter(alias = "prune", property = "prune", defaultValue = "false")
+    public boolean enablePrune;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -255,6 +257,8 @@ public class ProjectTestMojo
                 .proxy(proxy)
                 .phaseType(phaseType)
                 .sampleSize(sampleSize)
+                .module(module)
+                .enablePrune(enablePrune)
                 .build();
 
         // SmartUnitTest generation is now handled in the execute method when phaseType is TELPA
