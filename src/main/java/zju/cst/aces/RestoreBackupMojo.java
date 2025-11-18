@@ -35,6 +35,7 @@ public class RestoreBackupMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         try {
             log.info("\n==========================\n[ChatUniTest] Restoring test folder ...");
             TestCompiler compiler = new TestCompiler(config.getTestOutput(), config.getCompileOutputPath(),

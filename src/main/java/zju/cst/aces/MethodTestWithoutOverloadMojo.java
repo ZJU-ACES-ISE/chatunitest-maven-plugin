@@ -44,6 +44,14 @@ public class MethodTestWithoutOverloadMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
+        // warn if aggregator and no module
+        if ("pom".equals(project.getPackaging()) && (module == null || module.isEmpty())) {
+            log.warn("[ChatUniTest] You are running on an aggregator POM. " +
+                    "Specify -Dmodule=<submodule> or use -pl/-f to target a submodule.");
+            return;
+        }
+
         String className = selectMethod.split("#")[0];
         String methodName = selectMethod.split("#")[1];
         String signature = simplifyMethodCall(selectMethod);

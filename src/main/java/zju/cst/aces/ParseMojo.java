@@ -35,6 +35,7 @@ public class ParseMojo extends ProjectTestMojo {
     public void execute() throws MojoExecutionException {
         log = getLog();
         init();
+        if (shouldSkip()) return;
         PhaseImpl.createPhase(config).prepare();
     }
 }

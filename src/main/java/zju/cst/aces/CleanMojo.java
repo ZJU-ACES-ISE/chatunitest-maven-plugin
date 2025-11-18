@@ -36,6 +36,7 @@ public class CleanMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         log.info("\n==========================\n[ChatUniTest] Cleaning project " +  project.getBasedir().getName() + " ...");
         log.info("\n==========================\n[ChatUniTest] Cleaning output directory "
                 + config.getTmpOutput() + " and " + config.getTestOutput() + " ...");

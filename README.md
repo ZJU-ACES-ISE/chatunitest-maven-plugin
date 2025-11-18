@@ -65,6 +65,8 @@ Generally, you only need to provide the API key. **If you encounter an APIConnec
 - `maxThread`: (**Optional**) Maximum number of threads, default value: `CPU core count * 5`
 - `stopWhenSuccess`: (**Optional**) Whether to stop after generating a successful test, default value: `true`
 - `noExecution`: (**Optional**) Whether to skip the execution validation step, default value: `false`
+- `module`: (**Optional**) Specifies the module name, used when running the plugin from the root directory of a multi-module project, default value: `" "`
+- `prune`: (**Optional**) Enables or disables pruning of test cases that cause assertion errors during iterative test generation, default value: `false`
 - All these parameters can also be specified using the -D option in the command line.
 - `merge`: (**Optional**) Merge all tests corresponding to each class into a test suite, default value: `true`.
 - `promptPath`: (**Optional**) Path for custom prompts. Refer to the default prompt directory: `src/main/resources/prompt`.
@@ -94,6 +96,9 @@ If using a local large model (e.g., code-llama), simply modify the model name an
     </configuration>
 </plugin>
 ```
+
+The following guide describes how to generate a plugin for a single module.
+If you want to use the plugin correctly in a multi-module project, you need to either specify the module parameter or navigate to the submodule’s root directory (the directory containing the pom.xml) before running the plugin.
 
 ### 1. Add the following dependency to your `pom.xml`
 Similarly, add the dependency in the `pom.xml` of the project for which you want to generate unit tests:

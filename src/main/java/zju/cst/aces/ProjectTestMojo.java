@@ -45,12 +45,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -132,11 +127,16 @@ public class ProjectTestMojo
     public String mavenHome;
     @Parameter(property = "sampleSize", defaultValue = "10")
     public int sampleSize;
+    @Parameter(property = "module", defaultValue = "")
+    public String module;
+    @Parameter(alias = "prune", property = "prune", defaultValue = "false")
+    public boolean enablePrune;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
     public static Log log;
     public Config config;
+    protected boolean skipThisModule = false;
 
 
     /**
@@ -145,6 +145,7 @@ public class ProjectTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         log.info(String.format("\n==========================\n[%s] Generating tests for project %s ...", phaseType, project.getBasedir().getName()));
         log.warn(String.format("[%s] It may consume a significant number of tokens!", phaseType));
 
@@ -177,6 +178,7 @@ public class ProjectTestMojo
 //                log.info("SmartUnitTest generation completed. Starting test generation...");
 //            }
 
+
             // Generate tests
             new Task(config, new RunnerImpl(config)).startProjectTask();
         } catch (Exception e) {
@@ -188,7 +190,42 @@ public class ProjectTestMojo
     public void init() {
         log = getLog();
         MavenLogger mLogger = new MavenLogger(log);
-        Project myProject = new ProjectImpl(project, listClassPaths(project, dependencyGraphBuilder));
+        // 1) Resolve target MavenProject:
+        MavenProject targetProject = project;
+        if (module != null && !module.isEmpty()) {
+            targetProject = resolveModule(module, session.getProjects());
+            if (targetProject == null) {
+                log.error("[ChatUniTest] Cannot resolve module: " + module);
+                skipThisModule = true;
+                return;
+            }
+
+            boolean isSameModule =
+                    Objects.equals(project.getBasedir(), targetProject.getBasedir());
+
+            if (!isSameModule) {
+                skipThisModule = true;
+                return; // ← quit
+            }
+            log.info("[ChatUniTest] Using module: "
+                    + targetProject.getGroupId() + ":" + targetProject.getArtifactId());
+        }
+        else{
+            log.info("[ChatUniTest] Using current project: "
+                    + project.getGroupId() + ":" + project.getArtifactId());
+        }
+
+        // 2) Build Project/Config with the resolved target module (the rest logic is unchanged)
+        Project myProject = new ProjectImpl(targetProject, listClassPaths(targetProject, dependencyGraphBuilder));
+
+        // If current project is an aggregator POM and no module is specified
+        if ("pom".equals(project.getPackaging()) && (module == null || module.isEmpty())) {
+            log.warn("[ChatUniTest] You are running on an aggregator POM. " +
+                    "Usually you need to specify -Dmodule=<submodule> or use -pl/-f to target a submodule.");
+            skipThisModule = true;
+            return; // exit early since we cannot generate tests directly on a POM
+        }
+
         config = new Config.ConfigBuilder(myProject)
                 .logger(mLogger)
                 .promptPath(promptPath)
@@ -220,7 +257,10 @@ public class ProjectTestMojo
                 .proxy(proxy)
                 .phaseType(phaseType)
                 .sampleSize(sampleSize)
+                .module(module)
+                .enablePrune(enablePrune)
                 .build();
+
         // SmartUnitTest generation is now handled in the execute method when phaseType is TELPA
         config.setPluginSign(phaseType);
         config.print();
@@ -371,6 +411,48 @@ public class ProjectTestMojo
             System.out.println(e);
         }
         return classPaths;
+    }
+
+    private MavenProject resolveModule(String key, List<MavenProject> all) {
+        // First support "groupId:artifactId"
+        for (MavenProject p : all) {
+            if ((p.getGroupId() + ":" + p.getArtifactId()).equals(key)) {
+                return p;
+            }
+        }
+        // Then support only artifactId (must be unique)
+        List<MavenProject> sameArtifact = new ArrayList<>();
+        for (MavenProject p : all) {
+            if (p.getArtifactId().equals(key)) sameArtifact.add(p);
+        }
+        if (sameArtifact.size() == 1) return sameArtifact.get(0);
+        if (sameArtifact.size() > 1) {
+            throw new RuntimeException(
+                    "[ChatUniTest] Ambiguous module '" + key + "'. Use groupId:artifactId to disambiguate.");
+        }
+
+        // Finally support resolving by relative/absolute path (directory where pom.xml is located)
+        File keyFile = new File(key);
+        if (keyFile.exists()) {
+            String keyAbs = keyFile.toPath().toAbsolutePath().normalize().toString();
+            for (MavenProject p : all) {
+                File pom = p.getFile(); // .../submodule/pom.xml
+                if (pom != null) {
+                    String dirAbs = pom.getParentFile().toPath().toAbsolutePath().normalize().toString();
+                    if (dirAbs.equals(keyAbs)) return p;
+                }
+            }
+        }
+
+        throw new RuntimeException("[ChatUniTest] Module '" + key + "' not found in reactor.");
+    }
+
+    protected boolean shouldSkip() {
+        if (skipThisModule) {
+            getLog().info("[ChatUniTest] Skipped by module selection / aggregator POM.");
+            return true;
+        }
+        return false;
     }
 
 }

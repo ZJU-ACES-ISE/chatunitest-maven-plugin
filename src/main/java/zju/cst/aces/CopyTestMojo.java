@@ -35,6 +35,7 @@ public class CopyTestMojo
      */
     public void execute() throws MojoExecutionException {
         init();
+        if (shouldSkip()) return;
         try {
             log.info("\n==========================\n[ChatUniTest] Copying tests ...");
             TestCompiler compiler = new TestCompiler(config.getTestOutput(), config.getCompileOutputPath(),
