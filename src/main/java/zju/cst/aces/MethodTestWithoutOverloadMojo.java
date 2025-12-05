@@ -104,33 +104,84 @@ public class MethodTestWithoutOverloadMojo
     }
 
     public static String simplifyMethodCall(String input) {
-        // 形如：com.xxx.Board#getFen() 或 com.xxx.Board#findEnPassant(Square target, Side side)
+        // 形如：org.flmelody.core.Windward#get(String, EnhancedFunction<C, ?>)
         String[] parts = input.split("#", 2);
         if (parts.length != 2) {
-            return input; // 格式不对就直接原样返回，避免 NPE
+            // 格式不对，兜底：去掉空白直接返回
+            return input.replaceAll("\\s+", "");
         }
 
-        String methodCall = parts[1];    // getFen() / findEnPassant(Square target, Side side)
+        String methodCall = parts[1].trim(); // "get(String, EnhancedFunction<C, ?>)"
 
         int leftParen = methodCall.indexOf('(');
         int rightParen = methodCall.lastIndexOf(')');
-
         if (leftParen < 0 || rightParen < leftParen) {
-            return methodCall.trim();    // 没有括号就直接返回方法名
+            // 没括号，就返回方法部分
+            return methodCall.trim();
         }
 
-        String methodName = methodCall.substring(0, leftParen).trim();
-        String params = methodCall.substring(leftParen + 1, rightParen).trim();
+        String methodName = methodCall.substring(0, leftParen).trim();          // "get"
+        String paramStr   = methodCall.substring(leftParen + 1, rightParen).trim(); // "String, EnhancedFunction<C, ?>"
 
-        // 只保留参数类型，并规范化为 "Type1, Type2"（逗号后一个空格）
-        String simplifiedParams = "";
-        if (!params.isEmpty()) {
-            simplifiedParams = Pattern.compile(",\\s*")
-                    .splitAsStream(params)
-                    .map(p -> p.trim().split("\\s+")[0]) // 取类型部分
-                    .collect(java.util.stream.Collectors.joining(", "));
+        if (paramStr.isEmpty()) {
+            return methodName + "()";
         }
 
-        return methodName + "(" + simplifiedParams + ")";
+        // ==== 1. 按泛型层次切参数（避免把泛型里的逗号当作分隔符） ====
+        java.util.List<String> rawParams = new java.util.ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int depth = 0; // 泛型嵌套层级
+
+        for (int i = 0; i < paramStr.length(); i++) {
+            char c = paramStr.charAt(i);
+            if (c == '<') {
+                depth++;
+                current.append(c);
+            } else if (c == '>') {
+                depth = Math.max(0, depth - 1);
+                current.append(c);
+            } else if (c == ',' && depth == 0) {
+                // 只有在不在泛型内部时，逗号才是参数分隔符
+                rawParams.add(current.toString().trim());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        if (current.length() > 0) {
+            rawParams.add(current.toString().trim());
+        }
+
+        // ==== 2. 对每个参数，提取“简单类型名”，去掉泛型和包名 ====
+        java.util.List<String> typeList = new java.util.ArrayList<>();
+
+        for (String raw : rawParams) {
+            String p = raw.trim();
+
+            // 去掉参数名：很多情况下类型和变量名之间是最后一个空格
+            // 例如： "EnhancedFunction<C, ?> function" -> "EnhancedFunction<C, ?>"
+            int lastSpace = p.lastIndexOf(' ');
+            if (lastSpace > 0) {
+                p = p.substring(0, lastSpace);
+            }
+
+            // 去掉泛型： EnhancedFunction<C, ?> -> EnhancedFunction
+            int genericIdx = p.indexOf('<');
+            if (genericIdx >= 0) {
+                p = p.substring(0, genericIdx);
+            }
+
+            // 去掉包名： java.lang.String -> String
+            int dotIdx = p.lastIndexOf('.');
+            if (dotIdx >= 0 && dotIdx < p.length() - 1) {
+                p = p.substring(dotIdx + 1);
+            }
+
+            typeList.add(p);
+        }
+
+        // ==== 3. 拼回 methodSignature 形式 ====
+        // 生成： get(String, EnhancedFunction)
+        return methodName + "(" + String.join(", ", typeList) + ")";
     }
 }
