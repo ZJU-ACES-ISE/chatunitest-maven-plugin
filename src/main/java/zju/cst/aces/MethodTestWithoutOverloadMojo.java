@@ -53,9 +53,17 @@ public class MethodTestWithoutOverloadMojo
         }
 
         String className = selectMethod.split("#")[0];
-        String methodName = selectMethod.split("#")[1];
-        String signature = simplifyMethodCall(selectMethod);
+        String methodPart = selectMethod.split("#")[1]; // "getFen()" 或 "findEnPassantTarget(Square, Side)"
 
+        // methodName 只要方法名，不要括号和参数
+        String methodName;
+        int idx = methodPart.indexOf('(');
+        if (idx >= 0) {
+            methodName = methodPart.substring(0, idx).trim();   // "getFen"
+        } else {
+            methodName = methodPart.trim();                     // 兜底情况
+        }
+        String signature = simplifyMethodCall(selectMethod);
 
         try {
             // Execute Maven commands only if phaseType is TELPA and they haven't been executed yet
@@ -94,34 +102,35 @@ public class MethodTestWithoutOverloadMojo
             throw new MojoExecutionException("Failed to execute Maven commands or generate tests for method: " + className + "#" + methodName + " with signature: " + signature, e);
         }
     }
+
     public static String simplifyMethodCall(String input) {
-        // 匹配如 org.zju.edu.res(int num, String name)
-        String regex = "(?:[a-zA-Z_][\\w\\.]*)\\.([a-zA-Z_][\\w]*)\\s*\\(([^)]*)\\)";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-
-        StringBuffer sb = new StringBuffer();
-
-        while (matcher.find()) {
-            String methodName = matcher.group(1);
-            String params = matcher.group(2);
-
-            // 只保留参数类型
-            String simplifiedParams = "";
-            if (!params.trim().isEmpty()) {
-                simplifiedParams = String.join(", ",
-                        // 去掉每个参数中的变量名，只保留类型
-                        Pattern.compile(",\\s*")
-                                .splitAsStream(params)
-                                .map(param -> param.trim().split("\\s+")[0]) // 取类型
-                                .reduce((a, b) -> a + ", " + b).orElse("")
-                );
-            }
-
-            String replacement = methodName + "(" + simplifiedParams + ")";
-            matcher.appendReplacement(sb, replacement);
+        // 形如：com.xxx.Board#getFen() 或 com.xxx.Board#findEnPassant(Square target, Side side)
+        String[] parts = input.split("#", 2);
+        if (parts.length != 2) {
+            return input; // 格式不对就直接原样返回，避免 NPE
         }
-        matcher.appendTail(sb);
-        return sb.toString();
+
+        String methodCall = parts[1];    // getFen() / findEnPassant(Square target, Side side)
+
+        int leftParen = methodCall.indexOf('(');
+        int rightParen = methodCall.lastIndexOf(')');
+
+        if (leftParen < 0 || rightParen < leftParen) {
+            return methodCall.trim();    // 没有括号就直接返回方法名
+        }
+
+        String methodName = methodCall.substring(0, leftParen).trim();
+        String params = methodCall.substring(leftParen + 1, rightParen).trim();
+
+        // 只保留参数类型，并规范化为 "Type1, Type2"（逗号后一个空格）
+        String simplifiedParams = "";
+        if (!params.isEmpty()) {
+            simplifiedParams = Pattern.compile(",\\s*")
+                    .splitAsStream(params)
+                    .map(p -> p.trim().split("\\s+")[0]) // 取类型部分
+                    .collect(java.util.stream.Collectors.joining(", "));
+        }
+
+        return methodName + "(" + simplifiedParams + ")";
     }
 }
