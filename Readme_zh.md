@@ -153,6 +153,11 @@ mvn chatunitest:class -DselectClass=Example
 mvn chatunitest:method -DselectMethod=Example#method1
 ```
 
+对Example类中的方法method1(...)进行测试：(精确匹配方法签名)
+```shell
+mvn chatunitest:methodWithoutOverload -DselectMethod=Example#method1(...)
+```
+
 **为整个项目生成单元测试：**
 
 :warning: :warning: :warning: 对于大型项目来说，可能会消耗大量的token，导致相当大的费用。
