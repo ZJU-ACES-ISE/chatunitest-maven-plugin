@@ -131,6 +131,16 @@ public class ProjectTestMojo
     public String module;
     @Parameter(alias = "prune", property = "prune", defaultValue = "false")
     public boolean enablePrune;
+    @Parameter(property = "maxSubProblemRepairAttempts", defaultValue = "3")
+    public int maxSubProblemRepairAttempts;
+    @Parameter(property = "maxOverallIterations", defaultValue = "10")
+    public int maxOverallIterations;
+    @Parameter(property = "enableErrorDecomposition", defaultValue = "true")
+    public boolean enableErrorDecomposition;
+    @Parameter(property = "enableReActThought", defaultValue = "true")
+    public boolean enableReActThought;
+    @Parameter(property = "enableMemory", defaultValue = "true")
+    public boolean enableMemory;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @Component(hint = "default")
     public DependencyGraphBuilder dependencyGraphBuilder;
@@ -143,9 +153,12 @@ public class ProjectTestMojo
      * Generate tests for all classes in the project
      * @throws MojoExecutionException
      */
+    @Override
     public void execute() throws MojoExecutionException {
         init();
-        if (shouldSkip()) return;
+        if (shouldSkip()) {
+            return;
+        }
         log.info(String.format("\n==========================\n[%s] Generating tests for project %s ...", phaseType, project.getBasedir().getName()));
         log.warn(String.format("[%s] It may consume a significant number of tokens!", phaseType));
 
@@ -259,6 +272,11 @@ public class ProjectTestMojo
                 .sampleSize(sampleSize)
                 .module(module)
                 .enablePrune(enablePrune)
+                .maxSubProblemRepairAttempts(maxSubProblemRepairAttempts)
+                .maxOverallIterations(maxOverallIterations)
+                .enableErrorDecomposition(enableErrorDecomposition)
+                .enableReActThought(enableReActThought)
+                .enableMemory(enableMemory)
                 .build();
 
         // SmartUnitTest generation is now handled in the execute method when phaseType is TELPA
@@ -423,9 +441,13 @@ public class ProjectTestMojo
         // Then support only artifactId (must be unique)
         List<MavenProject> sameArtifact = new ArrayList<>();
         for (MavenProject p : all) {
-            if (p.getArtifactId().equals(key)) sameArtifact.add(p);
+            if (p.getArtifactId().equals(key)) {
+                sameArtifact.add(p);
+            }
         }
-        if (sameArtifact.size() == 1) return sameArtifact.get(0);
+        if (sameArtifact.size() == 1) {
+            return sameArtifact.get(0);
+        }
         if (sameArtifact.size() > 1) {
             throw new RuntimeException(
                     "[ChatUniTest] Ambiguous module '" + key + "'. Use groupId:artifactId to disambiguate.");
@@ -439,7 +461,9 @@ public class ProjectTestMojo
                 File pom = p.getFile(); // .../submodule/pom.xml
                 if (pom != null) {
                     String dirAbs = pom.getParentFile().toPath().toAbsolutePath().normalize().toString();
-                    if (dirAbs.equals(keyAbs)) return p;
+                    if (dirAbs.equals(keyAbs)) {
+                        return p;
+                    }
                 }
             }
         }
