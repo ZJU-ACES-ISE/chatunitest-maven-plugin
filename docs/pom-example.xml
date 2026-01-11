@@ -128,6 +128,13 @@
                     <tmpOutput>${tmpOutput}</tmpOutput>
                     <testOutput>${testOutput}</testOutput>
                     <project>${project}</project>
+                    
+                    <!-- ReAct feature toggles (since v2.1.3) -->
+                    <enableErrorDecomposition>true</enableErrorDecomposition>
+                    <enableReActThought>true</enableReActThought>
+                    <enableMemory>true</enableMemory>
+                    <maxSubProblemRepairAttempts>3</maxSubProblemRepairAttempts>
+                    <maxOverallIterations>10</maxOverallIterations>
                 </configuration>
             </plugin>
         </plugins>

@@ -5,7 +5,7 @@ The unit test is:
 ${unit_test}
 ```
 
-The error message is:
+The error chatMessage is:
 ```
 ${error_message}
 ```

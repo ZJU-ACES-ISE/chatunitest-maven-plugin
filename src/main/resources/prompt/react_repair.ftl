@@ -1,8 +1,5 @@
 # Fix Sub-Problem Using Tool Results
 
-<#-- Include similar repair memories if available -->
-<#include "memory_context.ftl">
-
 ## Sub-Problem
 **ID:** ${problem_id!"1"}
 **Description:** ${problem_description!"Fix the test error"}

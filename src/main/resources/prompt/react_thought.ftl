@@ -16,9 +16,16 @@ You are an expert Java test engineer using a ReAct (Reasoning + Acting) approach
 </#if>
 <#if suggested_tools?has_content && (suggested_tools?size > 0)>
 - **Suggested Tools (in order of priority):** ${suggested_tools?join(", ")}
-  (⭐ You are NOT limited to these - feel free to choose ANY tool you think is best!)
+  
+  ⚠️ **IMPORTANT**: These tools are recommended based on error analysis. 
+  You SHOULD use the recommended tool unless you have a VERY STRONG reason not to.
+  If the recommended tool fails after 2 attempts, then consider alternatives.
 <#else>
 - **Recommended Tool:** ${recommended_tool!"llm_repair"}
+  
+  ⚠️ **IMPORTANT**: This tool is specifically recommended for this error type.
+  You SHOULD use this tool as your first choice. Only switch to a different tool
+  if this one fails after 2 attempts with no progress.
 </#if>
 
 ## Error Details
@@ -84,6 +91,22 @@ ${full_fm}
 [${event.type}] ${event.description!""}
 </#list>
 
+<#-- ⭐ Show last action's full output for context -->
+<#if last_action_tool?has_content && last_action_output?has_content>
+
+### Last Tool Output (${last_action_tool})
+The previous action used `${last_action_tool}` and provided this information:
+```
+${last_action_output}
+```
+
+⚠️ **IMPORTANT**: Read the above output carefully! It may contain:
+- Specific instructions on what to do next
+- Available enum constants or method signatures
+- Suggestions for which tool to use next
+
+</#if>
+
 <#-- Loop detection warning -->
 <#assign recentActions = [] />
 <#list session_events as event>
@@ -109,7 +132,13 @@ No previous actions in this session.
 
 ## Your Task
 
-Analyze this error and decide which tool to use. You have full freedom to choose ANY tool.
+Analyze this error and decide which tool to use.
+
+⚠️ **CRITICAL INSTRUCTION**: 
+- The **Recommended Tool** above is chosen based on error pattern analysis
+- You MUST use the recommended tool FIRST unless you have strong evidence it won't work
+- Only switch tools if the recommended one fails 2+ times with identical results
+- DO NOT randomly choose a different tool just because you "think" it might be better
 
 <#-- ⭐ 错误特征提示：帮助选择合适的工具 -->
 <#if error_features??>
@@ -118,7 +147,11 @@ Analyze this error and decide which tool to use. You have full freedom to choose
 - Cannot find symbol detected → Consider using `symbol_search` to locate the symbol
 </#if>
 <#if error_features.has_type_conversion>
-- Type conversion issue (e.g., String → SomeType) → The target type might be an enum, consider `symbol_search` to check
+- ⭐ **Type conversion issue detected** (e.g., String → SomeType)
+  * The target type is likely an **enum** or a specific class
+  * **MUST use `symbol_search`** to find the target type's definition and available constants/values
+  * **DO NOT guess** the enum constant names (e.g., SAMPLE_CATEGORY) - they might not exist!
+  * Example: If error says "String cannot be converted to ErrorCategory", search for "ErrorCategory" to see all enum constants
 </#if>
 <#if error_features.has_incompatible_types>
 - Type incompatibility detected → May need to check type definitions with `symbol_search`
@@ -171,7 +204,13 @@ TOOL: symbol_search
 ARGUMENTS: {"symbolName": "ErrorCategory", "symbolType": "class"}
 STOP: [false]
 
-Example 2 - Multiple symbols not found (BATCH SEARCH):
+Example 2 - Type conversion error (String → Enum):
+THOUGHT: Error says "String cannot be converted to ErrorCategory". This means ErrorCategory is likely an enum, and I'm trying to return a String where an enum constant is expected. I need to search for ErrorCategory to see what enum constants are available, then use the correct constant instead of a String.
+TOOL: symbol_search
+ARGUMENTS: {"symbolName": "ErrorCategory", "symbolType": "enum"}
+STOP: [false]
+
+Example 3 - Multiple symbols not found (BATCH SEARCH):
 THOUGHT: Multiple "cannot find symbol" errors for DatatypeFeatures, SubtypeResolver, VisibilityChecker, etc. I'll search all of them at once using batch search to save time and get all import statements together.
 TOOL: symbol_search
 ARGUMENTS: {"symbolName": "DatatypeFeatures, SubtypeResolver, VisibilityChecker, ContextAttributes, ConstructorDetector, TypeBindings", "batchSearch": true}

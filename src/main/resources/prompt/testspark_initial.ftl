@@ -9,11 +9,19 @@ The source code of method under test is as follows:
 ${full_method_info}
 ```
 
-Here are the method signatures of classes used by the method under test. Only use these signatures for creating objects, not your own ideas.
-<#list dep_class_sigs?keys as key>
-    === methods in ${key}:
-    ${dep_m_sigs_ano_com[key]}
-</#list>
+<#if dep_class_sigs?has_content>
+    Here are the method signatures of classes used by the method under test. Only use these signatures for creating objects, not your own ideas.
+    <#list dep_class_sigs?keys as key>
+        === methods in ${key}:
+        <#if dep_m_sigs_ano_com[key]?has_content>
+            ${dep_m_sigs_ano_com[key]}
+        <#else>
+            No method signatures available.
+        </#if>
+    </#list>
+<#else>
+    No classes found for method signatures.
+</#if>
 
 Polymorphism relations:
 <#if subClasses??>
