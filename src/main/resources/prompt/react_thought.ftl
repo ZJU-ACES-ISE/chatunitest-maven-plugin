@@ -83,6 +83,26 @@ ${full_fm}
 <#list session_events as event>
 [${event.type}] ${event.description}
 </#list>
+
+<#-- Loop detection warning -->
+<#assign recentActions = [] />
+<#list session_events as event>
+  <#if event.type == "ACTION">
+    <#assign recentActions = recentActions + [event] />
+  </#if>
+</#list>
+<#if (recentActions?size >= 2)>
+  <#assign lastTool = recentActions[recentActions?size - 1].description?keep_after("Tool: ")?keep_before(",") />
+  <#assign secondLastTool = recentActions[recentActions?size - 2].description?keep_after("Tool: ")?keep_before(",") />
+  <#if lastTool == secondLastTool>
+
+⚠️ WARNING: You used '${lastTool}' in the last 2 iterations!
+If you're about to use it again, STOP and try a different approach:
+- If symbol_search didn't help → try llm_repair directly
+- If llm_repair keeps failing → the problem might need manual intervention
+- Consider if the error requires a different strategy entirely
+  </#if>
+</#if>
 <#else>
 No previous actions in this session.
 </#if>
@@ -93,10 +113,17 @@ Analyze this error and decide which tool to use. You have full freedom to choose
 
 **Tool Selection Guide:**
 - `symbol_search`: For "cannot find symbol" errors OR to understand what's in a class/enum
+  * ⭐ NEW: Supports BATCH SEARCH - search multiple symbols at once!
+  * ⭐ NEW: Shows generic type parameters (e.g., `<M, B>`) - critical for fixing generic type errors!
 - `mock_analysis`: For Mockito errors (MockitoException, stubbing issues)
 - `llm_repair`: For direct fixes when you understand the problem
 
-**⚠️ CRITICAL: You MUST respond in this EXACT format (all 4 lines required, NO code blocks):**
+**⚠️ CRITICAL RULES:**
+1. **Multiple "cannot find symbol" errors?** → Use batch search! Don't search one by one.
+2. **Generic type errors** (e.g., "wrong number of type arguments")? → Search the class to see its generic parameters!
+3. **Already used same tool 2+ times with no progress?** → STOP and try a different approach!
+
+**⚠️ YOU MUST respond in this EXACT format (all 4 lines required, NO code blocks):**
 
 THOUGHT: [Your reasoning - which tool and why]
 TOOL: [tool_name]
@@ -105,19 +132,25 @@ STOP: [false]
 
 **Examples:**
 
-Example 1 - Cannot find symbol:
+Example 1 - Single symbol not found:
 THOUGHT: Error says "cannot find symbol: ErrorCategory". I need to search for this symbol to understand if it's a class, enum, or inner type, and how to import it correctly.
 TOOL: symbol_search
 ARGUMENTS: {"symbolName": "ErrorCategory", "symbolType": "class"}
 STOP: [false]
 
-Example 2 - Type mismatch with enum:
-THOUGHT: Error "String cannot be converted to ErrorCategory" suggests ErrorCategory is likely an enum. I need to find its definition and available enum constants.
+Example 2 - Multiple symbols not found (BATCH SEARCH):
+THOUGHT: Multiple "cannot find symbol" errors for DatatypeFeatures, SubtypeResolver, VisibilityChecker, etc. I'll search all of them at once using batch search to save time and get all import statements together.
 TOOL: symbol_search
-ARGUMENTS: {"symbolName": "ErrorCategory", "symbolType": "enum"}
+ARGUMENTS: {"symbolName": "DatatypeFeatures, SubtypeResolver, VisibilityChecker, ContextAttributes, ConstructorDetector, TypeBindings", "batchSearch": true}
 STOP: [false]
 
-Example 3 - Mockito error:
+Example 3 - Generic type error:
+THOUGHT: Error "wrong number of type arguments; required 2" suggests the class has generic parameters. I need to search for MapperBuilder to see its full generic signature like <M, B>.
+TOOL: symbol_search
+ARGUMENTS: {"symbolName": "MapperBuilder", "symbolType": "class"}
+STOP: [false]
+
+Example 4 - Mockito error:
 THOUGHT: MockitoException indicates a mock configuration problem. I'll analyze the mock setup.
 TOOL: mock_analysis
 ARGUMENTS: {"testCode": "...", "errorMessage": "..."}

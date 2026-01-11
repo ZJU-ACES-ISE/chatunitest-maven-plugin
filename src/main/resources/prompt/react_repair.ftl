@@ -54,15 +54,21 @@ Based on the tool findings and error analysis, fix the test code to resolve: **$
 - **CRITICAL:** Read the Tool Output above carefully - it contains the EXACT information you need
 - If a class was found, the Tool Output shows:
   * The correct import statement to use
+  * **⭐ Generic Parameters** (e.g., `<M, B>`) - MUST be provided when extending/implementing!
   * All available fields in that class
   * All available public methods in that class (with signatures)
   * Inner types (inner classes/enums) if any
+- **For Generic Classes:** If Tool Output shows "Generic Parameters: <M, B>":
+  * You MUST provide ALL type parameters when extending/using the class
+  * Example: `class MyClass extends BaseClass<Type1, Type2>` NOT `BaseClass<Type1>`
+  * Read the bounds carefully (e.g., `M extends ObjectMapper` means M must be ObjectMapper or its subclass)
 - **If a method/field is not found:** Check the Tool Output for the actual available methods/fields and use the correct name
 - **For Inner Classes/Enums:** The Tool Output provides specific instructions - follow them exactly:
   * Use fully qualified name: `OuterClass.InnerClass` (e.g., `RepairMemory.SessionEvent`)
   * Import statement: `import package.OuterClass.InnerClass;` (e.g., `import zju.cst.aces.agent.memory.RepairMemory.SessionEvent;`)
   * NEVER use: `import package.InnerClass;` (this is incorrect)
 - **For Lombok @Data classes:** If Tool Output mentions Lombok, use the auto-generated getters shown (e.g., `getFieldName()`)
+- **For Batch Search Results:** All symbols are listed together - add ALL required imports at once
 - Check for typos by comparing with the exact names shown in Tool Output
 <#elseif error_type == "NO_SUITABLE_METHOD">
 **For "no suitable method found" errors:**
