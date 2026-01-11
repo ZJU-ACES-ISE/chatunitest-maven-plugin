@@ -81,7 +81,7 @@ ${full_fm}
 ## Session History
 <#if session_events?has_content>
 <#list session_events as event>
-[${event.type}] ${event.description}
+[${event.type}] ${event.description!""}
 </#list>
 
 <#-- Loop detection warning -->
@@ -111,17 +111,50 @@ No previous actions in this session.
 
 Analyze this error and decide which tool to use. You have full freedom to choose ANY tool.
 
-**Tool Selection Guide:**
-- `symbol_search`: For "cannot find symbol" errors OR to understand what's in a class/enum
-  * ⭐ NEW: Supports BATCH SEARCH - search multiple symbols at once!
-  * ⭐ NEW: Shows generic type parameters (e.g., `<M, B>`) - critical for fixing generic type errors!
-- `mock_analysis`: For Mockito errors (MockitoException, stubbing issues)
-- `llm_repair`: For direct fixes when you understand the problem
+<#-- ⭐ 错误特征提示：帮助选择合适的工具 -->
+<#if error_features??>
+**Error Analysis:**
+<#if error_features.has_cannot_find_symbol>
+- Cannot find symbol detected → Consider using `symbol_search` to locate the symbol
+</#if>
+<#if error_features.has_type_conversion>
+- Type conversion issue (e.g., String → SomeType) → The target type might be an enum, consider `symbol_search` to check
+</#if>
+<#if error_features.has_incompatible_types>
+- Type incompatibility detected → May need to check type definitions with `symbol_search`
+</#if>
+<#if error_features.has_no_suitable_method>
+- Method signature mismatch → Consider checking parameter types
+</#if>
+<#if error_features.has_mockito_keywords>
+- Mockito-related keywords detected → `mock_analysis` might help analyze mock configurations
+</#if>
+<#if error_features.has_inner_class>
+- Inner class issue → Use `symbol_search` to find the correct import format (OuterClass.InnerClass)
+</#if>
+<#if error_features.has_enum>
+- Enum-related → Use `symbol_search` to find available enum values
+</#if>
+<#if error_features.has_generic>
+- Generic type issue → Use `symbol_search` to see the generic parameters
+</#if>
 
-**⚠️ CRITICAL RULES:**
-1. **Multiple "cannot find symbol" errors?** → Use batch search! Don't search one by one.
-2. **Generic type errors** (e.g., "wrong number of type arguments")? → Search the class to see its generic parameters!
-3. **Already used same tool 2+ times with no progress?** → STOP and try a different approach!
+</#if>
+
+**Available Tools:**
+- `symbol_search`: Search for classes, methods, fields, or enums in the project
+  * Supports BATCH SEARCH - search multiple symbols at once (comma-separated)
+  * Shows generic type parameters, enum values, inner classes, etc.
+  * Use when you need to understand what's available in a class/enum
+- `mock_analysis`: Analyze Mockito mock configurations and stubbing
+  * Useful for MockitoException, stubbing issues, or mock setup problems
+- `llm_repair`: Direct code fix when you understand the problem clearly
+
+**Tool Usage Tips:**
+1. **You can use multiple tools** - If one tool doesn't provide enough info, try another!
+2. **Batch search** - For multiple "cannot find symbol" errors, search all symbols at once
+3. **Combine tools** - Use `symbol_search` first to understand types, then `llm_repair` to fix
+4. **Avoid loops** - If the same tool fails 2+ times with no progress, try a different approach
 
 **⚠️ YOU MUST respond in this EXACT format (all 4 lines required, NO code blocks):**
 

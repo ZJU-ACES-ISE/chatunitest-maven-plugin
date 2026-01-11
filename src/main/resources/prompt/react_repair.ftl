@@ -1,5 +1,8 @@
 # Fix Sub-Problem Using Tool Results
 
+<#-- Include similar repair memories if available -->
+<#include "memory_context.ftl">
+
 ## Sub-Problem
 **ID:** ${problem_id!"1"}
 **Description:** ${problem_description!"Fix the test error"}
@@ -22,6 +25,24 @@ ${error_messages}
 ${error_message!"No error message available"}
 </#if>
 ```
+
+<#-- ⭐ 修复提示：基于错误特征 -->
+<#if error_features??>
+**Repair Hints:**
+<#if error_features.has_type_conversion>
+- Type conversion error detected: Check if the target type is an enum (use enum constants instead of strings)
+</#if>
+<#if error_features.has_inner_class>
+- Inner class: Use format `OuterClass.InnerClass` for imports
+</#if>
+<#if error_features.has_enum>
+- Enum usage: Use enum constants directly (e.g., `EnumName.VALUE`), not string literals
+</#if>
+<#if error_features.mentioned_types?? && (error_features.mentioned_types?size > 0)>
+- Types mentioned: ${error_features.mentioned_types?join(", ")} - Check Tool Output for their definitions
+</#if>
+
+</#if>
 
 ## Current Test Code
 ```java
