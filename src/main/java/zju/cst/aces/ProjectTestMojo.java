@@ -131,14 +131,8 @@ public class ProjectTestMojo
     public String module;
     @Parameter(alias = "prune", property = "prune", defaultValue = "false")
     public boolean enablePrune;
-    @Parameter(property = "maxSubProblemRepairAttempts", defaultValue = "3")
-    public int maxSubProblemRepairAttempts;
-    @Parameter(property = "maxOverallIterations", defaultValue = "10")
+    @Parameter(property = "maxOverallIterations", defaultValue = "5")
     public int maxOverallIterations;
-    @Parameter(property = "enableErrorDecomposition", defaultValue = "true")
-    public boolean enableErrorDecomposition;
-    @Parameter(property = "enableReActThought", defaultValue = "true")
-    public boolean enableReActThought;
     @Parameter(property = "enableMemory", defaultValue = "true")
     public boolean enableMemory;
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -272,10 +266,7 @@ public class ProjectTestMojo
                 .sampleSize(sampleSize)
                 .module(module)
                 .enablePrune(enablePrune)
-                .maxSubProblemRepairAttempts(maxSubProblemRepairAttempts)
                 .maxOverallIterations(maxOverallIterations)
-                .enableErrorDecomposition(enableErrorDecomposition)
-                .enableReActThought(enableReActThought)
                 .enableMemory(enableMemory)
                 .build();
 
